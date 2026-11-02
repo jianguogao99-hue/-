@@ -14,3 +14,5 @@ export default async function(request){
   return Response.json({error:code,message:'后台初始化失败，请稍后重试。',build:'startup14'},{status:503,headers:{'cache-control':'private, no-store'}});
  }
 }
+
+export const config={path:"/api/*"};

@@ -7,11 +7,6 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
   external_node_modules = ["@netlify/identity", "@netlify/database"]
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/api/:splat"
-  status = 200
-  force = true
 [[headers]]
   for = "/*"
   [headers.values]

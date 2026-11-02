@@ -10,3 +10,6 @@ web-dist/
 *.zip
 .DS_Store
 coverage/
+
+# Also exclude a local dependency symlink.
+node_modules
