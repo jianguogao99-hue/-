@@ -1,0 +1,9 @@
+import assert from 'node:assert/strict';import {extractCity,routeTools,augmentChat} from '../worker/tools.mjs';
+for(const q of ['今天郑州几度','郑州今天几度','我想知道郑州现在多少度','帮我查一下郑州的天气']){assert.equal(extractCity(q),'郑州',q);assert.equal(routeTools(q)[0].tool,'weather',q);}
+assert.equal(extractCity('河南郑州今天几度'),'郑州,河南,中国');let geocodeQueries=[],weatherQueries=0;
+async function mock(url){const u=new URL(url);if(u.hostname==='geocoding-api.open-meteo.com'){geocodeQueries.push(u.searchParams.get('name'));return Response.json({results:[{name:'郑州',latitude:34.75778,longitude:113.64861,country_code:'CN',admin1:'河南'}]});}weatherQueries++;return Response.json({current:{time:1793600000,temperature_2m:15.5,weather_code:1},current_units:{temperature_2m:'°C'},timezone:'Asia/Shanghai'});}
+const turns=[{role:'user',content:'今天郑州几度'},{role:'assistant',content:'旧失败：未找到该城市，请提供城市和省份/国家。查询时间2026-11-01'}];
+for(const followup of ['再查一次','郑州，河南，中国','郑州你都不知道在哪吗','我想知道郑州现在多少度']){const result=await augmentChat({messages:[...turns,{role:'user',content:followup}]},'Asia/Shanghai',{}, {},mock);assert.equal(result.results[0].tool,'weather',followup);assert.equal(result.results[0].status,'success',followup);assert.equal(result.results[0].data.city,'郑州');assert(result.payload.messages.some(m=>m.role==='system'&&m.content.includes('本轮后端实际执行结果')));}
+assert.equal(weatherQueries,4);assert(geocodeQueries.every(q=>q==='郑州'||q==='郑州,河南,中国'));
+const none=await augmentChat({messages:[...turns,{role:'user',content:'谢谢'}]},'Asia/Shanghai',{}, {},mock);assert.equal(none.results.length,0);assert(none.payload.messages.some(m=>m.content.includes('results为空代表本轮没有执行实时查询')));assert.equal(weatherQueries,4);
+console.log('PASS: screenshot wording triggers real weather route; city prefixes/qualifiers normalized; retries and location clarification re-query; no fabricated lookup/coverage claims; non-queries stay direct.');

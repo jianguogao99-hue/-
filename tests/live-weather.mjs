@@ -1,0 +1,7 @@
+// Optional live check: Python urllib follows the managed environment's inherited HTTP proxy.
+// This shim is for local testing only; hosted Workers use their native fetch.
+import {spawnSync} from 'node:child_process';import {runTools,augmentChat} from '../worker/tools.mjs';
+async function viaProxy(url,options={}){if(options.method&&options.method!=='GET')throw new Error('This live check only permits GET');const script='import sys,json,urllib.request,urllib.error\nu=sys.stdin.readline().strip()\ntry:\n r=urllib.request.urlopen(u,timeout=20);print(json.dumps({"status":r.status,"text":r.read().decode()}))\nexcept urllib.error.HTTPError as e:print(json.dumps({"status":e.code,"text":e.read().decode()}))';const process=spawnSync('python',['-c',script],{input:url+'\n',encoding:'utf8',timeout:25000});if(process.status!==0)throw new Error('Live proxy check failed');const data=JSON.parse(process.stdout);return new Response(data.text,{status:data.status});}
+for(const question of ['现在几点','今天郑州几度','我想知道郑州现在多少度','河南郑州今天几度','今天有什么新闻']){const results=await runTools(question,'Asia/Shanghai',{}, {},viaProxy);console.log(JSON.stringify({question,results,note:question.includes('新闻')?'No account key supplied: must report not_configured.':'Live system/provider check.'}));}
+
+const retried=await augmentChat({messages:[{role:"user",content:"今天郑州几度"},{role:"assistant",content:"旧记录未找到城市"},{role:"user",content:"再查一次"}]},"Asia/Shanghai",{}, {},viaProxy);console.log(JSON.stringify({question:"郑州天气的连续追问：再查一次",results:retried.results}));

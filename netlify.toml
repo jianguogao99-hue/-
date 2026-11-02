@@ -1,0 +1,19 @@
+[build]
+  command = "npm run build"
+  publish = "web-dist"
+[build.environment]
+  NODE_VERSION = "22"
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+  force = true
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "same-origin"
+    X-Robots-Tag = "noindex, nofollow"

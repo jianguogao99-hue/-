@@ -1,0 +1,8 @@
+import assert from 'node:assert/strict';import fs from 'node:fs/promises';import {PGlite} from '@electric-sql/pglite';import {accountStore} from '../netlify/lib/account-store.mjs';
+const db=new PGlite();await db.exec(await fs.readFile('netlify/database/migrations/20261102080000_create_account_objects.sql','utf8'));
+const a=accountStore(db,'person-a','accounts/a/'),b=accountStore(db,'person-b','accounts/b/');
+const first=await a.put('accounts/a/state.json','{"title":"private A"}',{onlyIf:new Headers({'If-None-Match':'*'})});assert(first);assert.equal(await b.get('accounts/b/state.json'),null);await assert.rejects(()=>b.get('accounts/a/state.json'),/rejected/);
+const second=await b.put('accounts/b/state.json','{"title":"private B"}',{onlyIf:new Headers({'If-None-Match':'*'})});assert(second);assert.equal((await (await a.get('accounts/a/state.json')).json()).title,'private A');
+assert.equal(await a.put('accounts/a/state.json','overwrite',{onlyIf:new Headers({'If-None-Match':'*'})}),null);assert.equal(await a.put('accounts/a/state.json','overwrite',{onlyIf:new Headers({'If-Match':'"outdated"'})}),null);
+const next=await a.put('accounts/a/state.json','{"title":"updated A"}',{onlyIf:new Headers({'If-Match':'"'+first.etag+'"'})});assert(next);assert.equal(await a.put('accounts/a/state.json','overwrite',{onlyIf:new Headers({'If-Match':'"'+first.etag+'"'})}),null);assert.equal((await(await b.get('accounts/b/state.json')).json()).title,'private B');
+await db.close();console.log('PASS: real Postgres-compatible engine verifies account isolation, path rejection, conditional insert and stale ETag rejection');

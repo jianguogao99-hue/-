@@ -1,0 +1,11 @@
+import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';import {inflateSync} from 'node:zlib';
+// Decode this RGB8 non-interlaced fixture using Node built-ins (no image package).
+const png=fs.readFileSync('public/rei-ascii.png'),chunks=[];assert.equal(png[24],8);assert.equal(png[25],2);assert.equal(png[28],0);for(let offset=8;offset<png.length;){const length=png.readUInt32BE(offset);if(png.toString('ascii',offset+4,offset+8)==='IDAT')chunks.push(png.subarray(offset+8,offset+8+length));offset+=length+12;}
+const packed=inflateSync(Buffer.concat(chunks)),source=Buffer.alloc(1200*1200*3),stride=1200*3;
+function paeth(a,b,c){const p=a+b-c,da=Math.abs(p-a),db=Math.abs(p-b),dc=Math.abs(p-c);return da<=db&&da<=dc?a:db<=dc?b:c;}
+for(let y=0;y<1200;y++){const filter=packed[y*(stride+1)];assert(filter<=4);for(let x=0;x<stride;x++){const i=y*stride+x,a=x>=3?source[i-3]:0,b=y?source[i-stride]:0,c=y&&x>=3?source[i-stride-3]:0;source[i]=(packed[y*(stride+1)+1+x]+[0,a,b,Math.floor((a+b)/2),paeth(a,b,c)][filter])&255;}}
+const width=1200;let pixels;const window={};vm.runInNewContext(fs.readFileSync('public/rei-glyphs.js','utf8'),{window});const glyphs=window.ReiGlyphs;
+const context={clearRect(){pixels=Buffer.from(source)},fillRect(x,y,w,h){for(let r=y;r<y+h;r++)pixels.fill(0,(r*width+x)*3,(r*width+x+w)*3)},drawImage(image,sx,sy,w,h,x,y,dw,dh){assert.equal(w,8);assert.equal(h,12);assert.equal(dw,w);assert.equal(dh,h);assert.equal(x%8,0);assert.equal(y%12,0);for(let row=0;row<h;row++)source.copy(pixels,((y+row)*width+x)*3,((sy+row)*width+sx)*3,((sy+row)*width+sx+w)*3);}};
+const allowed=(x,y)=>(x>=664&&x<688&&y>=324&&y<348)||(x>=792&&x<856&&y>=288&&y<324);
+for(const stage of [1,2,3,2,1,0]){glyphs.draw(context,source,stage);let changed=0;for(let y=0;y<1200;y++)for(let x=0;x<1200;x++){const p=(y*1200+x)*3;if(pixels[p]!==source[p]||pixels[p+1]!==source[p+1]||pixels[p+2]!==source[p+2]){assert(allowed(x,y),'Blink changed hair/background outside exposed eye cells');changed++;}}assert(stage?changed>0:changed===0);assert.equal(context.imageSmoothingEnabled,false);}
+console.log('PASS: original artwork unchanged outside exposed eye cells; every replacement uses original glyph pixels at native grid size; idle restores exact pixels');
