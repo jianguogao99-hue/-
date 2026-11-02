@@ -8,11 +8,15 @@
   },
   "scripts": {
     "build": "node scripts/build-netlify.mjs",
-    "test": "node tests/sync.test.mjs && node tests/navigation.test.mjs && node tests/graph-hold.test.mjs && node tests/background.test.mjs && node tests/glyph-pixels.test.mjs && node tests/weather-routing.test.mjs && node tests/tools.test.mjs && node tests/netlify-store.test.mjs && node tests/netlify-auth.test.mjs && node tests/backup-import.test.mjs"
+    "test": "node tests/sync.test.mjs && node tests/navigation.test.mjs && node tests/graph-hold.test.mjs && node tests/background.test.mjs && node tests/glyph-pixels.test.mjs && node tests/weather-routing.test.mjs && node tests/tools.test.mjs && node tests/netlify-store.test.mjs && node tests/netlify-auth.test.mjs && node tests/backup-import.test.mjs",
+    "build:vercel": "node scripts/build-vercel.mjs",
+    "build:netlify": "node scripts/build-netlify.mjs",
+    "test:supabase": "node tests/supabase-isolation.test.mjs"
   },
   "dependencies": {
     "@netlify/database": "^2.0.1",
     "@netlify/identity": "^2.0.0",
+    "@supabase/supabase-js": "^2.118.0",
     "esbuild": "^0.28.2"
   },
   "devDependencies": {
