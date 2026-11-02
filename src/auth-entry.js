@@ -1,4 +1,4 @@
-import {getUser,getSettings,handleAuthCallback,login,signup,logout,oauthLogin,requestPasswordRecovery,updateUser,onAuthChange} from '@netlify/identity';
+import {getUser,getSettings,handleAuthCallback,login,signup,logout,requestPasswordRecovery,updateUser,onAuthChange} from '@netlify/identity';
 const $=s=>document.querySelector(s),loginPage=Boolean($('#authForm'));
 async function main(){
  if(new URLSearchParams(location.search).has('logout')){await logout();location.replace('/login.html');return;}
@@ -8,11 +8,9 @@ async function main(){
  const user=await getUser();
  if(user){if(loginPage){location.replace('/');return;}onAuthChange(event=>{if(event==='logout')location.replace('/login.html');});const script=document.createElement('script');script.src='/app.js';document.body.append(script);return;}
  if(!loginPage){location.replace('/login.html');return;}
- const settings=await getSettings();$('#signup').hidden=settings.disableSignup;
- for(const [name,enabled] of Object.entries(settings.providers)){if(!enabled||name==='email')continue;const button=document.createElement('button');button.type='button';button.textContent='使用 '+({google:'Google',github:'GitHub',gitlab:'GitLab',bitbucket:'Bitbucket',facebook:'Facebook'}[name]||name)+' 登录';button.onclick=()=>oauthLogin(name);$('#oauthButtons').append(button);}
- async function run(action){$('#authStatus').textContent='正在处理…';$('#submitLogin').disabled=true;try{await action();if(await getUser())location.replace('/');else $('#authStatus').textContent='请查收确认邮件，确认后即可登录。';}catch(error){$('#authStatus').textContent=error.message||'登录失败，请重试。';}finally{$('#submitLogin').disabled=false;}}
- $('#authForm').onsubmit=e=>{e.preventDefault();run(()=>login($('#authEmail').value.trim(),$('#authPassword').value));};
- $('#signup').onclick=()=>{if($('#authForm').reportValidity())run(()=>signup($('#authEmail').value.trim(),$('#authPassword').value));};
+ const settings=await getSettings();let mode='login';$('#signup').disabled=settings.disableSignup;if(settings.disableSignup)$('#authStatus').textContent='当前仅允许受邀账号注册。';function setMode(next){mode=next;$('#confirmPasswordField').hidden=mode!=='signup';$('#authConfirm').required=mode==='signup';$('#authPassword').autocomplete=mode==='signup'?'new-password':'current-password';$('#submitLogin').textContent=mode==='signup'?'注册账号':'登录';$('#signup').textContent=mode==='signup'?'已有账号？返回登录':'没有账号？注册';$('#authHeading').textContent=mode==='signup'?'创建你的问迹账号':'登录问迹';$('#authStatus').textContent='';}$('#signup').onclick=()=>{if(!settings.disableSignup)setMode(mode==='signup'?'login':'signup');};if(new URLSearchParams(location.search).get('mode')==='signup'&&!settings.disableSignup)setMode('signup');
+ async function run(action){$('#authStatus').textContent='正在处理…';$('#signup').disabled=true;$('#submitLogin').disabled=true;try{await action();if(await getUser())location.replace('/');else $('#authStatus').textContent='请查收确认邮件，确认后即可登录。';}catch(error){$('#authStatus').textContent=error.message||'登录失败，请重试。';}finally{$('#submitLogin').disabled=false;$('#signup').disabled=settings.disableSignup;}}
+ $('#authForm').onsubmit=e=>{e.preventDefault();if(mode==='signup'&&$('#authPassword').value!==$('#authConfirm').value){$('#authStatus').textContent='两次输入的密码不一致。';return;}run(()=>mode==='signup'?signup($('#authEmail').value.trim(),$('#authPassword').value):login($('#authEmail').value.trim(),$('#authPassword').value));};
  $('#forgotPassword').onclick=()=>{const email=$('#authEmail').value.trim();if(!email){$('#authStatus').textContent='请先填写邮箱，再申请重置密码。';return;}run(()=>requestPasswordRecovery(email));};
 }
 main().catch(error=>{const status=$('#authStatus')||$('#syncLoadingText');if(status)status.textContent='登录服务暂不可用：'+error.message;});
