@@ -2,6 +2,7 @@ import {normalizeSupabaseUrl} from './supabase-url.mjs';
 import {createHash} from 'node:crypto';import {api} from '../worker/api.mjs';import {supabaseStore} from './supabase-store.mjs';
 export function createVercelHandler({createClient,readEnv}){return async request=>{
  const json=(body,status)=>Response.json(body,{status,headers:{'cache-control':'private, no-store'}});
+ if(new URL(request.url).pathname==='/api/health'){const value=readEnv('SYNC_KEY_ENCRYPTION');let encryption='missing';if(value){try{encryption=Buffer.from(value.trim(),'base64').length===32?'ready':'invalid';}catch{encryption='invalid';}}return json({ready:encryption==='ready'&&Boolean(readEnv('SUPABASE_URL')&&readEnv('SUPABASE_PUBLISHABLE_KEY')),encryption},200);}
  const token=request.headers.get('authorization')?.match(/^Bearer\s+(.+)$/i)?.[1];if(!token)return json({error:'sign_in_required',signIn:'/login.html'},401);
  const rawUrl=readEnv('SUPABASE_URL'),key=readEnv('SUPABASE_PUBLISHABLE_KEY');if(!rawUrl||!key)return json({error:'auth_not_configured'},503);
  try{
