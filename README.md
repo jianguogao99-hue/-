@@ -1,4 +1,4 @@
-> **Vercel 迁移准备中**：见 [迁移步骤](docs/VERCEL-MIGRATION.md)。迁移分支暂不替换现有 Netlify 生产站。
+> **Vercel 迁移准备中**：见 [迁移步骤](docs/VERCEL-MIGRATION.md)。`main` 同时支持两种平台的独立构建，现有 Netlify 生产站继续保留。
 
 # 问迹 · Wenji
 

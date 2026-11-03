@@ -1,6 +1,6 @@
 # 从 Netlify 迁移到 Vercel + Supabase
 
-迁移分支：`migration/vercel-supabase`。现有 Netlify 生产站不切换、不删除。新站通过邮箱和密码注册登录，无第三方授权入口、无 Netlify 页面标志。免费额度可以用于先行测试，实际额度和费用以服务商控制台为准。
+Vercel 配置已并入 `main`；Netlify 继续使用自己的构建命令。现有 Netlify 生产站不切换、不删除。新站通过邮箱和密码注册登录，无第三方授权入口、无 Netlify 页面标志。免费额度可以用于先行测试，实际额度和费用以服务商控制台为准。
 
 ## 1. Supabase 项目
 
@@ -17,7 +17,7 @@ Auth → Providers / Sign In → Email：开启邮箱登录。需要直接注册
 
 ## 2. Vercel 连接 GitHub
 
-用自己的 Vercel 账号导入 GitHub 仓库 `jianguogao99-hue/-`。第一次验证时，将 Production Branch 设置为 `migration/vercel-supabase`，避免使用仍在运行 Netlify 版本的 main。Framework Preset 选 Other，项目根目录保留默认。
+用自己的 Vercel 账号导入 GitHub 仓库 `jianguogao99-hue/-`。Production Branch 使用 `main`；根目录的 `vercel.json` 会为 Vercel 选择专用构建命令，不改变 Netlify 的构建方式。Framework Preset 选 Other，项目根目录保留默认。
 
 `vercel.json` 已声明：构建命令 `npm run build:vercel`，输出目录 `web-dist`，API 函数位于 `api/[...path].js`。无需安装 Netlify 插件。
 
