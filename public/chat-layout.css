@@ -49,10 +49,14 @@ netlify-badge,netlify-toolbar,#netlify-badge,#netlify-toolbar,[data-netlify-badg
 /* UI polish: liquid-glass composer. Vanilla port of rdev/liquid-glass-react.
    iPad Safari is the primary look (frost + specular rim). Displacement is PE only. */
 :root{
- --glass-blur:40px;
- --glass-sat:1.55;
- --glass-bg:rgba(16,18,16,.28);
- --glass-fallback:#101510;
+ --glass-blur:8px;
+ --glass-sat:1.8;
+ --glass-tint:linear-gradient(180deg,rgba(255,255,255,.09) 0%,rgba(255,255,255,.02) 45%,rgba(255,255,255,.04) 100%);
+ --glass-bg:rgba(255,255,255,.035);
+ --glass-fallback:rgba(22,24,22,.9);
+ --send-amber:#8e6235;
+ --send-amber-top:#9a6b3a;
+ --send-amber-bottom:#84592f;
  --glass-rim:rgba(255,255,255,.28);
  --glass-rim-strong:rgba(255,255,255,.5);
  --glass-sheen:rgba(255,255,255,.62);
@@ -64,7 +68,7 @@ netlify-badge,netlify-toolbar,#netlify-badge,#netlify-toolbar,[data-netlify-badg
  --login-ink:#101510;
  --rei-void:#070907;
  --rei-shade:#080c08;
- --composer-reserve:168px;
+ --composer-reserve:140px;
 }
 #workspace #chatPanel{
  position:relative;
@@ -72,17 +76,6 @@ netlify-badge,netlify-toolbar,#netlify-badge,#netlify-toolbar,[data-netlify-badg
 #workspace #chatPanel #messages,
 .rei-theme #workspace #chatPanel #messages{
  padding-bottom:calc(var(--composer-reserve) + env(safe-area-inset-bottom,0px));
-}
-#workspace #chatPanel::after{
- content:"";
- position:absolute;
- left:0;
- right:0;
- bottom:0;
- height:calc(var(--composer-reserve) + env(safe-area-inset-bottom,0px));
- pointer-events:none;
- z-index:2;
- background:linear-gradient(to top,rgba(8,10,8,.28) 0%,rgba(8,10,8,.1) 42%,transparent 100%);
 }
 #workspace #form.composer,
 .rei-theme #workspace #form.composer{
@@ -100,15 +93,13 @@ netlify-badge,netlify-toolbar,#netlify-badge,#netlify-toolbar,[data-netlify-badg
  overflow:visible;
  padding:16px 18px 12px;
  min-height:0;
- box-shadow:0 18px 40px rgba(0,0,0,.38);
+ box-shadow:0 10px 30px rgba(0,0,0,.22);
 }
 #form.composer .glass-material{
  position:absolute;
  inset:0;
- z-index:0;
  border-radius:inherit;
  pointer-events:none;
- overflow:hidden;
 }
 #form.composer .glass-backdrop{
  position:absolute;
@@ -116,9 +107,9 @@ netlify-badge,netlify-toolbar,#netlify-badge,#netlify-toolbar,[data-netlify-badg
  border-radius:inherit;
  background:var(--glass-fallback);
 }
-@supports ((backdrop-filter:blur(40px)) or (-webkit-backdrop-filter:blur(40px))){
+@supports ((backdrop-filter:blur(12px)) or (-webkit-backdrop-filter:blur(12px))){
  #form.composer .glass-backdrop{
-  background:var(--glass-bg);
+  background:var(--glass-tint),var(--glass-bg);
   -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(var(--glass-sat));
   backdrop-filter:blur(var(--glass-blur)) saturate(var(--glass-sat));
  }
@@ -128,10 +119,9 @@ netlify-badge,netlify-toolbar,#netlify-badge,#netlify-toolbar,[data-netlify-badg
  inset:0;
  border-radius:inherit;
  background:
-  radial-gradient(120% 70% at 50% -10%,rgba(255,255,255,.34) 0%,rgba(255,255,255,.08) 34%,transparent 62%),
-  linear-gradient(180deg,rgba(255,255,255,.14) 0%,rgba(255,255,255,.03) 28%,transparent 55%);
- mix-blend-mode:screen;
- opacity:.85;
+  linear-gradient(180deg,rgba(255,255,255,.22) 0,rgba(255,255,255,.06) 10px,transparent 34px),
+  radial-gradient(90% 60% at 30% 0%,rgba(255,255,255,.1) 0%,transparent 60%);
+ opacity:1;
  pointer-events:none;
 }
 #form.composer .glass-rim,
@@ -153,12 +143,10 @@ netlify-badge,netlify-toolbar,#netlify-badge,#netlify-toolbar,[data-netlify-badg
  opacity:.95;
 }
 #form.composer .glass-rim{
- mix-blend-mode:screen;
- opacity:.55;
+ opacity:.6;
 }
 #form.composer .glass-rim-overlay{
- mix-blend-mode:overlay;
- opacity:.8;
+ opacity:.45;
  background:linear-gradient(155deg,rgba(255,255,255,.7) 0%,rgba(255,255,255,.28) 32%,rgba(255,255,255,.06) 58%,rgba(255,255,255,.4) 100%);
 }
 #form.composer::before{z-index:0;opacity:.9;animation:none;transition:opacity .24s ease}
@@ -202,52 +190,40 @@ netlify-badge,netlify-toolbar,#netlify-badge,#netlify-toolbar,[data-netlify-badg
  display:inline-flex;
  align-items:center;
  justify-content:center;
- flex:0 0 38px;
- width:38px;
- height:38px;
- min-width:38px;
- max-width:38px;
- min-height:38px;
- max-height:38px;
+ flex:0 0 44px;
+ width:44px;
+ height:44px;
+ min-width:44px;
+ max-width:44px;
+ min-height:44px;
+ max-height:44px;
  padding:0;
- border:1px solid var(--glass-rim);
+ border:0;
  appearance:none;
  -webkit-appearance:none;
  border-radius:50%;
- background:var(--glass-fill-strong);
- color:var(--glass-text);
+ background:linear-gradient(180deg,var(--send-amber-top) 0%,var(--send-amber) 55%,var(--send-amber-bottom) 100%);
+ color:#fff;
  font-size:0;
  line-height:0;
- letter-spacing:0;
  overflow:hidden;
- white-space:nowrap;
- text-indent:0;
- box-shadow:inset 0 1px 0 rgba(255,255,255,.32),0 4px 10px rgba(0,0,0,.25);
- -webkit-backdrop-filter:blur(16px) saturate(1.3);
- backdrop-filter:blur(16px) saturate(1.3);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 2px 8px rgba(0,0,0,.28);
+ transition:filter .18s ease,opacity .18s ease,transform .12s ease;
 }
-#form .send .send-icon{
- display:block;
- font-size:17px;
- font-weight:600;
- line-height:1;
- color:var(--glass-text);
- transform:translateY(-0.5px);
-}
-#form .send:hover{background:rgba(255,255,255,.22);border-color:var(--glass-rim-strong)}
-#form .send:hover .send-icon{color:#fff}
-#form .send:focus-visible{outline:2px solid rgba(255,255,255,.45);outline-offset:2px}
-#form .send:disabled{opacity:.8;cursor:progress}
-#form .send.is-busy{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.18)}
+#form .send .send-icon{display:block;width:22px;height:22px;color:#fff;overflow:visible}
+#form:not(.has-text) .send:not(.is-busy){filter:saturate(.8) brightness(.78)}
+#form .send:hover{filter:brightness(1.08)}
+#form .send:focus-visible{outline:2px solid rgba(255,255,255,.6);outline-offset:2px}
+#form .send:active{transform:scale(.95)}
+#form .send:disabled{cursor:progress;opacity:1}
 #form .send.is-busy .send-icon{visibility:hidden}
 #form .send.is-busy::after{
  content:"";
  position:absolute;
- inset:auto;
- width:14px;
- height:14px;
- border:2px solid rgba(255,255,255,.28);
- border-top-color:rgba(255,255,255,.92);
+ width:16px;
+ height:16px;
+ border:2.5px solid rgba(255,255,255,.35);
+ border-top-color:#fff;
  border-radius:50%;
  animation:send-busy-spin .7s linear infinite;
 }
@@ -298,13 +274,13 @@ netlify-badge,netlify-toolbar,#netlify-badge,#netlify-toolbar,[data-netlify-badg
 }
 @keyframes send-busy-spin{to{transform:rotate(360deg)}}
 @media(max-width:760px){
- #workspace #form.composer{left:8px;right:8px;bottom:max(8px,env(safe-area-inset-bottom,0px));padding:13px 14px 11px;border-radius:22px}
+ #workspace #form.composer{left:8px;right:8px;bottom:max(8px,env(safe-area-inset-bottom,0px));padding:13px 12px 10px 14px;border-radius:24px}
  #form.composer textarea{font-size:16px;min-height:44px;max-height:120px}
  #form .compose-bottom{gap:9px;min-height:38px}
  #form .model-pill{max-width:min(62vw,238px);height:28px;padding:0 9px;gap:6px}
  #form .model-pill-label{font-size:10px}
- #form .send{flex-basis:38px;width:38px;height:38px;min-width:38px;max-width:38px}
- #workspace #chatPanel{--composer-reserve:158px}
+ #form .send{flex-basis:44px;width:44px;height:44px;min-width:44px;max-width:44px}
+ #workspace #chatPanel{--composer-reserve:132px}
  .waiting-message{gap:11px;padding:12px 2px 20px;min-height:74px}
  .waiting-orb{width:58px;height:62px;flex-basis:58px}
  .waiting-orb .waiting-icon{width:36px;height:46px}
@@ -321,7 +297,7 @@ netlify-badge,netlify-toolbar,#netlify-badge,#netlify-toolbar,[data-netlify-badg
  .waiting-orb::after{opacity:.28}
  .waiting-orb .waiting-icon{animation:none}
  .waiting-particle{display:none}
- #form .send.is-busy::after{animation:none;border-top-color:rgba(255,255,255,.92);opacity:.9}
+ #form .send.is-busy::after{animation:none;border-top-color:#fff;opacity:.9}
 }
 
 /* UI polish: sidebar glass. Neutral mist, no moss-green fills. */

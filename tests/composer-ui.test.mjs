@@ -14,7 +14,9 @@ assert.match(html, /<form[^>]*class="composer liquid-glass"[^>]*id="form"[^>]*>/
 assert.match(html, /<textarea[^>]*id="input"[^>]*maxlength="4000"[^>]*required/, 'composer textarea contract must remain');
 const sendTag = html.match(/<button[^>]*class="send"[^>]*type="submit"[^>]*>/)?.[0] || '';
 assert.ok(sendTag, 'composer submit button must remain type=submit');
-assert.match(html, /class="send-icon"/, 'send button must use a compact icon span');
+assert.match(html, /<svg class="send-icon"[^>]*stroke-linecap="round"[^>]*stroke-linejoin="round"/, 'send button must use a bold rounded SVG arrow');
+assert.doesNotMatch(html, /<button[^>]*class="send"[^>]*>[\s\S]{0,40}↑/, 'send button must not use the ↑ text glyph');
+assert.match(html, /stroke-width="2\.75"/, 'send arrow stroke must be bold (2.5–3)');
 assert.doesNotMatch(html, /<button[^>]*class="send"[^>]*>[^<]*(发送|思考中)/, 'send button must not contain 发送 or 思考中 typography');
 const pillTag = html.match(/<button[^>]*id="modelPill"[^>]*>/)?.[0] || '';
 assert.ok(pillTag, 'model pill button must exist');
@@ -24,9 +26,9 @@ assert.match(html, /id="modelPillLabel"/, 'model pill needs a truncatable label'
 assert.match(html, /class="glass-backdrop"/, 'composer must include a backdrop layer');
 assert.match(html, /class="glass-specularity"/, 'composer must include a specular highlight layer');
 assert.match(html, /class="glass-rim"/, 'composer must include a liquid-glass rim');
-assert.match(html, /chat-layout\.css\?v=ui-fx3/, 'edited composer CSS needs a new cache token');
-assert.match(html, /app\.js\?v=ui-fx2/, 'edited composer JS needs a new cache token');
-assert.match(html, /liquid-glass\.js\?v=ui-fx3/, 'liquid glass runtime must be included');
+assert.match(html, /chat-layout\.css\?v=ui-fx4/, 'edited composer CSS needs a new cache token');
+assert.match(html, /app\.js\?v=ui-fx3/, 'edited composer JS needs a new cache token');
+assert.match(html, /liquid-glass\.js\?v=ui-fx4/, 'liquid glass runtime must be included');
 assert.match(html, /rei-background\.css\?v=ui-fx3/, 'rei theme override needs a new cache token');
 
 const waitingStart = app.indexOf('function startWaiting');
@@ -55,10 +57,12 @@ assert.match(app, /\$\('#modelPill'\)\.onclick/, 'model pill must open settings'
 assert.match(app, /syncComposerTextState/, 'composer has-text state must be wired');
 assert.match(app, /classList\.toggle\('has-text'/, 'composer has-text class must be toggled');
 
-assert.match(polish, /--glass-blur:40px/, 'Safari-first frost must use a visible 40px blur');
-assert.match(polish, /--glass-bg:rgba\(16,18,16,\.28\)/, 'glass fill must stay translucent so content can show through');
-assert.match(polish, /--glass-fallback:#101510/, 'unsupported blur must fall back to login ink');
-assert.match(polish, /--glass-rim:rgba\(255,255,255,\.28\)/, 'glass rim must be a pale mist, not green');
+assert.match(polish, /--glass-blur:8px/, 'frost must stay light enough that content reads through on iPhone');
+assert.doesNotMatch(polish, /--glass-blur:(?:[2-9]\d|1[3-9])px/, 'heavy blur flattens the transcript into a gray slab');
+assert.match(polish, /--glass-bg:rgba\(255,255,255,\.035\)/, 'glass fill must be a light white tint, not a dark slab');
+assert.match(polish, /-webkit-backdrop-filter:blur\(var\(--glass-blur\)\)/, 'iOS Safari needs the prefixed backdrop-filter');
+assert.doesNotMatch(polish, /#chatPanel::after/, 'no dark scrim may sit around the composer');
+assert.match(polish, /--glass-fallback:rgba\(22,24,22,\.9\)/, 'unsupported blur must fall back to dark ink');
 assert.match(polish, /backdrop-filter:blur\(var\(--glass-blur\)\) saturate\(var\(--glass-sat\)\)/, 'composer backdrop must frost and saturate');
 assert.match(polish, /#form\.composer \.glass-backdrop/, 'frost lives on the backdrop layer so content stays sharp');
 assert.match(polish, /#form\.composer \.glass-specularity/, 'a specular sheen must decorate the glass');
@@ -66,9 +70,13 @@ assert.match(polish, /#form\.composer \.glass-rim/, 'a liquid-glass rim must dec
 assert.match(polish, /#workspace #form\.composer[\s\S]*position:absolute/, 'composer must overlay the transcript so messages and art can frost through');
 assert.match(polish, /--composer-reserve/, 'messages must reserve space under the overlaid composer');
 assert.match(polish, /#form \.send \.send-icon/, 'send typography must be an icon, not a wrapped label');
-assert.match(polish, /#form \.send\{[\s\S]*font-size:0/, 'any leftover send label must be typographically suppressed');
+assert.match(polish, /--send-amber:#8e6235/, 'send button must be warm amber matching the nut logo');
+assert.match(polish, /#form:not\(\.has-text\) \.send:not\(\.is-busy\)\{filter:/, 'empty state must dim the same button');
 assert.match(polish, /#form \.send\.is-busy::after/, 'busy send state must use a compact spinner, not 思考中 text');
-assert.match(polish, /#form \.send\{[\s\S]*max-width:38px/, 'send control must stay a fixed circle');
+assert.match(polish, /#form \.send\{[\s\S]*width:44px/, 'send control must be a 44px touch target');
+const composerBlock = polish.slice(0, polish.indexOf('/* UI polish: sidebar glass'));
+assert.doesNotMatch(composerBlock, /#form[^{]*\.glass-[^{]*\{[^}]*mix-blend-mode/, 'blend modes on glass layers can isolate the backdrop');
+assert.match(glassJs, /reserveTranscript/, 'transcript reserve must be measured from the real composer height');
 assert.doesNotMatch(polish, /@property\s+--beam-angle/, 'the travelling beam angle must be removed');
 assert.doesNotMatch(polish, /composer-beam-turn/, 'the travelling border beam must be removed');
 assert.doesNotMatch(polish, /--beam-accent|#1ed760|#84a86c|#b7d69e|#46523b|#7fd89c/, 'composer identity must not use the rejected green treatment');

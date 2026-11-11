@@ -234,9 +234,16 @@
     var backdrop = ensureLayers(form);
     form.dataset.liquidGlassMounted = 'true';
     var frame = 0;
+    function reserveTranscript() {
+      var panel = form.closest('#chatPanel');
+      if (!panel) return;
+      var rect = form.getBoundingClientRect();
+      var bottomGap = parseFloat(getComputedStyle(form).bottom) || 0;
+      if (rect.height > 0) panel.style.setProperty('--composer-reserve', Math.ceil(rect.height + bottomGap + 14) + 'px');
+    }
     function refresh() {
       cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(function () { applyDisplacement(form, backdrop); });
+      frame = requestAnimationFrame(function () { reserveTranscript(); applyDisplacement(form, backdrop); });
     }
     refresh();
     if (typeof ResizeObserver === 'function') {
