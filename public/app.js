@@ -28,7 +28,7 @@ if(provider==='deepseek'&&modelId==='deepseek-chat'){modelId='deepseek-flash';tr
 $('#provider').value=provider;$('#modelId').value=modelId;
 $('#provider').onchange=()=>{$('#modelId').value=providers[$('#provider').value].model;$('#apiKey').value='';$('#connectionStatus').textContent='填写该服务商的密钥，保存后切换。';};
 const sendButton=$('#form button[type="submit"]');
-const SEND_ICON_SVG='<svg class="send-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 19.5V5"/><path d="M5.5 11.5 12 5l6.5 6.5"/></svg>';
+const SEND_ICON_SVG='<svg class="send-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 19.5V5"/><path d="M5.5 11.5 12 5l6.5 6.5"/></svg>';
 function paintSendButton(busy){
   if(!sendButton.querySelector('svg.send-icon'))sendButton.innerHTML=SEND_ICON_SVG;
   sendButton.classList.toggle('is-busy',Boolean(busy));
