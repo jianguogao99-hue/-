@@ -15,7 +15,63 @@ const seed=copy(doc),phone=copy(seed),ipad=copy(seed);phone.conversations[0].mes
 // Two independent browser realms with one simulated authenticated cloud.
 let sharedDoc=null,version=0,sharedSettings={provider:null,model:null,configured:[]};
 async function siteFetch(path,options={}){const input=options.body?JSON.parse(options.body):null;if(path==='/api/state'){if(options.method==='POST'){if(input.etag!==(version?String(version):null))return Response.json({error:'conflict'},{status:409});sharedDoc=copy(input.document);version++;return Response.json({etag:String(version)});}return Response.json({user:'account',etag:version?String(version):null,document:copy(sharedDoc)});}if(path==='/api/settings'){if(options.method==='POST'){sharedSettings={provider:input.provider,model:input.model,configured:[input.provider]};}return Response.json(sharedSettings);}throw new Error('Unexpected '+path);}
-function browser(initial,key,owner='account'){const storage=new Map([['question-garden-cloud-user',owner]]),els=new Map();let workspace=copy(initial),configured;const window={fetch:siteFetch,SyncMerge:mergeCtx.window.SyncMerge,addEventListener(){}};const context={window,document:{hidden:false,querySelector(s){if(!els.has(s))els.set(s,{});return els.get(s)},addEventListener(){}},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)},Headers,Blob,URL,setInterval:()=>0,setTimeout:()=>0,clearTimeout(){}};vm.createContext(context);vm.runInContext(fs.readFileSync(new URL('../public/cloud-account.js',import.meta.url),'utf8'),context);return {cloud:window.CloudAccount,get:()=>workspace,storage,start:()=>window.CloudAccount.start({get:()=>workspace,seed:()=>copy(seed),apply:v=>{workspace=copy(v)},blocked:()=>false,localSettings:()=>({provider:'deepseek',model:'deepseek-flash',key}),applySettings:v=>{configured=v},setLoading(){}}),config:()=>configured};}
+function deferred(){let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return {promise,resolve,reject};}
+const tick=()=>new Promise(resolve=>setImmediate(resolve));
+async function waitFor(check,label){for(let i=0;i<100;i++){if(check())return;await tick();}throw new Error('Timed out waiting for '+label);}
+function browser(initial,key,owner='account',options={}){const storage=new Map();if(owner!==null&&owner!==undefined)storage.set('question-garden-cloud-user',owner);const els=new Map(),loads=[];let workspace=copy(initial),configured;const window={fetch:options.fetch||siteFetch,SyncMerge:mergeCtx.window.SyncMerge,addEventListener(){}};const context={window,document:{hidden:false,querySelector(s){if(!els.has(s))els.set(s,{});return els.get(s)},addEventListener(){}},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)},Headers,Blob,URL,setInterval:()=>0,setTimeout:()=>0,clearTimeout(){}};vm.createContext(context);vm.runInContext(fs.readFileSync(new URL('../public/cloud-account.js',import.meta.url),'utf8'),context);const callbacks={get:()=>workspace,seed:()=>copy(seed),apply:v=>{workspace=copy(v)},blocked:()=>false,localSettings:()=>({provider:'deepseek',model:'deepseek-flash',key}),applySettings:v=>{configured=v},setLoading(loading){loads.push({loading,ready:window.CloudAccount.ready,status:els.get('#syncStatus')?.textContent||''});}};return {cloud:window.CloudAccount,get:()=>workspace,storage,loads,status:()=>els.get('#syncStatus')?.textContent||'',start:()=>window.CloudAccount.start(callbacks),config:()=>configured};}
 const a=browser(phone,'unit-test-key');await a.start();assert.equal(sharedDoc.conversations[0].messages.length,2);const b=browser(seed,'');await b.start();assert.equal(b.get().conversations[0].messages.length,2);assert.equal(b.config().provider,'deepseek');a.get().conversations[0].questions[0].favorite=false;b.get().conversations.push({id:'from-ipad',title:'另一个方向',messages:[],questions:[]});await a.cloud.sync();await b.cloud.sync();await a.cloud.sync();assert.equal(a.get().conversations.length,2);assert.equal(b.get().conversations[0].questions[0].favorite,false);assert(a.storage.has('question-garden-before-cloud-v1'));assert(!JSON.stringify(sharedDoc).includes('unit-test-key'));
 sharedDoc=null;version=0;sharedSettings={provider:null,model:null,configured:[]};const switched=browser(phone,'another-person-key','different-account');await switched.start();assert.equal(sharedSettings.provider,null,'Do not import the previous account key');assert.equal(switched.get().conversations[0].messages.length,seed.conversations[0].messages.length,'Do not import previous account chat');assert.equal(switched.config().provider,null);
-console.log('PASS: account isolation, origin checks, ETag conflict rejection, encrypted keys, constrained provider proxy, rich phone/default iPad migration, two-device concurrent edits, deletion/favorite sync, local backup and no keys in workspace.');
+// A. A return visit paints the local workspace immediately, before settings or the second state fetch finish.
+{
+ let stateGets=0,statePosts=0,settingsGets=0;
+ const firstState=deferred(),secondState=deferred(),settingsGate=deferred();
+ const remoteDoc={active:'cloud',conversations:[{id:'cloud',title:'云端对话',messages:[{id:'c1',role:'user',text:'云端消息'}],questions:[]}]};
+ const localDoc={active:'local',conversations:[{id:'local',title:'本机对话',messages:[{id:'l1',role:'user',text:'本机消息'}],questions:[]}]};
+ const gatedFetch=async(path,options={})=>{if(path==='/api/state'&&options.method!=='POST'){stateGets++;const gate=stateGets===1?firstState:secondState;await gate.promise;return Response.json({user:'account',etag:'1',document:copy(remoteDoc)});}if(path==='/api/state'){statePosts++;return Response.json({etag:'2'});}if(path==='/api/settings'){settingsGets++;await settingsGate.promise;return Response.json({provider:'deepseek',model:'deepseek-flash',configured:['deepseek']});}throw new Error('Unexpected '+path);};
+ const v=browser(localDoc,'unit-test-key','account',{fetch:gatedFetch});
+ const started=v.start();await tick();
+ const hidden=v.loads.find(x=>!x.loading&&x.ready);
+ assert(hidden,'Return visit clears the overlay immediately');
+ assert.equal(v.cloud.ready,true);assert.equal(v.status(),'正在同步…');
+ assert.equal(stateGets,1,'First state request started');assert.equal(settingsGets,1,'Settings request starts in parallel');
+ assert.equal(v.loads.filter(x=>!x.loading).length,1,'Only the early hide has happened');
+ firstState.resolve();await waitFor(()=>v.get().conversations.length===2,'cloud merge');
+ assert.equal(v.config(),undefined,'Settings are still pending after chats merge');
+ assert.equal(stateGets,1,'Second state fetch waits for settings');
+ settingsGate.resolve();await waitFor(()=>stateGets===2,'second state request');
+ secondState.resolve();await started;
+ assert.equal(v.config().provider,'deepseek');assert(statePosts>=1,'Follow-up sync pushes the merged workspace');
+ assert.equal(v.loads.at(-1).loading,false,'Overlay never comes back after the early hide');
+}
+// B. A failed first state request must not replace local chats or re-show the overlay on a return visit.
+{
+ const localDoc=copy(phone);
+ const v=browser(localDoc,'unit-test-key','account',{fetch:async path=>{if(path==='/api/state')throw new Error('offline');if(path==='/api/settings')return Response.json({provider:null,model:null,configured:[]});throw new Error('Unexpected '+path);}});
+ await v.start();
+ assert.deepEqual(v.get(),localDoc,'Local chats survive a failed first state request');
+ assert(v.loads.some(x=>!x.loading&&x.ready),'Overlay stays hidden on a return visit');
+ assert.equal(v.cloud.ready,true);assert(v.status().includes('云端未连接'),'Sync status reports the offline state');
+}
+// C. A first visit waits only for the first state response, not settings or the follow-up state fetch.
+{
+ let stateGets=0,settingsGets=0;
+ const firstState=deferred(),settingsGate=deferred();
+ const remoteDoc={active:'cloud',conversations:[{id:'cloud',title:'云端对话',messages:[{id:'c1',role:'user',text:'云端消息'}],questions:[]}]};
+ const gatedFetch=async(path,options={})=>{if(path==='/api/state'&&options.method!=='POST'){stateGets++;if(stateGets===1)await firstState.promise;return Response.json({user:'account',etag:'1',document:copy(remoteDoc)});}if(path==='/api/state')return Response.json({etag:'2'});if(path==='/api/settings'){settingsGets++;await settingsGate.promise;return Response.json({provider:'deepseek',model:'deepseek-flash',configured:['deepseek']});}throw new Error('Unexpected '+path);};
+ const v=browser(copy(seed),'',null,{fetch:gatedFetch});
+ v.storage.set('question-garden-conversations-v1',JSON.stringify(seed));
+ assert.equal(v.storage.has('question-garden-cloud-user'),false,'First visit has no known local account');
+ const started=v.start();await tick();
+ assert.equal(stateGets,1,'First state request started');assert.equal(settingsGets,1,'Settings request starts in parallel');
+ assert.equal(v.loads.filter(x=>!x.loading).length,0,'Overlay remains until the first state response');
+ assert.equal(v.cloud.ready,false);
+ firstState.resolve();await waitFor(()=>v.cloud.ready===true,'first state hides overlay');
+ assert(v.loads.some(x=>!x.loading&&x.ready),'Overlay hides with ready true');
+ assert.equal(stateGets,1,'Second state fetch does not block the first paint');
+ assert.equal(v.config().provider,null,'Settings are still pending after the first paint');
+ assert(v.get().conversations.some(c=>c.id==='cloud'),'Cloud document is applied on the first visit');
+ settingsGate.resolve();await started;
+ assert.equal(v.config().provider,'deepseek');assert(stateGets>=2,'Follow-up sync runs after the first paint');
+ assert.equal(v.storage.get('question-garden-cloud-user'),'account');
+}
+console.log('PASS: account isolation, origin checks, ETag conflict rejection, encrypted keys, constrained provider proxy, rich phone/default iPad migration, two-device concurrent edits, deletion/favorite sync, local backup, no keys in workspace, immediate return-visit paint, offline preservation and first-visit overlay timing.');
