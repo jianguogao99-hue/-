@@ -46,34 +46,38 @@ main{position:fixed!important;inset:auto 0 auto 0;top:var(--chat-viewport-top,0p
 /* Injected hosting controls must not cover the mobile send button. */
 netlify-badge,netlify-toolbar,#netlify-badge,#netlify-toolbar,[data-netlify-badge],iframe[src*="netlify"][src*="badge"],iframe[src*="netlify"][src*="toolbar"]{display:none!important;pointer-events:none!important}
 
-/* UI polish: ink-green composer beam and thinking halo. Colors stay in the 问迹 family. */
+/* UI polish: frosted-glass composer. Neutral mist rim, no traveling green beam. */
 :root{
- --beam-dim:#46523b;
- --beam-mid:#84a86c;
- --beam-soft:#b7d69e;
- --beam-accent:#1ed760;
- --orb-core:#7fd89c;
- --orb-halo:#91a183;
- --glass-bg:#1d251dea;
- --glass-fallback:#1d251d;
+ --glass-blur:32px;
+ --glass-bg:rgba(8,8,8,.42);
+ --glass-fallback:#101510;
+ --glass-rim:rgba(255,255,255,.16);
+ --glass-rim-strong:rgba(255,255,255,.28);
+ --glass-sheen:rgba(255,255,255,.5);
+ --glass-fill:rgba(255,255,255,.08);
+ --glass-fill-strong:rgba(255,255,255,.14);
+ --glass-text:rgba(229,237,223,.92);
+ --glass-muted:rgba(200,206,198,.72);
  --ink-bg:#080808;
  --login-ink:#101510;
  --rei-void:#070907;
  --rei-shade:#080c08;
- --beam-idle-opacity:.44;
- --beam-focus-opacity:.7;
 }
-@property --beam-angle{syntax:'<angle>';inherits:false;initial-value:0deg}
-#workspace #form.composer{
+#workspace #form.composer,.rei-theme #workspace #form.composer{
  position:relative;
  isolation:isolate;
  background:var(--glass-fallback);
- border:1px solid var(--beam-dim);
+ border:1px solid var(--glass-rim);
  border-radius:22px;
  overflow:visible;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 -1px 0 rgba(255,255,255,.04),0 10px 28px rgba(0,0,0,.32);
 }
-@supports ((backdrop-filter:blur(16px)) or (-webkit-backdrop-filter:blur(16px))){
- #workspace #form.composer{background:var(--glass-bg);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
+@supports ((backdrop-filter:blur(32px)) or (-webkit-backdrop-filter:blur(32px))){
+ #workspace #form.composer,.rei-theme #workspace #form.composer{
+  background:var(--glass-bg);
+  -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
+  backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
+ }
 }
 #form.composer::before{
  content:"";
@@ -81,31 +85,22 @@ netlify-badge,netlify-toolbar,#netlify-badge,#netlify-toolbar,[data-netlify-badg
  inset:0;
  z-index:0;
  box-sizing:border-box;
- padding:1.5px;
+ padding:1px;
  border-radius:inherit;
- background:linear-gradient(135deg,var(--beam-dim),var(--beam-mid),var(--beam-dim));
+ background:linear-gradient(155deg,var(--glass-sheen) 0%,rgba(255,255,255,.12) 26%,rgba(255,255,255,.04) 58%,rgba(255,255,255,.2) 100%);
  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
  -webkit-mask-composite:xor;
  mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
  mask-composite:exclude;
- opacity:var(--beam-idle-opacity);
+ opacity:.8;
  pointer-events:none;
+ animation:none;
  transition:opacity .24s ease;
 }
-@supports (background:conic-gradient(from var(--beam-angle),#000,#fff)){
- #form.composer::before{
-  background:conic-gradient(from var(--beam-angle),var(--beam-dim) 0deg,var(--beam-dim) 215deg,var(--beam-mid) 270deg,var(--beam-soft) 305deg,var(--beam-accent) 326deg,var(--beam-mid) 340deg,var(--beam-dim) 360deg);
-  animation:composer-beam-turn 7.5s linear infinite;
- }
-}
-@supports not (background:conic-gradient(from var(--beam-angle),#000,#fff)){
- #form.composer::before{background:linear-gradient(135deg,var(--beam-dim),var(--beam-mid),var(--beam-dim))}
-}
-@keyframes composer-beam-turn{to{--beam-angle:360deg}}
-#workspace #form.composer:focus-within{border-color:var(--beam-mid)}
-#form.composer:focus-within::before,#form.composer.has-text::before{opacity:var(--beam-focus-opacity)}
+#workspace #form.composer:focus-within,.rei-theme #workspace #form.composer:focus-within{border-color:var(--glass-rim-strong)}
+#form.composer:focus-within::before,#form.composer.has-text::before{opacity:1}
 #form.composer textarea,#form.composer .compose-bottom{position:relative;z-index:1}
-#form.composer textarea{background:transparent;border:0;outline:none;width:100%;resize:none}
+#form.composer textarea{background:transparent;border:0;outline:none;width:100%;resize:none;color:#fff}
 #form .compose-bottom{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0;min-height:38px;font-size:10px}
 #form .model-pill{
  display:inline-flex;
@@ -115,10 +110,10 @@ netlify-badge,netlify-toolbar,#netlify-badge,#netlify-toolbar,[data-netlify-badg
  max-width:min(62vw,280px);
  height:29px;
  padding:0 10px;
- border:1px solid var(--beam-dim);
+ border:1px solid var(--glass-rim);
  border-radius:999px;
- background:var(--glass-fallback);
- color:var(--orb-halo);
+ background:var(--glass-fill);
+ color:var(--glass-muted);
  font-size:11px;
  line-height:1;
  cursor:pointer;
@@ -126,9 +121,9 @@ netlify-badge,netlify-toolbar,#netlify-badge,#netlify-toolbar,[data-netlify-badg
  overflow:hidden;
  transition:border-color .18s,background .18s,color .18s;
 }
-#form .model-pill:hover{border-color:var(--beam-mid);background:var(--glass-fallback);color:var(--beam-soft)}
-#form .model-pill:focus-visible{outline:2px solid var(--beam-mid);outline-offset:2px}
-#form .model-pill-dot{width:5px;height:5px;border-radius:50%;background:var(--orb-core);opacity:.8;flex:0 0 auto}
+#form .model-pill:hover{border-color:var(--glass-rim-strong);background:var(--glass-fill-strong);color:var(--glass-text)}
+#form .model-pill:focus-visible{outline:2px solid rgba(255,255,255,.4);outline-offset:2px}
+#form .model-pill-dot{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.7);opacity:.85;flex:0 0 auto}
 #form .model-pill-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
 #form.composer,#form .compose-bottom,#form .model-pill,#form .send,#form textarea{box-sizing:border-box}
 #form .send{
@@ -140,19 +135,20 @@ netlify-badge,netlify-toolbar,#netlify-badge,#netlify-toolbar,[data-netlify-badg
  height:38px;
  min-width:38px;
  padding:0;
- border:0;
+ border:1px solid var(--glass-rim);
  appearance:none;
  -webkit-appearance:none;
  border-radius:50%;
- background:var(--beam-mid);
- color:var(--rei-void);
+ background:var(--glass-fill-strong);
+ color:var(--glass-text);
  font-size:17px;
  line-height:1;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.22);
 }
-#form .send:hover{background:var(--beam-soft)}
-#form .send:focus-visible{outline:2px solid var(--beam-soft);outline-offset:2px}
+#form .send:hover{background:rgba(255,255,255,.2);border-color:var(--glass-rim-strong);color:#fff}
+#form .send:focus-visible{outline:2px solid rgba(255,255,255,.45);outline-offset:2px}
 #form .send:disabled{opacity:.62;cursor:progress}
-#form .send.is-busy{background:var(--beam-dim);color:var(--beam-soft)}
+#form .send.is-busy{background:rgba(255,255,255,.08);color:var(--glass-muted);border-color:rgba(255,255,255,.12)}
 
 .waiting-message{display:flex;align-items:center;gap:14px;color:#bcbcbc;padding:15px 4px 24px;min-height:86px}
 .waiting-orb{position:relative;width:70px;height:70px;flex:0 0 70px;display:grid;place-items:center;isolation:isolate}
@@ -162,27 +158,40 @@ netlify-badge,netlify-toolbar,#netlify-badge,#netlify-toolbar,[data-netlify-badg
  inset:1px;
  z-index:0;
  border-radius:50%;
- background:radial-gradient(circle at 50% 52%,var(--orb-core) 0%,var(--orb-halo) 38%,transparent 70%);
- opacity:.28;
+ background:radial-gradient(circle at 50% 52%,rgba(255,255,255,.42) 0%,rgba(255,255,255,.12) 38%,transparent 70%);
+ opacity:.34;
  animation:waiting-halo-breathe 4.6s ease-in-out infinite;
 }
-.waiting-orb::after{content:"";position:absolute;inset:9px;z-index:0;border:1px solid var(--orb-halo);border-radius:50%;opacity:.16}
+.waiting-orb::after{content:"";position:absolute;inset:9px;z-index:0;border:1px solid rgba(255,255,255,.2);border-radius:50%;opacity:.35}
 .waiting-orb .waiting-icon{position:relative;z-index:1;width:42px;height:52px;display:grid;place-items:center;animation:nut-breathe 2.4s ease-in-out infinite;transform-origin:50% 90%}
 .waiting-orb .waiting-icon img{display:block;width:100%;height:100%;object-fit:contain}
-.waiting-particle{position:absolute;left:50%;top:50%;z-index:0;width:4px;height:4px;margin:-2px 0 0 -2px;border-radius:50%;background:var(--orb-core);opacity:.28;pointer-events:none;animation:waiting-particle-orbit 8s linear infinite}
+.waiting-particle{position:absolute;left:50%;top:50%;z-index:0;width:4px;height:4px;margin:-2px 0 0 -2px;border-radius:50%;background:rgba(255,255,255,.55);opacity:.22;pointer-events:none;animation:waiting-particle-orbit 8s linear infinite}
 .waiting-particle-a{--orbit-start:24deg;--orbit-radius:28px;animation-duration:7.5s;animation-delay:-2s}
-.waiting-particle-b{--orbit-start:148deg;--orbit-radius:31px;background:var(--orb-halo);animation-duration:9.5s;animation-delay:-5s}
+.waiting-particle-b{--orbit-start:148deg;--orbit-radius:31px;background:rgba(255,255,255,.4);animation-duration:9.5s;animation-delay:-5s}
 .waiting-particle-c{--orbit-start:262deg;--orbit-radius:25px;animation-duration:8.5s;animation-delay:-1.2s}
 .waiting-copy{display:flex;flex-direction:column;gap:5px;min-width:0}
-.waiting-capsule{display:inline-flex;align-items:center;gap:8px;width:fit-content;max-width:100%;padding:4px 10px;border:1px solid var(--beam-dim);border-radius:999px;background:var(--glass-fallback)}
-.waiting-title{font-size:13px;line-height:1.35;color:var(--beam-soft);white-space:nowrap}
-.waiting-note{font-size:10px;line-height:1.6;color:var(--orb-halo);opacity:.78;margin:0}
-.waiting-time{font-size:11px;white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--orb-halo);margin-left:0;padding-left:8px;border-left:1px solid var(--beam-dim)}
-@keyframes waiting-halo-breathe{0%,100%{opacity:.2;transform:scale(.94)}50%{opacity:.36;transform:scale(1.03)}}
+.waiting-capsule{
+ display:inline-flex;
+ align-items:center;
+ gap:8px;
+ width:fit-content;
+ max-width:100%;
+ padding:4px 10px;
+ border:1px solid var(--glass-rim);
+ border-radius:999px;
+ background:var(--glass-bg);
+ -webkit-backdrop-filter:blur(18px) saturate(1.15);
+ backdrop-filter:blur(18px) saturate(1.15);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.16);
+}
+.waiting-title{font-size:13px;line-height:1.35;color:var(--glass-text);white-space:nowrap}
+.waiting-note{font-size:10px;line-height:1.6;color:var(--glass-muted);opacity:.86;margin:0}
+.waiting-time{font-size:11px;white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--glass-muted);margin-left:0;padding-left:8px;border-left:1px solid var(--glass-rim)}
+@keyframes waiting-halo-breathe{0%,100%{opacity:.2;transform:scale(.94)}50%{opacity:.4;transform:scale(1.03)}}
 @keyframes waiting-particle-orbit{
- from{transform:rotate(var(--orbit-start)) translateX(var(--orbit-radius)) scale(.8);opacity:.14}
- 45%{opacity:.46}
- to{transform:rotate(calc(var(--orbit-start) + 360deg)) translateX(var(--orbit-radius)) scale(.8);opacity:.14}
+ from{transform:rotate(var(--orbit-start)) translateX(var(--orbit-radius)) scale(.8);opacity:.1}
+ 45%{opacity:.36}
+ to{transform:rotate(calc(var(--orbit-start) + 360deg)) translateX(var(--orbit-radius)) scale(.8);opacity:.1}
 }
 @media(max-width:760px){
  #form.composer{padding:13px 14px 11px;border-radius:20px}
@@ -201,10 +210,94 @@ netlify-badge,netlify-toolbar,#netlify-badge,#netlify-toolbar,[data-netlify-badg
  .waiting-time{font-size:10px;padding-left:6px}
 }
 @media(prefers-reduced-motion:reduce){
- #form.composer::before{animation:none;background:linear-gradient(135deg,var(--beam-dim),var(--beam-mid),var(--beam-dim))}
- #form.composer:focus-within::before,#form.composer.has-text::before{opacity:var(--beam-focus-opacity)}
- .waiting-orb::before{animation:none;opacity:.22;transform:none}
- .waiting-orb::after{opacity:.14}
+ #form.composer::before{animation:none;opacity:.8}
+ #form.composer:focus-within::before,#form.composer.has-text::before{opacity:1}
+ .waiting-orb::before{animation:none;opacity:.26;transform:none}
+ .waiting-orb::after{opacity:.28}
  .waiting-orb .waiting-icon{animation:none}
  .waiting-particle{display:none}
 }
+
+/* UI polish: sidebar glass. Neutral mist, no moss-green fills. */
+#sidebar>summary{
+ background:rgba(8,8,8,.55);
+ border:1px solid var(--glass-rim);
+ color:var(--glass-text);
+ -webkit-backdrop-filter:blur(18px) saturate(1.15);
+ backdrop-filter:blur(18px) saturate(1.15);
+}
+#sidebar>summary:hover{background:rgba(255,255,255,.1);color:#fff}
+#sidebar>summary:focus-visible{outline:2px solid rgba(255,255,255,.45);outline-offset:2px}
+#sidebar[open]>summary{background:rgba(16,21,16,.72);border-color:var(--glass-rim-strong)}
+#sidebar[open]{background:transparent}
+#sidebar[open]::before{
+ content:"";
+ position:absolute;
+ inset:0 0 0 min(430px,calc(100vw - 30px));
+ background:rgba(0,0,0,.38);
+ pointer-events:none;
+}
+#sidebar[open]>aside,.rei-theme #sidebar[open]>aside{
+ background:var(--glass-fallback);
+ border-right:1px solid var(--glass-rim);
+ box-shadow:inset -1px 0 0 rgba(255,255,255,.04),16px 0 48px rgba(0,0,0,.4);
+}
+@supports ((backdrop-filter:blur(28px)) or (-webkit-backdrop-filter:blur(28px))){
+ #sidebar[open]>aside,.rei-theme #sidebar[open]>aside{
+  background:rgba(8,8,8,.45);
+  -webkit-backdrop-filter:blur(28px) saturate(1.15);
+  backdrop-filter:blur(28px) saturate(1.15);
+ }
+}
+#sidebar .actions{background:transparent}
+#sidebar #newConversation{
+ background:var(--glass-fill);
+ border:1px solid var(--glass-rim);
+ color:var(--glass-text);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.14);
+}
+#sidebar #newConversation:hover,#sidebar #newConversation:focus-visible{
+ background:var(--glass-fill-strong);
+ border-color:var(--glass-rim-strong);
+ color:#fff;
+}
+#sidebar .sidebar-tabs{
+ background:rgba(255,255,255,.05);
+ border:1px solid rgba(255,255,255,.08);
+}
+#sidebar .sidebar-tabs .nav{background:transparent;color:var(--glass-muted);font-weight:400}
+#sidebar .sidebar-tabs .nav:hover{background:rgba(255,255,255,.06);color:var(--glass-text)}
+#sidebar .sidebar-tabs .nav.active,#sidebar .sidebar-tabs .nav.active:hover{
+ background:rgba(255,255,255,.12);
+ color:#fff;
+ font-weight:600;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.2);
+}
+#sidebar #listTitle,#sidebar #historyPanel h2,#sidebar .history-group h3{color:var(--glass-muted)}
+#sidebar .history-group h3 small{color:rgba(200,206,198,.5)}
+#sidebar .history-item{color:rgba(229,237,223,.88)}
+#sidebar .history-item small{color:var(--glass-muted)}
+#sidebar .history-item:hover,#sidebar .history-row:hover{background:transparent}
+#sidebar .history-row:hover{background:rgba(255,255,255,.06)}
+#sidebar .conversation-more{color:var(--glass-muted)}
+#sidebar .conversation-more:hover,#sidebar .conversation-more:active{background:rgba(255,255,255,.08);color:#fff}
+#sidebar .history-row.current-conversation,
+#sidebar .pinned-group .history-row.current-conversation,
+#sidebar .regular-group .history-row.current-conversation,
+#sidebar .current-conversation{
+ background:rgba(255,255,255,.1);
+ color:#fff;
+}
+#sidebar .pinned-group{
+ background:rgba(255,255,255,.04);
+ border:1px solid var(--glass-rim);
+}
+#sidebar .pinned-group h3{color:var(--glass-text)}
+#sidebar .pinned-group .history-row{border-left:2px solid rgba(255,255,255,.32);border-radius:2px 8px 8px 2px}
+#sidebar .pin-label{color:var(--glass-muted)}
+#sidebar .pinned-group+.regular-group{border-top:1px solid rgba(255,255,255,.08)}
+#sidebar .drawer-footer{border-top:1px solid rgba(255,255,255,.1)}
+#sidebar .drawer-footer button{color:var(--glass-text)}
+#sidebar .drawer-footer button:hover{background:rgba(255,255,255,.08)}
+#sidebar .drawer-footer small{color:var(--glass-muted)}
+#sidebar #historyList{scrollbar-color:rgba(255,255,255,.18) transparent}
