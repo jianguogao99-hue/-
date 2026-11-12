@@ -26,12 +26,12 @@ assert.match(html, /id="modelPillLabel"/, 'model pill needs a truncatable label'
 assert.match(html, /class="glass-backdrop"/, 'composer must include a backdrop layer');
 assert.match(html, /class="glass-specularity"/, 'composer must include a specular highlight layer');
 assert.match(html, /class="glass-rim"/, 'composer must include a liquid-glass rim');
-assert.match(html, /chat-layout\.css\?v=ui-fx9/, 'edited composer CSS needs a new cache token');
-assert.match(html, /app\.js\?v=ui-fx4/, 'edited composer JS needs a new cache token');
+assert.match(html, /chat-layout\.css\?v=ui-fx10/, 'edited composer CSS needs a new cache token');
+assert.match(html, /app\.js\?v=ui-fx10/, 'edited composer JS needs a new cache token');
 assert.match(html, /liquid-glass\.js\?v=ui-fx4/, 'liquid glass runtime must be included');
 assert.match(html, /rei-background\.css\?v=ui-fx9/, 'rei theme override needs a new cache token');
 assert.match(html, /layout\.js\?v=ui-fx8/, 'drawer JS needs a new cache token');
-assert.match(html, /rei-background\.js\?v=ui-fx9/, 'appearance JS needs a new cache token');
+assert.match(html, /rei-background\.js\?v=ui-fx10/, 'appearance JS needs a new cache token');
 
 const waitingStart = app.indexOf('function startWaiting');
 const waitingEnd = app.indexOf('function readableApiError');
@@ -98,7 +98,7 @@ assert.doesNotMatch(composerBlock, /#form[^{]*\.glass-[^{]*\{[^}]*mix-blend-mode
 assert.match(glassJs, /reserveTranscript/, 'transcript reserve must be measured from the real composer height');
 assert.doesNotMatch(polish, /@property\s+--beam-angle/, 'the travelling beam angle must be removed');
 assert.doesNotMatch(polish, /composer-beam-turn/, 'the travelling border beam must be removed');
-assert.doesNotMatch(polish, /--beam-accent|#1ed760|#84a86c|#b7d69e|#46523b|#7fd89c/, 'composer identity must not use the rejected green treatment');
+assert.doesNotMatch(composerPolish, /--beam-accent|#1ed760|#84a86c|#b7d69e|#46523b|#7fd89c/, 'composer identity must not use the rejected green treatment');
 assert.match(css, /\.waiting-orb::before/, 'thinking halo must decorate the logo');
 assert.match(css, /\.waiting-orb \.waiting-icon img/, 'the nut image must remain visible inside the orb wrapper');
 assert.match(polish, /\.waiting-capsule\{/, 'the status capsule must be styled as glass');
@@ -114,7 +114,7 @@ assert.match(rei, /\.rei-theme #form\{background:transparent/, 'rei theme must n
 assert.match(css, /#sidebar \.sidebar-tabs \.nav\.active/, 'selected sidebar tab must be restyled');
 assert.match(css, /#sidebar #newConversation/, 'new-conversation control must be restyled');
 assert.match(sidebar, /#sidebar \.sidebar-tabs \.nav\.active/, 'selected tab rule lives in the glass sidebar block');
-assert.doesNotMatch(sidebar, /#1ed760|#3c4a34|#83a567|#1b2517|#303e27|#222620|#84a86c|#b7d69e|#b9df9e|#9ac386/, 'sidebar glass must not reintroduce moss-green fills');
+assert.doesNotMatch(sidebar.replace(/\.accent-swatch\[data-accent="spotify"\]\{--swatch:#1ed760\}/, ''), /#1ed760|#3c4a34|#83a567|#1b2517|#303e27|#222620|#84a86c|#b7d69e|#b9df9e|#9ac386/, 'sidebar glass must not reintroduce moss-green fills');
 const sidebarInset = Number(sidebar.match(/--sidebar-inset:([\d.]+)px/)?.[1]);
 assert.ok(sidebarInset >= 10 && sidebarInset <= 16, 'sidebar must float with a 10–16px inset, got ' + sidebarInset);
 const sidebarRadius = Number(sidebar.match(/--sidebar-radius:([\d.]+)px/)?.[1]);
@@ -209,7 +209,7 @@ assert.match(neutrals, /#settingsDialog #connect[\s\S]*background:#1c1c1c/, 'set
 assert.match(neutrals, /#settingsDialog \.account-summary[\s\S]*background:#1c1c1c/, 'account summary must drop the olive panel');
 assert.match(neutrals, /\.delete-undo[\s\S]*background:#1c1c1c/, 'map undo bar must not stay moss green');
 assert.match(neutrals, /\.organize-status\.done[\s\S]*color:#9a9a9a/, '已整理入图 must be muted gray');
-assert.doesNotMatch(neutrals, /#1ed760|#1a2b1e|#232b1d|#3a4933|#1c2518/, 'winning neutral rules must not reuse the old olive/ink fills');
+assert.doesNotMatch(neutrals.replace(/\.accent-swatch\[data-accent="spotify"\]\{--swatch:#1ed760\}/, ''), /#1ed760|#1a2b1e|#232b1d|#3a4933|#1c2518/, 'winning neutral rules must not reuse the old olive/ink fills');
 assert.match(neutrals, /outline-color:rgba\(255,255,255,\.45\)/, 'focus rings on these surfaces must be light, not Spotify green');
 assert.doesNotMatch(composerPolish, /#form \.send\{[^}]*#1ed760/, 'composer send must stay off the green treatment');
 
@@ -240,8 +240,11 @@ assert.match(compact, /--accent:#b88246/, 'default accent is the existing amber'
 assert.match(reiJs, /ACCENT_DEFAULT='amber'/, 'saved accents default to amber');
 assert.match(reiJs, /clampAccent/, 'invalid saved accents must be clamped');
 assert.match(reiJs, /preferences\.accent/, 'accent is persisted in appearance prefs');
-assert.doesNotMatch(reiJs, /#1ed760/, 'accent green must not be the old Spotify green');
-assert.doesNotMatch(compact, /#1ed760/, 'compact/accent CSS must not reintroduce Spotify green');
+assert.match(reiJs, /spotify:\{name:'亮绿',accent:'#1ed760'/, 'Spotify bright green is an opt-in accent');
+assert.match(reiJs, /green:\{name:'绿',accent:'#2fbf71'/, 'the milder green accent must stay distinct from Spotify');
+assert.match(html, /data-accent="spotify"[^>]*aria-label="亮绿"/, 'settings include a 亮绿 swatch after 绿');
+assert.match(compact, /\.accent-swatch\[data-accent="spotify"\]\{--swatch:#1ed760\}/, 'the 亮绿 swatch uses exact Spotify green');
+assert.doesNotMatch(compact, /--accent:#1ed760/, 'the default accent token must stay amber');
 assert.match(compact, /--accent-soft/, 'accent tokens include a soft fill');
 assert.match(compact, /\.map-view-switch button\.active[\s\S]*background:var\(--accent-soft\)/, 'active map tabs use the accent softly');
 assert.match(compact, /#sidebar \.sidebar-tabs \.nav\.active[\s\S]*background:var\(--accent-soft\)/, 'active sidebar tabs use the accent softly');
@@ -278,6 +281,35 @@ assert.match(reiJs, /SIDEBAR_BG=\.24/, 'sidebar default alpha stays .24');
 assert.match(composerPolish, /--glass-bg:rgba\(118,118,128,\.14\)/, 'composer default fill stays at v3 .14');
 assert.match(reiJs, /prefers-reduced-transparency: reduce/, 'reduced transparency must be respected without breaking the control');
 assert.match(css, /\.glass-opacity-control/, 'slider must be styled with the settings typography');
+
+
+assert.match(html, /placeholder="输入问题"/, 'composer placeholder stays short and quiet');
+assert.match(html, /placeholder="搜索问题"/, 'map search placeholder stays short and quiet');
+assert.match(html, /placeholder="筛选问题"/, 'merge search placeholder stays short and quiet');
+assert.doesNotMatch(html, /想聊些什么|搜索问题、关键词|筛选候选问题|ASCII 绫波丽 · 试用/, 'wordy or promotional placeholders must be tightened');
+assert.match(html, /<option value="rei">ASCII 绫波丽<\/option>/, 'background option keeps the world name without a trial tag');
+assert.match(html, /id="newConversation"[^>]*>[\s\S]*?<svg class="ui-icon"/, '新对话 uses a line plus icon');
+assert.match(html, /id="openSettings"[^>]*>[\s\S]*?<svg class="ui-icon"/, 'settings uses a line gear icon');
+assert.match(html, /id="connect"[^>]*>[\s\S]*?<svg class="ui-icon"/, '模型与 API uses a line gear icon');
+assert.match(html, /id="favoritesView"[^>]*>[\s\S]*?<svg class="ui-icon star-icon"/, 'map favorites tab uses a line star');
+assert.match(html, /id="favoriteQuestion"[^>]*>[\s\S]*?<svg class="ui-icon star-icon"/, 'detail favorite uses a line star');
+assert.doesNotMatch(html, /[⚙★☆＋⌕]/, 'chrome must not use decorative emoji or symbols as icons');
+assert.match(html, /<details id="sidebar"><summary[^>]*>☰<\/summary>/, 'the header hamburger character stays for the ride-along close animation');
+assert.match(html, /id="closeSidebar"[^>]*>☰<\/button>/, 'the card hamburger character stays on the sliding aside');
+assert.match(app, /UI_ICON_STAR_FILLED/, 'favorite state has a filled star icon');
+assert.match(app, /favoriteStar\(selected\.favorite\)/, 'detail favorite button paints through the star helper');
+assert.match(app, /UI_ICON_GEAR\+'模型与 API'/, 'connection label uses the gear icon, not an emoji');
+assert.match(app, /正在准备收录候选…/, 'organization pending copy remains');
+assert.doesNotMatch(app, /◌ 正在准备收录候选|✓ 已整理入图|确认要收录的问题 ↗|打开地图 ↗|在图中定位 ↗|★ 我的收藏|☆ 收藏问题/, 'status and action copy must drop decorative symbols');
+assert.match(app, /replace\('搜索结果','我的收藏'\)/, 'favorites heading stays plain text');
+assert.match(css, /\.star-icon\.is-filled[\s\S]*#e1c572/, 'filled favorite stars stay gold, not the theme accent');
+assert.match(css, /\.graph-located>circle\{[\s\S]*stroke:var\(--accent\)!important[\s\S]*filter:none/, 'located graph nodes use a tight accent ring with no lime bloom');
+assert.match(css, /#workspace #mapPanel \.mind-legend span\{color:#9a9a9a\}/, 'mind-map legend must drop the purple key color');
+assert.doesNotMatch(css.slice(css.lastIndexOf('/* UI polish: leftover olive/lime neutralization')), /#91ae80|#d0d6ca|#edffb4|#c9ff99|#b6a0de|#5a794a|#25371f|#101510ec|#9caf8e|#3d4935|#b3c8a5/, 'later leftover overrides must not keep the audited olive or lime');
+assert.match(read('public/mindmap.js'), /class="mind-fav"/, 'favorite map nodes use a gold star mark, not a star prefix in the label');
+assert.doesNotMatch(read('public/mindmap.js'), /item\.q\?\.favorite\?'★ /, 'mind-map labels must not prefix a star character');
+assert.match(html, /mindmap\.js\?v=ui-fx10/, 'edited mindmap JS needs a new cache token');
+assert.match(html, /theme\.css\?v=ui-fx10/, 'theme tokens need a new cache token');
 
 console.log('PASS: liquid-glass composer, floating sidebar glass, riding hamburger, compact map, accent picker, sidebar glass preview, Claude-neutral surfaces, compact send typography, overlay frost, Safari-first backdrop, displacement as PE, reduced motion and palette guard.');
 

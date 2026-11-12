@@ -10,7 +10,8 @@ const ACCENTS={
  pink:{name:'粉',accent:'#e36aa8',soft:'rgba(227,106,168,.22)',strong:'#f08ac0',text:'#f3b0d4',on:'#fff'},
  orange:{name:'橙',accent:'#e8923a',soft:'rgba(232,146,58,.22)',strong:'#f0a954',text:'#f3c07a',on:'#1a1208'},
  teal:{name:'青',accent:'#2db8b2',soft:'rgba(45,184,178,.22)',strong:'#4ad0ca',text:'#7ee0db',on:'#062221'},
- green:{name:'绿',accent:'#2fbf71',soft:'rgba(47,191,113,.22)',strong:'#4fd68b',text:'#86e0b0',on:'#062015'}
+ green:{name:'绿',accent:'#2fbf71',soft:'rgba(47,191,113,.22)',strong:'#4fd68b',text:'#86e0b0',on:'#062015'},
+ spotify:{name:'亮绿',accent:'#1ed760',soft:'rgba(30,215,96,.22)',strong:'#3be477',text:'#8af0b0',on:'#001b09'}
 };
 function clampOpacity(value){const n=Number(value);return Number.isFinite(n)?Math.min(GLASS_MAX,Math.max(GLASS_MIN,n)):GLASS_DEFAULT;}
 function clampAccent(value){return ACCENTS[value]?value:ACCENT_DEFAULT;}

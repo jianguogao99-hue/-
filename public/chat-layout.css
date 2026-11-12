@@ -997,6 +997,7 @@ dialog select:focus,
 .accent-swatch[data-accent="orange"]{--swatch:#e8923a}
 .accent-swatch[data-accent="teal"]{--swatch:#2db8b2}
 .accent-swatch[data-accent="green"]{--swatch:#2fbf71}
+.accent-swatch[data-accent="spotify"]{--swatch:#1ed760}
 .accent-swatch[aria-checked="true"],
 .accent-swatch.active{
  border-color:#fff;
@@ -1076,3 +1077,103 @@ dialog select:focus,
  padding:10px 0 4px;
 }
 .appearance-settings #motionHint{font-size:11px;margin:0 0 4px;line-height:1.6;color:#9a9a9a}
+
+
+/* UI polish: leftover olive/lime neutralization and quiet icons. Later overrides only. */
+#sidebar>summary:focus-visible{outline:2px solid color-mix(in srgb,var(--accent) 80%,#fff);outline-offset:2px}
+.waiting-icon{color:var(--accent)}
+.current-conversation{background:#242424;color:#eee}
+#workspace #mapPanel .branch-arrow,
+#workspace #mapPanel .topic-branch summary small{color:#9a9a9a}
+#workspace #mapPanel .topic-content{border-left:1px solid #333}
+#workspace #mapPanel .topic-content .q,
+#workspace #mapPanel .q{background:#1c1c1c;border-color:#333;color:#eee}
+#workspace #mapPanel .find-card{background:#1c1c1c;border:1px solid #333;color:#eee}
+#workspace #mapPanel .find-open>span{color:#eee}
+#workspace #mapPanel .find-open>small{color:var(--accent-text)}
+#workspace #mapPanel .find-meta,
+#workspace #mapPanel .find-meta button{color:#9a9a9a}
+.collection-notice{background:#1c1c1cf5;border:1px solid #333;color:#eee}
+.collection-notice button{color:#eee}
+#workspace #mapPanel .mind-shell,
+.rei-theme #workspace #mapPanel .mind-shell,
+.rei-theme .mind-shell{
+ background:radial-gradient(ellipse at center,#1c1c1c 0%,#111 65%,#0b0b0b 100%);
+ border-color:#333;
+}
+#workspace #mapPanel.graph-immersive,
+#mapPanel.graph-immersive{background:#101010}
+#workspace #mapPanel .mind-hint,
+#workspace #mapPanel .mind-legend,
+#workspace #mapPanel .mind-legend span{color:#9a9a9a}
+#workspace #mapPanel .mind-controls{
+ background:#1c1c1ce8;
+ border:1px solid #333;
+}
+#workspace #mapPanel .mind-controls button{color:#eee}
+#workspace #mapPanel .mind-controls button[data-zoom="full"]{border-left:1px solid #333}
+.graph-located>circle{
+ stroke:var(--accent)!important;
+ stroke-width:2.5!important;
+ filter:none;
+}
+#detailTopic,#related,#sourceDetails>summary,#editFields>summary{color:#9a9a9a}
+#detailAnswer{color:#eee}
+#sourceDetails,#editFields{border-top:1px solid #333}
+#sourceDetails .source{background:#1c1c1c;border-color:#333}
+.detail-bottom{border-top:1px solid #333;background:#121212f5}
+#detailMore>summary{border:1px solid #333;color:#eee}
+.detail-menu{border:1px solid #333;background:#1c1c1c}
+.detail-menu button{color:#eee}
+.detail-menu button:hover{background:#2a2a2a!important}
+.detail-menu #deleteQuestion{border-top:1px solid #333!important}
+#mergeDescription{color:#9a9a9a}
+.sync-account{border-top-color:#333;color:#9a9a9a}
+.sync-account button{border-color:#333;color:#eee}
+.sync-account a{color:#eee}
+#syncLoading{background:#101010ec;color:#eee}
+#syncLoading button,#syncLoading a{color:#eee;border:1px solid #333}
+#workspace .organize-status.done::first-letter{color:inherit}
+
+.ui-icon{
+ display:inline-block;
+ width:14px;
+ height:14px;
+ vertical-align:-2px;
+ margin-right:6px;
+ flex-shrink:0;
+}
+#newConversation,
+#openSettings span,
+#connect,
+#favoritesView,
+#favoriteQuestion,
+#viewCollected{
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+}
+#favoritesView .ui-icon,
+#favoriteQuestion .ui-icon,
+.favorite-inline .ui-icon{margin-right:5px}
+.favorite-inline{
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+}
+.star-icon.is-filled,
+.favorite-inline .star-icon.is-filled,
+#favoritesView .star-icon.is-filled{
+ color:#e1c572;
+ fill:#e1c572;
+ stroke:#e1c572;
+}
+#favoriteQuestion{color:#e6ce88;border-color:#5e5334}
+#favoriteQuestion .star-icon.is-filled{color:#e6ce88;fill:#e6ce88;stroke:#e6ce88}
+#favoriteQuestion .star-icon:not(.is-filled),
+.favorite-inline .star-icon:not(.is-filled),
+#favoritesView .star-icon:not(.is-filled){
+ color:currentColor;
+ fill:none;
+}
+.mind-fav{fill:#e1c572;stroke:none}
