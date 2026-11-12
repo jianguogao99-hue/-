@@ -26,10 +26,12 @@ assert.match(html, /id="modelPillLabel"/, 'model pill needs a truncatable label'
 assert.match(html, /class="glass-backdrop"/, 'composer must include a backdrop layer');
 assert.match(html, /class="glass-specularity"/, 'composer must include a specular highlight layer');
 assert.match(html, /class="glass-rim"/, 'composer must include a liquid-glass rim');
-assert.match(html, /chat-layout\.css\?v=ui-fx7/, 'edited composer CSS needs a new cache token');
+assert.match(html, /chat-layout\.css\?v=ui-fx8/, 'edited composer CSS needs a new cache token');
 assert.match(html, /app\.js\?v=ui-fx4/, 'edited composer JS needs a new cache token');
 assert.match(html, /liquid-glass\.js\?v=ui-fx4/, 'liquid glass runtime must be included');
-assert.match(html, /rei-background\.css\?v=ui-fx3/, 'rei theme override needs a new cache token');
+assert.match(html, /rei-background\.css\?v=ui-fx8/, 'rei theme override needs a new cache token');
+assert.match(html, /layout\.js\?v=ui-fx8/, 'drawer JS needs a new cache token');
+assert.match(html, /rei-background\.js\?v=ui-fx8/, 'appearance JS needs a new cache token');
 
 const waitingStart = app.indexOf('function startWaiting');
 const waitingEnd = app.indexOf('function readableApiError');
@@ -160,8 +162,24 @@ assert.doesNotMatch(openAside, /border-right:/, 'floating panel must not fall ba
 assert.match(openAside, /border-radius:var\(--sidebar-radius\)/, 'floating panel needs the rounded card radius');
 assert.match(openAside, /0 24px 64px rgba\(0,0,0,\.38\)/, 'floating panel needs a soft shadow around the card');
 const openSummary = sidebar.match(/#sidebar\[open\]>summary\{([^}]*)\}/)?.[1] || '';
-assert.match(openSummary, /left:calc\(var\(--sidebar-edge-left\) \+ var\(--sidebar-width\) - 46px\)/, 'open summary must sit at the floating card top-right');
-assert.match(openSummary, /top:calc\(var\(--sidebar-edge-top\) \+ 10px\)/, 'open summary must sit inside the floating card');
+assert.match(openSummary, /left:24px/, 'open header hamburger must stay at the original top-left, not jump mid-screen');
+assert.match(openSummary, /top:12px/, 'open header hamburger must keep the header top offset');
+assert.doesNotMatch(openSummary, /--sidebar-width/, 'open header hamburger must not be positioned with the card width');
+assert.match(sidebar, /@media\(max-width:760px\)\{\s*#sidebar\[open\]>summary\{left:12px;top:8px\}/, 'phone header hamburger stays at the header inset');
+assert.match(sidebar, /#sidebar\.drawer-js\[open\]>summary/, 'JS-enhanced open state must hide the fixed header hamburger');
+assert.match(sidebar, /#sidebar\.drawer-js\.drawer-closing>summary/, 'header hamburger stays hidden during the close animation');
+assert.match(sidebar, /visibility:hidden/, 'header hamburger is not visible while the card is moving');
+const cardMenu = sidebar.match(/#sidebar \.sidebar-menu\{([^}]*)\}/)?.[0] || '';
+assert.match(cardMenu, /position:absolute/, 'the visible open hamburger must live on the sliding card');
+assert.match(cardMenu, /top:10px/, 'card hamburger sits at the card top-right');
+assert.match(cardMenu, /right:10px/, 'card hamburger sits at the card top-right');
+assert.doesNotMatch(cardMenu, /position:fixed/, 'card hamburger must share the aside transform, not a fixed viewport slot');
+assert.match(html, /<button[^>]*class="sidebar-menu"[^>]*id="closeSidebar"/, 'card hamburger must be the close control inside the aside');
+assert.match(html, /<details id="sidebar"><summary[^>]*>☰<\/summary>/, 'closed state still has a header disclosure control');
+const layout = read('public/layout.js');
+assert.match(layout, /drawer-js/, 'layout JS marks the drawer so the header hamburger can hide while open');
+assert.match(layout, /prefers-reduced-motion: reduce/, 'close duration must honor reduced motion');
+assert.match(layout, /CLOSE_MS=160/, 'close timeout stays in sync with the 0.16s drawer-out animation');
 assert.match(sidebar, /@keyframes drawer-in\{from\{transform:translateX\(calc\(-100% - var\(--sidebar-edge-left\) - 8px\)\)\}/, 'drawer-in must start fully off-screen past the inset');
 assert.match(sidebar, /@keyframes drawer-out\{to\{transform:translateX\(calc\(-100% - var\(--sidebar-edge-left\) - 8px\)\)\}\}/, 'drawer-out must slide fully off-screen past the inset');
 assert.match(sidebar, /@media\(max-width:760px\)\{[\s\S]*--sidebar-inset:10px[\s\S]*--sidebar-radius:24px/, 'phone keeps a slim floating gap and rounded card');
@@ -180,4 +198,43 @@ for (const rejected of ['#a855f7', '#ec4899', '#8b5cf6', '#6366f1', '#38bdf8']) 
   assert.ok(!css.toLowerCase().includes(rejected), `rejected rainbow hue ${rejected} must not appear`);
 }
 
-console.log('PASS: liquid-glass composer, floating sidebar glass, compact send typography, overlay frost, Safari-first backdrop, displacement as PE, reduced motion and palette guard.');
+
+const neutrals = css.slice(css.indexOf('/* UI polish: Claude-neutral surfaces'));
+assert.ok(neutrals.length > 200, 'neutral surface overrides must exist');
+assert.match(neutrals, /#workspace \.msg\.user \.bubble[\s\S]*background:#242424/, 'user bubbles must be Claude-neutral gray');
+assert.match(neutrals, /\.rei-theme \.msg\.user \.bubble[\s\S]*background:#242424/, 'rei theme must not keep an olive user bubble');
+assert.match(neutrals, /\.map-view-switch button\.active[\s\S]*background:#2a2a2a/, 'map tabs must use a light gray active fill');
+assert.match(neutrals, /\.collect-actions button[\s\S]*background:#242424/, 'collect actions must drop the olive pill fill');
+assert.match(neutrals, /#settingsDialog #connect[\s\S]*background:#1c1c1c/, 'settings cards must be neutral dark gray');
+assert.match(neutrals, /#settingsDialog \.account-summary[\s\S]*background:#1c1c1c/, 'account summary must drop the olive panel');
+assert.match(neutrals, /\.delete-undo[\s\S]*background:#1c1c1c/, 'map undo bar must not stay moss green');
+assert.match(neutrals, /\.organize-status\.done[\s\S]*color:#9a9a9a/, '已整理入图 must be muted gray');
+assert.doesNotMatch(neutrals, /#1ed760|#1a2b1e|#232b1d|#3a4933|#1c2518/, 'winning neutral rules must not reuse the old olive/ink fills');
+assert.match(neutrals, /outline-color:rgba\(255,255,255,\.45\)/, 'focus rings on these surfaces must be light, not Spotify green');
+assert.doesNotMatch(composerPolish, /#form \.send\{[^}]*#1ed760/, 'composer send must stay off the green treatment');
+
+const reiCss = rei;
+assert.match(reiCss, /\.rei-theme \.msg\.user \.bubble\{background:#242424e8\}/, 'later rei theme user bubble must be neutral');
+assert.doesNotMatch(reiCss, /#252c23e8|#0b100b85|#232b1d|#91a183|#84a86c|#3c4733/, 'rei stylesheet must not keep olive settings or bubbles');
+assert.match(reiCss, /\.appearance-settings select\{[^}]*background:#242424/, 'appearance select must be neutral');
+
+assert.match(html, /id="glassOpacity"/, 'settings must include a glass transparency slider');
+assert.match(html, /<label for="glassOpacity">玻璃透明度<\/label>/, 'slider must be clearly labeled');
+assert.match(html, /id="glassOpacity"[^>]*value="1"/, 'slider default must be the current v2/v3 fill');
+assert.match(html, /id="glassOpacity"[^>]*min="0\.2"/, 'slider must allow more transparent than default');
+assert.match(html, /id="glassOpacity"[^>]*max="2\.5"/, 'slider must allow more solid than default');
+assert.match(html, /class="appearance-settings"[\s\S]*id="glassOpacity"/, 'slider lives in the appearance / background section');
+const reiJs = read('public/rei-background.js');
+assert.match(reiJs, /question-garden-appearance-v1/, 'glass opacity is stored with the appearance preferences');
+assert.match(reiJs, /glassOpacity/, 'appearance prefs include glassOpacity');
+assert.match(reiJs, /--glass-bg/, 'slider must write the composer glass fill');
+assert.match(reiJs, /--sidebar-bg/, 'slider must write the sidebar glass fill');
+assert.match(reiJs, /clampOpacity/, 'invalid saved opacity values must be clamped');
+assert.match(reiJs, /GLASS_DEFAULT=1/, 'default multiplier must reproduce the current alphas');
+assert.match(reiJs, /GLASS_BG=\.14/, 'composer default alpha stays .14');
+assert.match(reiJs, /SIDEBAR_BG=\.24/, 'sidebar default alpha stays .24');
+assert.match(reiJs, /prefers-reduced-transparency: reduce/, 'reduced transparency must be respected without breaking the control');
+assert.match(css, /\.glass-opacity-control/, 'slider must be styled with the settings typography');
+
+console.log('PASS: liquid-glass composer, floating sidebar glass, riding hamburger, Claude-neutral surfaces, glass opacity slider, compact send typography, overlay frost, Safari-first backdrop, displacement as PE, reduced motion and palette guard.');
+

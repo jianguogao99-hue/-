@@ -1,13 +1,48 @@
 (()=>{
 'use strict';
 const drawer=document.querySelector('#sidebar');let closing=0,start=null,suppressClick=false;
-function open(){clearTimeout(closing);drawer.classList.remove('drawer-closing');drawer.open=true;drawer.querySelector('summary').setAttribute('aria-expanded','true');}
-function close(){clearTimeout(closing);if(!drawer.open)return;drawer.classList.add('drawer-closing');closing=setTimeout(()=>{drawer.open=false;drawer.classList.remove('drawer-closing');drawer.querySelector('summary').setAttribute('aria-expanded','false');},160);}
+const reduceMotion=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)');
+const CLOSE_MS=160;
+function duration(){return reduceMotion&&reduceMotion.matches?0:CLOSE_MS;}
+function summary(){return drawer.querySelector('summary');}
+function cardMenu(){const node=drawer.querySelector('#closeSidebar');return node&&node!==summary()?node:null;}
+function setExpanded(open){
+ const value=String(open);
+ const head=summary();
+ if(head&&head.setAttribute)head.setAttribute('aria-expanded',value);
+ const card=cardMenu();
+ if(card&&card.setAttribute)card.setAttribute('aria-expanded',value);
+}
+function focusedOn(node){return node&&document.activeElement===node;}
+function open(){
+ clearTimeout(closing);
+ drawer.classList.remove('drawer-closing');
+ const head=summary(),card=cardMenu();
+ const keep=focusedOn(head);
+ drawer.open=true;
+ setExpanded(true);
+ if(keep&&card&&typeof card.focus==='function')card.focus();
+}
+function close(){
+ clearTimeout(closing);
+ if(!drawer.open)return;
+ drawer.classList.add('drawer-closing');
+ const head=summary(),card=cardMenu();
+ const keep=focusedOn(card)||(card&&card.contains&&document.activeElement&&card.contains(document.activeElement));
+ closing=setTimeout(()=>{
+  drawer.open=false;
+  drawer.classList.remove('drawer-closing');
+  setExpanded(false);
+  if(keep&&head&&typeof head.focus==='function')head.focus();
+ },duration());
+}
 window.Drawer={open,close};
-drawer.querySelector('summary').setAttribute('aria-expanded','false');
-drawer.querySelector('summary').addEventListener('click',e=>{e.preventDefault();drawer.open?close():open();});
-drawer.addEventListener('toggle',()=>drawer.querySelector('summary').setAttribute('aria-expanded',String(drawer.open)));
-document.querySelector('#closeSidebar').onclick=close;
+if(drawer.classList&&drawer.classList.add)drawer.classList.add('drawer-js');
+setExpanded(false);
+summary().addEventListener('click',e=>{e.preventDefault();drawer.open?close():open();});
+drawer.addEventListener('toggle',()=>setExpanded(drawer.open));
+const closeButton=document.querySelector('#closeSidebar');
+if(closeButton)closeButton.onclick=close;
 drawer.addEventListener('click',e=>{if(e.target===drawer)close();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
 // Only the left-edge opening gesture owns page touches. Graph pan, text editing,

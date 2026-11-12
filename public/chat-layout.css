@@ -330,12 +330,42 @@ netlify-badge,netlify-toolbar,#netlify-badge,#netlify-toolbar,[data-netlify-badg
 #sidebar[open]::before{content:none;display:none;background:transparent}
 #sidebar::backdrop{background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none}
 #sidebar[open]>summary{
- left:calc(var(--sidebar-edge-left) + var(--sidebar-width) - 46px);
- top:calc(var(--sidebar-edge-top) + 10px);
- background:rgba(255,255,255,.08);
- border:1px solid var(--glass-hairline);
- box-shadow:var(--glass-highlight);
+ /* Stay at the header/top-left; do not jump to a mid-screen card coordinate. */
+ left:24px;
+ top:12px;
 }
+@media(max-width:760px){
+ #sidebar[open]>summary{left:12px;top:8px}
+}
+#sidebar.drawer-js[open]>summary,
+#sidebar.drawer-js.drawer-closing>summary{
+ visibility:hidden;
+ opacity:0;
+ pointer-events:none;
+}
+#sidebar .sidebar-menu{
+ position:absolute;
+ top:10px;
+ right:10px;
+ z-index:2;
+ display:flex;
+ width:38px;
+ height:38px;
+ margin:0;
+ padding:0;
+ align-items:center;
+ justify-content:center;
+ font-size:20px;
+ color:var(--glass-text);
+ border:1px solid var(--glass-hairline);
+ border-radius:9px;
+ background:rgba(255,255,255,.08);
+ box-shadow:var(--glass-highlight);
+ cursor:pointer;
+}
+#sidebar .sidebar-menu:hover{background:rgba(255,255,255,.14);color:#fff}
+#sidebar .sidebar-menu:focus-visible{outline:2px solid rgba(255,255,255,.45);outline-offset:2px}
+#sidebar:not([open]) .sidebar-menu{display:none}
 #sidebar[open]>aside,.rei-theme #sidebar[open]>aside{
  position:absolute;
  top:var(--sidebar-edge-top);
@@ -423,3 +453,215 @@ netlify-badge,netlify-toolbar,#netlify-badge,#netlify-toolbar,[data-netlify-badg
   --sidebar-width:min(286px,calc(100vw - var(--sidebar-edge-left) - 100px));
  }
 }
+
+/* UI polish: Claude-neutral surfaces. Later overrides so early olive/ink-green fills no longer win. */
+#workspace .msg.user .bubble,
+.rei-theme #workspace .msg.user .bubble,
+.rei-theme .msg.user .bubble{
+ background:#242424;
+ border:0;
+ color:#eee;
+}
+.rei-theme #workspace .msg:not(.user) .bubble,
+.rei-theme .msg:not(.user) .bubble{
+ background:transparent;
+ text-shadow:none;
+ color:#eee;
+}
+#workspace .who,
+#workspace .capture,
+#workspace .organize-status,
+#workspace .organize-status.done,
+#workspace .organize-retry,
+#workspace .collect-actions{
+ color:#9a9a9a;
+}
+#workspace .collect-actions button,
+#workspace .staged-card button{
+ background:#242424;
+ border:1px solid #333;
+ color:#eee;
+}
+#workspace .collect-actions button:last-child{
+ background:transparent;
+ border-color:#333;
+ color:#9a9a9a;
+}
+#workspace .collect-actions button:focus-visible,
+#workspace .organize-retry:focus-visible,
+#settingsDialog button:focus-visible,
+#settingsDialog a:focus-visible,
+#settingsDialog input:focus,
+#settingsDialog select:focus,
+#settingsDialog input:focus-visible,
+#settingsDialog select:focus-visible,
+#workspace #mapPanel .search:focus,
+#workspace #mapPanel button:focus-visible,
+#sidebar>summary:focus-visible,
+#sidebar .sidebar-menu:focus-visible{
+ outline:2px solid rgba(255,255,255,.45);
+ outline-offset:2px;
+ outline-color:rgba(255,255,255,.45);
+}
+
+/* Problem map chrome */
+#workspace #mapPanel .map-view-switch{background:#1c1c1c;border:1px solid #333}
+#workspace #mapPanel .map-view-switch button{color:#9a9a9a}
+#workspace #mapPanel .map-view-switch button.active,
+#workspace #mapPanel .map-view-switch button.active:hover{
+ background:#2a2a2a;
+ color:#eee;
+}
+#workspace #mapPanel .map-heading p,
+#workspace #mapPanel .timeline-note,
+#workspace #mapPanel .event-top,
+#workspace #mapPanel .event-path,
+#workspace #mapPanel .event-status,
+#workspace #mapPanel .branch-arrow,
+#workspace #mapPanel .topic-branch summary small,
+#workspace #mapPanel .mind-hint,
+#workspace #mapPanel .mind-legend{
+ color:#9a9a9a;
+}
+#workspace #mapPanel .topic-content{border-left:1px solid #333}
+#workspace #mapPanel .topic-content .q,
+#workspace #mapPanel .q,
+#workspace #mapPanel .find-card,
+#workspace #mapPanel .staged-card,
+#workspace #mapPanel .candidate-item,
+#workspace #mapPanel .review-candidate{
+ background:#1c1c1c;
+ border-color:#333;
+ color:#eee;
+}
+#workspace #mapPanel .qtitle,
+#workspace #mapPanel .find-open>span,
+#workspace #mapPanel .staged-card p,
+#workspace #mapPanel .candidate-item b,
+#workspace #mapPanel .event-title{
+ color:#eee;
+}
+#workspace #mapPanel .find-open>small,
+#workspace #mapPanel .staged-card small,
+#workspace #mapPanel .candidate-item small,
+#workspace #mapPanel .find-meta,
+#workspace #mapPanel .find-meta button{
+ color:#9a9a9a;
+}
+#workspace #mapPanel .timeline-event:not(:last-child):before{background:#333}
+#workspace #mapPanel .event-number{
+ background:#242424;
+ border:1px solid #333;
+ color:#eee;
+}
+#workspace #mapPanel .timeline-event:hover .event-title{color:#fff}
+#workspace #mapPanel .delete-undo{
+ background:#1c1c1c;
+ border:1px solid #333;
+ color:#9a9a9a;
+}
+#workspace #mapPanel .delete-undo button{color:#eee}
+#workspace #mapPanel .mind-shell,
+.rei-theme #workspace #mapPanel .mind-shell,
+.rei-theme .mind-shell{
+ background:radial-gradient(ellipse at center,#1c1c1c 0%,#111 65%,#0b0b0b 100%);
+ border-color:#333;
+}
+#workspace #mapPanel.graph-immersive{background:#101010}
+#workspace #mapPanel .mind-controls{
+ background:#1c1c1ce8;
+ border:1px solid #333;
+}
+#workspace #mapPanel .mind-controls button{color:#eee}
+#workspace #mapPanel .mind-controls button[data-zoom="full"]{border-left:1px solid #333}
+.collection-notice{
+ background:#1c1c1cf5;
+ border:1px solid #333;
+ color:#eee;
+}
+.collection-notice button{color:#eee}
+#workspace #mapPanel .status.done{background:#242424;color:#eee}
+
+/* Settings and related dialogs */
+#settingsDialog,
+#settingsDialog .review-header h2{color:#eee}
+#settingsDialog .settings-label,
+#settingsDialog .account-summary small,
+#settingsDialog .sub,
+#settingsDialog .sync-account,
+#settingsDialog .sync-account span{
+ color:#9a9a9a;
+}
+#settingsDialog #connect,
+#settingsDialog .sync-account button,
+#settingsDialog .account-summary{
+ background:#1c1c1c;
+ border:1px solid #333;
+ color:#eee;
+}
+#settingsDialog .account-summary p,
+#settingsDialog .account-summary a,
+#settingsDialog #connect,
+#settingsDialog .sync-account a{
+ color:#eee;
+}
+#settingsDialog .sync-account{
+ border-top:1px solid #333;
+}
+.appearance-settings{
+ border-top:1px solid #333;
+}
+.appearance-settings h3,
+.appearance-settings #motionHint,
+.appearance-settings .glass-opacity-ends{
+ color:#9a9a9a;
+}
+.appearance-settings label{color:#eee}
+.appearance-settings select{
+ background:#242424;
+ color:#eee;
+ border:1px solid #333;
+}
+.appearance-settings .motion-choice input{accent-color:#c8c8c8}
+.glass-opacity-control{
+ display:flex;
+ align-items:center;
+ gap:10px;
+ margin:8px 0 14px;
+}
+.glass-opacity-control input[type=range]{
+ flex:1;
+ min-width:0;
+ height:4px;
+ margin:0;
+ accent-color:#c8c8c8;
+ background:#333;
+}
+#settingsDialog .glass-opacity-control input[type=range]:focus,
+#settingsDialog .glass-opacity-control input[type=range]:focus-visible{
+ outline:2px solid rgba(255,255,255,.45);
+ outline-offset:3px;
+}
+#syncLoading{background:#101010ec;color:#eee}
+#syncLoading button,#syncLoading a{color:#eee;border:1px solid #333}
+#toast{background:#242424;border:1px solid #333;color:#eee}
+dialog input:focus,dialog select:focus,dialog input:focus-visible,dialog select:focus-visible{
+ outline:2px solid rgba(255,255,255,.45);
+}
+#detailTopic,#related,#sourceDetails>summary,#editFields>summary{color:#9a9a9a}
+#detailAnswer{color:#eee}
+#sourceDetails,#editFields{border-top:1px solid #333}
+.detail-bottom{border-top:1px solid #333;background:#121212f5}
+#detailMore>summary{border:1px solid #333;color:#eee}
+.detail-menu{border:1px solid #333;background:#1c1c1c}
+.detail-menu button{color:#eee}
+.detail-menu button:hover{background:#2a2a2a!important}
+#sourceDetails .source{background:#1c1c1c}
+#mergeDescription{color:#9a9a9a}
+.conversation-actions button{background:#242424}
+.candidate-item input{accent-color:#c8c8c8}
+.tool-results{border-top:1px solid #333}
+.tool-result>summary,.tool-result-body,.tool-result-body p,.tool-result-body a,.tool-result-body small,.tool-provider{
+ color:#9a9a9a;
+}
+.tool-result-body{background:#1c1c1c;border:1px solid #333}
