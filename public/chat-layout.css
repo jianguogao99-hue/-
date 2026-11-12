@@ -665,3 +665,414 @@ dialog input:focus,dialog select:focus,dialog input:focus-visible,dialog select:
  color:#9a9a9a;
 }
 .tool-result-body{background:#1c1c1c;border:1px solid #333}
+
+
+/* UI polish: compact map and accent. Later overrides for density, accent tokens, and settings structure. */
+:root{
+ --accent:#b88246;
+ --accent-soft:rgba(184,130,70,.22);
+ --accent-strong:#d4a05c;
+ --accent-text:#e8c48a;
+ --accent-on:#1a1208;
+ --sidebar-blur:12px;
+ --sidebar-sat:1.2;
+ --sidebar-bg:rgba(118,118,128,.24);
+ --sidebar-radius:26px;
+}
+
+/* Compact map chrome: merge the redundant panel-head into one title line. */
+#workspace[data-mode="map"] #mapPanel>.panel-head{display:none!important}
+#workspace[data-mode="map"] #mapPanel{
+ padding:4px 8px 0;
+}
+#workspace[data-mode="map"] #mapPanel .map-heading{
+ display:flex;
+ align-items:baseline;
+ gap:8px;
+ flex-wrap:wrap;
+ padding:2px 2px 6px;
+ margin:0;
+ flex-shrink:0;
+}
+#workspace[data-mode="map"] #mapPanel .map-heading h2{
+ font-size:16px;
+ font-weight:650;
+ line-height:1.25;
+ margin:0;
+}
+#workspace[data-mode="map"] #mapPanel .map-heading p,
+#workspace[data-mode="map"] #mapPanel .map-heading #mapTitle{
+ font-size:11px;
+ color:var(--accent-text);
+ margin:0;
+ line-height:1.3;
+}
+#workspace[data-mode="map"] #mapPanel .map-view-tools{
+ margin:0 0 6px;
+ gap:6px;
+}
+#workspace[data-mode="map"] #mapPanel .map-view-switch{padding:2px}
+#workspace[data-mode="map"] #mapPanel .map-view-switch button{padding:5px 9px;font-size:11px}
+#workspace[data-mode="map"] #mapPanel .search,
+#workspace[data-mode="map"] #mapPanel #search{
+ margin:0;
+ min-height:36px;
+ padding:6px 11px;
+}
+#workspace[data-mode="map"] #mapPanel .delete-undo{
+ padding:4px 10px;
+ margin:6px 0 6px;
+ min-height:0;
+ gap:8px;
+ font-size:10px;
+ border-radius:8px;
+}
+#workspace[data-mode="map"] .find-heading{margin:0 0 4px;font-size:12px}
+#workspace[data-mode="map"] .timeline-note{margin:0 0 8px;font-size:10px;line-height:1.45}
+#workspace[data-mode="map"] .find-card{margin:0 0 8px;padding:10px 12px}
+
+/* List views: the map chrome scrolls away with the list; tabs+search stay sticky. Graph keeps a fixed pane. */
+#workspace[data-mode="map"] #mapPanel:not(:has(.mind-shell)):not(.graph-immersive){
+ overflow-y:auto;
+ overscroll-behavior:contain;
+ -webkit-overflow-scrolling:touch;
+ touch-action:pan-y;
+}
+#workspace[data-mode="map"] #mapPanel:not(:has(.mind-shell)):not(.graph-immersive) #tree{
+ flex:0 0 auto;
+ overflow:visible;
+ min-height:0;
+ max-height:none;
+ height:auto;
+ padding-bottom:28px;
+ touch-action:auto;
+}
+#workspace[data-mode="map"] #mapPanel .map-sticky{
+ position:sticky;
+ top:0;
+ z-index:3;
+ flex-shrink:0;
+ margin:0 -8px;
+ padding:2px 8px 6px;
+ background:linear-gradient(180deg,rgba(8,8,8,.94) 0%,rgba(8,8,8,.86) 100%);
+ -webkit-backdrop-filter:blur(12px) saturate(1.1);
+ backdrop-filter:blur(12px) saturate(1.1);
+}
+#workspace[data-mode="map"] #mapPanel.search-editing .map-heading,
+#workspace[data-mode="map"] #mapPanel.search-editing .panel-head,
+#workspace[data-mode="map"] #mapPanel.search-editing .map-view-tools{display:none!important}
+#workspace[data-mode="map"] #mapPanel.search-editing .map-sticky{padding-top:2px}
+#workspace[data-mode="map"] #mapPanel.search-editing:not(:has(.mind-shell)) #tree{
+ overflow:visible;
+ min-height:70px;
+}
+/* Graph view keeps the tree as the filling, non-scrolling pane. */
+#workspace[data-mode="map"] #mapPanel:has(.mind-shell){
+ overflow:hidden;
+}
+#workspace[data-mode="map"] #mapPanel:has(.mind-shell) #tree{
+ flex:1 1 0%;
+ min-height:200px;
+ overflow:hidden;
+ padding:0;
+}
+@media(min-width:761px){
+ #workspace[data-mode="map"] #mapPanel{padding:8px 10px 0}
+ #workspace[data-mode="map"] #mapPanel .map-heading h2{font-size:18px}
+ #workspace[data-mode="map"] #mapPanel .map-sticky{
+  margin:0 -10px;
+  padding:4px 10px 8px;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(200px,260px);
+  gap:8px 12px;
+  align-items:center;
+ }
+ #workspace[data-mode="map"] #mapPanel .map-view-tools{margin:0}
+ #workspace[data-mode="map"] #mapPanel .search,
+ #workspace[data-mode="map"] #mapPanel #search{margin:0;min-height:38px}
+}
+@media(max-width:760px){
+ #workspace[data-mode="map"] #mapPanel{padding:4px 6px 0}
+ #workspace[data-mode="map"] #mapPanel .map-sticky{margin:0 -6px;padding:1px 6px 5px}
+ #workspace[data-mode="map"] #mapPanel .map-heading{padding:0 2px 5px}
+ #workspace[data-mode="map"] #mapPanel .map-view-switch button{padding:5px 8px;font-size:10px}
+}
+
+/* Accent usage: small fills, text, borders, and dots. Surfaces stay neutral. */
+#workspace #mapPanel .map-view-switch button.active,
+#workspace #mapPanel .map-view-switch button.active:hover{
+ background:var(--accent-soft);
+ color:var(--accent-text);
+}
+#sidebar .sidebar-tabs .nav.active,
+#sidebar .sidebar-tabs .nav.active:hover{
+ background:var(--accent-soft);
+ color:var(--accent-text);
+ box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 28%,transparent);
+}
+#settingsDialog .settings-label,
+#settingsDialog .appearance-settings h3,
+#settingsDialog .account-summary small{
+ color:var(--accent-text);
+}
+#workspace #mapPanel .find-card,
+#workspace #mapPanel .topic-content .q,
+#workspace #mapPanel .staged-card{
+ border-left:2px solid var(--accent);
+}
+#workspace #mapPanel .find-open>small,
+#workspace #mapPanel .event-path,
+#workspace #mapPanel .relation{
+ color:var(--accent-text);
+}
+#workspace .collect-actions button[data-collect="collect"]{
+ background:var(--accent-soft);
+ border-color:color-mix(in srgb,var(--accent) 40%,#333);
+ color:var(--accent-text);
+}
+#workspace .organize-status.done{color:var(--accent-text)}
+#workspace .organize-status.done::first-letter{color:var(--accent)}
+dialog .send,
+#locate,
+#confirmImport,
+#collectReview .send{
+ background:var(--accent);
+ color:var(--accent-on);
+ border:0;
+}
+dialog .send:hover,
+#locate:hover{filter:brightness(1.08)}
+#form .model-pill-dot{background:var(--accent)}
+#form.has-text .send{
+ background:linear-gradient(var(--accent-soft),var(--accent-soft)),var(--ctl-fill);
+ box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 36%,transparent),var(--ctl-highlight);
+}
+#workspace #mapPanel button:focus-visible,
+#workspace #mapPanel .search:focus,
+#settingsDialog button:focus-visible,
+#settingsDialog a:focus-visible,
+#settingsDialog input:focus,
+#settingsDialog select:focus,
+#settingsDialog input:focus-visible,
+#settingsDialog select:focus-visible,
+#settingsDialog .glass-opacity-control input[type=range]:focus-visible,
+dialog input:focus,
+dialog select:focus,
+#sidebar>summary:focus-visible,
+#sidebar .sidebar-menu:focus-visible,
+#form .model-pill:focus-visible,
+#form .send:focus-visible{
+ outline:2px solid color-mix(in srgb,var(--accent) 80%,#fff);
+ outline-offset:2px;
+ outline-color:color-mix(in srgb,var(--accent) 80%,#fff);
+}
+.glass-opacity-control input[type=range]{accent-color:var(--accent)}
+.appearance-settings .motion-choice input{accent-color:var(--accent)}
+.candidate-item input{accent-color:var(--accent)}
+
+/* ChatGPT-style grouped settings. */
+#settingsDialog{
+ background:#111;
+ color:#eee;
+ border:1px solid #2a2a2a;
+}
+#settingsDialog .settings-label{
+ margin:18px 2px 8px;
+ font-size:12px;
+ font-weight:500;
+ letter-spacing:.02em;
+}
+#settingsDialog .review-header{margin-bottom:4px}
+#settingsDialog .settings-card,
+#settingsDialog .account-summary,
+#settingsDialog .actions,
+#settingsDialog .sync-account{
+ background:#1c1c1c;
+ border:1px solid #2a2a2a;
+ border-radius:14px;
+ padding:4px 14px;
+}
+#settingsDialog #connect{
+ width:100%;
+ text-align:left;
+ padding:14px 2px;
+ border:0;
+ border-radius:0;
+ background:transparent;
+ color:#eee;
+ font-size:14px;
+}
+#settingsDialog .account-summary{padding:12px 14px}
+#settingsDialog .account-summary p,
+#settingsDialog .account-summary a,
+#settingsDialog .sync-account a{color:#eee}
+#settingsDialog .sync-account{
+ display:flex;
+ flex-wrap:wrap;
+ gap:8px;
+ padding:12px 14px;
+ border-top:0;
+ margin-top:0;
+}
+#settingsDialog .sync-account span{width:100%;margin:0 0 4px;color:#9a9a9a;font-size:13px}
+#settingsDialog .sync-account button{
+ font-size:13px;
+ padding:8px 12px;
+ border:1px solid #333;
+ border-radius:8px;
+ background:#242424;
+ color:#eee;
+}
+#settingsDialog .sub{margin-top:8px;color:#9a9a9a}
+.appearance-settings{margin-top:8px;padding-top:0;border-top:0}
+.appearance-settings .settings-label{margin-top:18px}
+.appearance-settings .settings-card{padding:2px 14px 10px}
+.appearance-settings label,
+.appearance-settings .settings-row-head,
+#accentLabel{font-size:13px;color:#eee}
+#settingsDialog .settings-row{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:12px;
+ padding:12px 0;
+ border-bottom:1px solid #2a2a2a;
+}
+#settingsDialog .appearance-card>.settings-row:last-of-type,
+#settingsDialog .motion-choice{border-bottom:0}
+#settingsDialog .settings-row-head{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ width:100%;
+ gap:10px;
+}
+#settingsDialog .accent-row,
+#settingsDialog .sidebar-glass-row{
+ flex-direction:column;
+ align-items:stretch;
+}
+.appearance-settings select{
+ width:auto;
+ min-width:42%;
+ max-width:62%;
+ margin:0;
+ padding:8px 10px;
+ background:#242424;
+ color:#eee;
+ border:1px solid #333;
+ border-radius:9px;
+ font-size:16px;
+}
+.accent-current{
+ display:flex;
+ align-items:center;
+ gap:7px;
+ margin:0;
+ font-size:13px;
+ color:#eee;
+}
+.accent-dot{
+ width:10px;
+ height:10px;
+ border-radius:50%;
+ background:var(--accent);
+ box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 35%,transparent);
+}
+.accent-picker{display:flex;flex-wrap:wrap;gap:10px;padding-top:2px}
+.accent-swatch{
+ width:26px;
+ height:26px;
+ padding:0;
+ border-radius:50%;
+ border:2px solid transparent;
+ background:var(--swatch,var(--accent));
+ box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);
+ cursor:pointer;
+}
+.accent-swatch[data-accent="amber"]{--swatch:#b88246}
+.accent-swatch[data-accent="blue"]{--swatch:#4d8dff}
+.accent-swatch[data-accent="purple"]{--swatch:#9b7ef0}
+.accent-swatch[data-accent="pink"]{--swatch:#e36aa8}
+.accent-swatch[data-accent="orange"]{--swatch:#e8923a}
+.accent-swatch[data-accent="teal"]{--swatch:#2db8b2}
+.accent-swatch[data-accent="green"]{--swatch:#2fbf71}
+.accent-swatch[aria-checked="true"],
+.accent-swatch.active{
+ border-color:#fff;
+ box-shadow:0 0 0 2px color-mix(in srgb,var(--swatch) 45%,transparent);
+}
+.sidebar-glass-preview{
+ position:relative;
+ width:100%;
+ height:92px;
+ border-radius:14px;
+ overflow:hidden;
+ border:1px solid #333;
+ background:#101010;
+}
+.sidebar-glass-preview-scene{position:absolute;inset:0}
+.sidebar-glass-preview-art{
+ position:absolute;
+ inset:0;
+ background:
+  radial-gradient(circle at 80% 30%,rgba(255,255,255,.08),transparent 40%),
+  repeating-linear-gradient(90deg,rgba(255,255,255,.05) 0 1px,transparent 1px 7px),
+  repeating-linear-gradient(0deg,rgba(255,255,255,.04) 0 1px,transparent 1px 9px),
+  #141414;
+}
+.rei-theme .sidebar-glass-preview-art{
+ background:
+  linear-gradient(90deg,rgba(8,8,8,.2),rgba(8,8,8,.04) 70%),
+  url("rei-ascii.png") 62% 18% / auto 230% no-repeat,
+  #070907;
+}
+.sidebar-glass-preview-card{
+ position:absolute;
+ top:10px;
+ left:10px;
+ bottom:10px;
+ width:46%;
+ min-width:112px;
+ max-width:170px;
+ border-radius:var(--sidebar-radius,26px);
+ border:1px solid var(--glass-hairline);
+ background:var(--glass-tint),var(--sidebar-bg);
+ -webkit-backdrop-filter:blur(var(--sidebar-blur,12px)) saturate(var(--sidebar-sat,1.2));
+ backdrop-filter:blur(var(--sidebar-blur,12px)) saturate(var(--sidebar-sat,1.2));
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 8px 20px rgba(0,0,0,.28);
+ padding:10px 10px 8px;
+ display:flex;
+ flex-direction:column;
+ gap:6px;
+}
+.sidebar-glass-preview-brand{
+ width:42%;
+ height:8px;
+ border-radius:99px;
+ background:rgba(255,255,255,.55);
+}
+.sidebar-glass-preview-line{
+ width:88%;
+ height:6px;
+ border-radius:99px;
+ background:rgba(255,255,255,.16);
+}
+.sidebar-glass-preview-line.is-short{width:58%}
+.sidebar-glass-preview-chip{
+ width:54%;
+ height:12px;
+ border-radius:7px;
+ margin-top:auto;
+ background:var(--accent-soft);
+ box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 30%,transparent);
+}
+.appearance-settings .motion-choice{
+ display:flex;
+ flex-direction:row-reverse;
+ align-items:center;
+ justify-content:space-between;
+ gap:9px;
+ padding:10px 0 4px;
+}
+.appearance-settings #motionHint{font-size:11px;margin:0 0 4px;line-height:1.6;color:#9a9a9a}

@@ -26,12 +26,12 @@ assert.match(html, /id="modelPillLabel"/, 'model pill needs a truncatable label'
 assert.match(html, /class="glass-backdrop"/, 'composer must include a backdrop layer');
 assert.match(html, /class="glass-specularity"/, 'composer must include a specular highlight layer');
 assert.match(html, /class="glass-rim"/, 'composer must include a liquid-glass rim');
-assert.match(html, /chat-layout\.css\?v=ui-fx8/, 'edited composer CSS needs a new cache token');
+assert.match(html, /chat-layout\.css\?v=ui-fx9/, 'edited composer CSS needs a new cache token');
 assert.match(html, /app\.js\?v=ui-fx4/, 'edited composer JS needs a new cache token');
 assert.match(html, /liquid-glass\.js\?v=ui-fx4/, 'liquid glass runtime must be included');
-assert.match(html, /rei-background\.css\?v=ui-fx8/, 'rei theme override needs a new cache token');
+assert.match(html, /rei-background\.css\?v=ui-fx9/, 'rei theme override needs a new cache token');
 assert.match(html, /layout\.js\?v=ui-fx8/, 'drawer JS needs a new cache token');
-assert.match(html, /rei-background\.js\?v=ui-fx8/, 'appearance JS needs a new cache token');
+assert.match(html, /rei-background\.js\?v=ui-fx9/, 'appearance JS needs a new cache token');
 
 const waitingStart = app.indexOf('function startWaiting');
 const waitingEnd = app.indexOf('function readableApiError');
@@ -218,23 +218,66 @@ assert.match(reiCss, /\.rei-theme \.msg\.user \.bubble\{background:#242424e8\}/,
 assert.doesNotMatch(reiCss, /#252c23e8|#0b100b85|#232b1d|#91a183|#84a86c|#3c4733/, 'rei stylesheet must not keep olive settings or bubbles');
 assert.match(reiCss, /\.appearance-settings select\{[^}]*background:#242424/, 'appearance select must be neutral');
 
-assert.match(html, /id="glassOpacity"/, 'settings must include a glass transparency slider');
-assert.match(html, /<label for="glassOpacity">玻璃透明度<\/label>/, 'slider must be clearly labeled');
-assert.match(html, /id="glassOpacity"[^>]*value="1"/, 'slider default must be the current v2/v3 fill');
-assert.match(html, /id="glassOpacity"[^>]*min="0\.2"/, 'slider must allow more transparent than default');
-assert.match(html, /id="glassOpacity"[^>]*max="2\.5"/, 'slider must allow more solid than default');
-assert.match(html, /class="appearance-settings"[\s\S]*id="glassOpacity"/, 'slider lives in the appearance / background section');
 const reiJs = read('public/rei-background.js');
-assert.match(reiJs, /question-garden-appearance-v1/, 'glass opacity is stored with the appearance preferences');
-assert.match(reiJs, /glassOpacity/, 'appearance prefs include glassOpacity');
-assert.match(reiJs, /--glass-bg/, 'slider must write the composer glass fill');
-assert.match(reiJs, /--sidebar-bg/, 'slider must write the sidebar glass fill');
+
+const compact = css.slice(css.indexOf('/* UI polish: compact map and accent'));
+assert.ok(compact.length > 200, 'compact map and accent overrides must exist');
+assert.match(compact, /#workspace\[data-mode="map"\] #mapPanel>\.panel-head\{display:none!important\}/, 'map mode must hide the redundant panel-head');
+assert.match(html, /<div class="map-heading"><h2>问题地图<\/h2><p id="mapTitle">/, 'one compact title line keeps the conversation name as a subtitle');
+assert.match(html, /class="map-sticky"/, 'tabs and search must share a sticky chrome wrapper');
+assert.match(compact, /#workspace\[data-mode="map"\] #mapPanel:not\(:has\(\.mind-shell\)\):not\(\.graph-immersive\)/, 'list views may scroll the map chrome');
+assert.match(compact, /\.map-sticky\{[\s\S]*position:sticky/, 'tabs and search stay pinned while the title can scroll away');
+assert.match(compact, /#workspace\[data-mode="map"\] #mapPanel:has\(\.mind-shell\) #tree/, 'the mind-map graph still fills its pane');
+assert.match(compact, /search-editing \.map-view-tools\{display:none!important\}/, 'search-editing still hides the tab row');
+assert.match(compact, /#workspace\[data-mode="map"\] #mapPanel \.map-heading h2\{[\s\S]*font-size:16px/, 'the map title is compact');
+assert.match(compact, /\.delete-undo\{[\s\S]*padding:4px 10px/, 'the undo bar is compact without removing undo');
+
+assert.match(html, /id="accentLabel">强调色/, 'settings must include an accent color control');
+assert.match(html, /data-accent="amber"/, 'amber is an accent swatch');
+assert.match(html, /data-accent="green"/, 'a modern green swatch must exist');
+assert.match(html, /class="accent-picker"/, 'accents are chosen from a small swatch list');
+assert.match(compact, /--accent:#b88246/, 'default accent is the existing amber');
+assert.match(reiJs, /ACCENT_DEFAULT='amber'/, 'saved accents default to amber');
+assert.match(reiJs, /clampAccent/, 'invalid saved accents must be clamped');
+assert.match(reiJs, /preferences\.accent/, 'accent is persisted in appearance prefs');
+assert.doesNotMatch(reiJs, /#1ed760/, 'accent green must not be the old Spotify green');
+assert.doesNotMatch(compact, /#1ed760/, 'compact/accent CSS must not reintroduce Spotify green');
+assert.match(compact, /--accent-soft/, 'accent tokens include a soft fill');
+assert.match(compact, /\.map-view-switch button\.active[\s\S]*background:var\(--accent-soft\)/, 'active map tabs use the accent softly');
+assert.match(compact, /#sidebar \.sidebar-tabs \.nav\.active[\s\S]*background:var\(--accent-soft\)/, 'active sidebar tabs use the accent softly');
+assert.match(compact, /\.collect-actions button\[data-collect="collect"\][\s\S]*background:var\(--accent-soft\)/, '收录 uses the accent as a small fill');
+assert.match(compact, /\.organize-status\.done\{color:var\(--accent-text\)\}/, '已整理入图 uses the accent');
+assert.match(html, /settings-card/, 'settings are grouped into cards');
+assert.match(html, /<h3 class="settings-label">账号<\/h3>/, 'settings have an account section');
+assert.match(html, /<h3 class="settings-label">同步<\/h3>/, 'settings have a sync section');
+assert.match(html, /id="connect"/, 'model connection control remains');
+assert.match(html, /id="syncNow"/, 'sync control remains');
+assert.match(html, /id="backupData"/, 'backup control remains');
+assert.match(html, /id="importData"/, 'import control remains');
+assert.match(html, /id="backgroundChoice"/, 'background control remains');
+assert.match(html, /id="backgroundMotion"/, 'motion control remains');
+
+assert.match(html, /id="sidebarGlass"/, 'settings must include a sidebar glass slider');
+assert.match(html, /<label for="sidebarGlass">侧栏玻璃透明度<\/label>/, 'slider is labeled as sidebar-only');
+assert.match(html, /id="sidebarGlass"[^>]*value="1"/, 'slider default reproduces the v2 sidebar fill');
+assert.match(html, /id="sidebarGlass"[^>]*min="0\.2"/, 'slider must allow more transparent than default');
+assert.match(html, /id="sidebarGlass"[^>]*max="2\.5"/, 'slider must allow more solid than default');
+assert.match(html, /class="sidebar-glass-preview"/, 'settings must include a live sidebar glass preview');
+assert.match(compact, /\.sidebar-glass-preview-card\{[\s\S]*background:var\(--glass-tint\),var\(--sidebar-bg\)/, 'preview card uses the real sidebar fill token');
+assert.match(compact, /\.sidebar-glass-preview-card\{[\s\S]*backdrop-filter:blur\(var\(--sidebar-blur/, 'preview card uses the real sidebar blur token');
+assert.match(reiJs, /question-garden-appearance-v1/, 'appearance prefs stay on the existing storage key');
+assert.match(reiJs, /sidebarGlass/, 'sidebar glass is persisted as sidebarGlass');
+assert.match(reiJs, /glassOpacity/, 'old glassOpacity values must be migrated');
+assert.match(reiJs, /setVar\(style,'--sidebar-bg'/, 'slider writes the sidebar fill');
+assert.match(reiJs, /clearVar\(style,'--glass-bg'\)/, 'slider must clear any leftover composer fill override');
+assert.doesNotMatch(reiJs, /setVar\([^;]*'--glass-bg'/, 'slider must not change the composer glass fill');
+assert.doesNotMatch(reiJs, /setVar\([^;]*'--ctl-fill'/, 'slider must not change composer control fills');
 assert.match(reiJs, /clampOpacity/, 'invalid saved opacity values must be clamped');
-assert.match(reiJs, /GLASS_DEFAULT=1/, 'default multiplier must reproduce the current alphas');
-assert.match(reiJs, /GLASS_BG=\.14/, 'composer default alpha stays .14');
+assert.match(reiJs, /GLASS_DEFAULT=1/, 'default multiplier must reproduce the current sidebar alpha');
 assert.match(reiJs, /SIDEBAR_BG=\.24/, 'sidebar default alpha stays .24');
+assert.match(composerPolish, /--glass-bg:rgba\(118,118,128,\.14\)/, 'composer default fill stays at v3 .14');
 assert.match(reiJs, /prefers-reduced-transparency: reduce/, 'reduced transparency must be respected without breaking the control');
 assert.match(css, /\.glass-opacity-control/, 'slider must be styled with the settings typography');
 
-console.log('PASS: liquid-glass composer, floating sidebar glass, riding hamburger, Claude-neutral surfaces, glass opacity slider, compact send typography, overlay frost, Safari-first backdrop, displacement as PE, reduced motion and palette guard.');
+console.log('PASS: liquid-glass composer, floating sidebar glass, riding hamburger, compact map, accent picker, sidebar glass preview, Claude-neutral surfaces, compact send typography, overlay frost, Safari-first backdrop, displacement as PE, reduced motion and palette guard.');
 
