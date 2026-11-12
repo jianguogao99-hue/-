@@ -26,7 +26,7 @@ assert.match(html, /id="modelPillLabel"/, 'model pill needs a truncatable label'
 assert.match(html, /class="glass-backdrop"/, 'composer must include a backdrop layer');
 assert.match(html, /class="glass-specularity"/, 'composer must include a specular highlight layer');
 assert.match(html, /class="glass-rim"/, 'composer must include a liquid-glass rim');
-assert.match(html, /chat-layout\.css\?v=ui-fx5/, 'edited composer CSS needs a new cache token');
+assert.match(html, /chat-layout\.css\?v=ui-fx6/, 'edited composer CSS needs a new cache token');
 assert.match(html, /app\.js\?v=ui-fx4/, 'edited composer JS needs a new cache token');
 assert.match(html, /liquid-glass\.js\?v=ui-fx4/, 'liquid glass runtime must be included');
 assert.match(html, /rei-background\.css\?v=ui-fx3/, 'rei theme override needs a new cache token');
@@ -112,7 +112,40 @@ assert.match(css, /#sidebar \.sidebar-tabs \.nav\.active/, 'selected sidebar tab
 assert.match(css, /#sidebar #newConversation/, 'new-conversation control must be restyled');
 assert.match(sidebar, /#sidebar \.sidebar-tabs \.nav\.active/, 'selected tab rule lives in the glass sidebar block');
 assert.doesNotMatch(sidebar, /#1ed760|#3c4a34|#83a567|#1b2517|#303e27|#222620|#84a86c|#b7d69e|#b9df9e|#9ac386/, 'sidebar glass must not reintroduce moss-green fills');
-assert.match(sidebar, /backdrop-filter:blur\(28px\)/, 'open sidebar panel uses frosted glass');
+const sidebarInset = Number(sidebar.match(/--sidebar-inset:([\d.]+)px/)?.[1]);
+assert.ok(sidebarInset >= 10 && sidebarInset <= 16, 'sidebar must float with a 10–16px inset, got ' + sidebarInset);
+const sidebarRadius = Number(sidebar.match(/--sidebar-radius:([\d.]+)px/)?.[1]);
+assert.ok(sidebarRadius >= 20, 'floating sidebar needs a generous rounded card, got ' + sidebarRadius);
+assert.match(sidebar, /--sidebar-width:min\(430px,calc\(100vw - var\(--sidebar-edge-left\) - var\(--sidebar-edge-right\)\)\)/, 'sidebar width must leave both insets visible');
+assert.match(sidebar, /-webkit-backdrop-filter:blur\(var\(--glass-blur\)\) saturate\(var\(--glass-sat\)\)/, 'sidebar needs the prefixed iOS light frost');
+assert.match(sidebar, /backdrop-filter:blur\(var\(--glass-blur\)\) saturate\(var\(--glass-sat\)\)/, 'sidebar frost must reuse the composer blur/saturation tokens');
+assert.doesNotMatch(sidebar, /backdrop-filter:blur\((?:18|28)px\)/, 'sidebar must not use a heavy blur that grays out the artwork');
+assert.match(sidebar, /background:var\(--glass-tint\),var\(--glass-bg\)/, 'sidebar frost must reuse the faint composer glass fill');
+assert.match(sidebar, /#sidebar\[open\]\{background:transparent;border:0;box-shadow:none\}/, 'the open hit area must stay transparent');
+assert.doesNotMatch(sidebar, /background:rgba\(0,0,0,\.38\)/, 'no dark page scrim may fake the glass');
+assert.doesNotMatch(sidebar, /#sidebar\[open\]::before\{[^}]*position:absolute/, 'no positioned veil may sit over the page');
+
+const openAsideRules = [...sidebar.matchAll(/#sidebar\[open\]>aside[^{]*\{([^}]*)\}/g)].map(match => match[1]);
+const openAside = openAsideRules.find(rule => rule.includes('position:absolute')) || '';
+assert.ok(openAside, 'open sidebar panel must have an inset geometry rule');
+assert.match(openAside, /top:var\(--sidebar-edge-top\)/, 'floating panel needs a top gap');
+assert.match(openAside, /left:var\(--sidebar-edge-left\)/, 'floating panel needs a left gap');
+assert.match(openAside, /bottom:var\(--sidebar-edge-bottom\)/, 'floating panel needs a bottom gap');
+assert.match(openAside, /width:var\(--sidebar-width\)/, 'floating panel must cap its width so both gaps stay visible');
+assert.match(openAside, /min-height:0/, 'legacy min-height:100% must not stretch the floating card');
+assert.match(openAside, /height:auto/, 'floating panel must derive height from top/bottom, not a full-height drawer');
+assert.match(openAside, /max-height:none/, 'full-height drawer caps must not win over the floating card');
+assert.doesNotMatch(openAside, /inset:0|height:100%|height:100dvh/, 'open sidebar must not win as a flush full-height drawer');
+assert.match(openAside, /border:1px solid var\(--glass-hairline\)/, 'floating panel needs a hairline all around');
+assert.doesNotMatch(openAside, /border-right:/, 'floating panel must not fall back to a right-edge drawer border');
+assert.match(openAside, /border-radius:var\(--sidebar-radius\)/, 'floating panel needs the rounded card radius');
+assert.match(openAside, /0 24px 64px rgba\(0,0,0,\.38\)/, 'floating panel needs a soft shadow around the card');
+const openSummary = sidebar.match(/#sidebar\[open\]>summary\{([^}]*)\}/)?.[1] || '';
+assert.match(openSummary, /left:calc\(var\(--sidebar-edge-left\) \+ var\(--sidebar-width\) - 46px\)/, 'open summary must sit at the floating card top-right');
+assert.match(openSummary, /top:calc\(var\(--sidebar-edge-top\) \+ 10px\)/, 'open summary must sit inside the floating card');
+assert.match(sidebar, /@keyframes drawer-in\{from\{transform:translateX\(calc\(-100% - var\(--sidebar-edge-left\) - 8px\)\)\}/, 'drawer-in must start fully off-screen past the inset');
+assert.match(sidebar, /@keyframes drawer-out\{to\{transform:translateX\(calc\(-100% - var\(--sidebar-edge-left\) - 8px\)\)\}\}/, 'drawer-out must slide fully off-screen past the inset');
+assert.match(sidebar, /@media\(max-width:760px\)\{[\s\S]*--sidebar-inset:10px[\s\S]*--sidebar-radius:24px/, 'phone keeps a slim floating gap and rounded card');
 assert.match(sidebar, /border-left:2px solid rgba\(255,255,255,\.32\)/, 'pinned rows use a pale glass edge, not a green bar');
 
 const reducedIndex = css.lastIndexOf('@media(prefers-reduced-motion:reduce)');
@@ -128,4 +161,4 @@ for (const rejected of ['#a855f7', '#ec4899', '#8b5cf6', '#6366f1', '#38bdf8']) 
   assert.ok(!css.toLowerCase().includes(rejected), `rejected rainbow hue ${rejected} must not appear`);
 }
 
-console.log('PASS: liquid-glass composer, compact send typography, overlay frost, Safari-first backdrop, displacement as PE, reduced motion and palette guard.');
+console.log('PASS: liquid-glass composer, floating sidebar glass, compact send typography, overlay frost, Safari-first backdrop, displacement as PE, reduced motion and palette guard.');

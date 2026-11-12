@@ -303,64 +303,88 @@ netlify-badge,netlify-toolbar,#netlify-badge,#netlify-toolbar,[data-netlify-badg
  #form .send.is-busy::after{animation:none;border-top-color:#fff;opacity:.9}
 }
 
-/* UI polish: sidebar glass. Neutral mist, no moss-green fills. */
-#sidebar>summary{
- background:rgba(8,8,8,.55);
- border:1px solid var(--glass-rim);
- color:var(--glass-text);
- -webkit-backdrop-filter:blur(18px) saturate(1.15);
- backdrop-filter:blur(18px) saturate(1.15);
+/* UI polish: sidebar glass. A floating frosted card inset from every edge, sharing the composer film. */
+#sidebar{
+ --sidebar-inset:14px;
+ --sidebar-radius:26px;
+ --sidebar-edge-top:max(var(--sidebar-inset),env(safe-area-inset-top,0px));
+ --sidebar-edge-left:max(var(--sidebar-inset),env(safe-area-inset-left,0px));
+ --sidebar-edge-right:max(var(--sidebar-inset),env(safe-area-inset-right,0px));
+ --sidebar-edge-bottom:max(var(--sidebar-inset),env(safe-area-inset-bottom,0px));
+ --sidebar-width:min(430px,calc(100vw - var(--sidebar-edge-left) - var(--sidebar-edge-right)));
 }
-#sidebar>summary:hover{background:rgba(255,255,255,.1);color:#fff}
+#sidebar>summary{
+ background:var(--glass-tint),var(--glass-bg);
+ border:1px solid var(--glass-hairline);
+ color:var(--glass-text);
+ -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(var(--glass-sat));
+ backdrop-filter:blur(var(--glass-blur)) saturate(var(--glass-sat));
+ box-shadow:var(--glass-highlight);
+}
+#sidebar>summary:hover{background:var(--glass-tint),rgba(118,118,128,.22);color:#fff}
 #sidebar>summary:focus-visible{outline:2px solid rgba(255,255,255,.45);outline-offset:2px}
-#sidebar[open]>summary{background:rgba(16,21,16,.72);border-color:var(--glass-rim-strong)}
-#sidebar[open]{background:transparent}
-#sidebar[open]::before{
- content:"";
- position:absolute;
- inset:0 0 0 min(430px,calc(100vw - 30px));
- background:rgba(0,0,0,.38);
- pointer-events:none;
+#sidebar[open]{background:transparent;border:0;box-shadow:none}
+#sidebar[open]::before{content:none;display:none;background:transparent}
+#sidebar::backdrop{background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none}
+#sidebar[open]>summary{
+ left:calc(var(--sidebar-edge-left) + var(--sidebar-width) - 46px);
+ top:calc(var(--sidebar-edge-top) + 10px);
+ background:rgba(255,255,255,.08);
+ border:1px solid var(--glass-hairline);
+ box-shadow:var(--glass-highlight);
 }
 #sidebar[open]>aside,.rei-theme #sidebar[open]>aside{
+ position:absolute;
+ top:var(--sidebar-edge-top);
+ left:var(--sidebar-edge-left);
+ bottom:var(--sidebar-edge-bottom);
+ width:var(--sidebar-width);
+ max-width:none;
+ min-height:0;
+ height:auto;
+ max-height:none;
  background:var(--glass-fallback);
- border-right:1px solid var(--glass-rim);
- box-shadow:inset -1px 0 0 rgba(255,255,255,.04),16px 0 48px rgba(0,0,0,.4);
+ border:1px solid var(--glass-hairline);
+ border-radius:var(--sidebar-radius);
+ overflow:hidden;
+ overscroll-behavior:contain;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 24px 64px rgba(0,0,0,.38),0 6px 20px rgba(0,0,0,.18);
 }
-@supports ((backdrop-filter:blur(28px)) or (-webkit-backdrop-filter:blur(28px))){
+@supports ((backdrop-filter:blur(6px)) or (-webkit-backdrop-filter:blur(6px))){
  #sidebar[open]>aside,.rei-theme #sidebar[open]>aside{
-  background:rgba(8,8,8,.45);
-  -webkit-backdrop-filter:blur(28px) saturate(1.15);
-  backdrop-filter:blur(28px) saturate(1.15);
+  background:var(--glass-tint),var(--glass-bg);
+  -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(var(--glass-sat));
+  backdrop-filter:blur(var(--glass-blur)) saturate(var(--glass-sat));
  }
 }
 #sidebar .actions{background:transparent}
 #sidebar #newConversation{
- background:var(--glass-fill);
- border:1px solid var(--glass-rim);
+ background:var(--glass-tint),var(--glass-bg);
+ border:1px solid var(--glass-hairline);
  color:var(--glass-text);
- box-shadow:inset 0 1px 0 rgba(255,255,255,.14);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
 }
 #sidebar #newConversation:hover,#sidebar #newConversation:focus-visible{
- background:var(--glass-fill-strong);
- border-color:var(--glass-rim-strong);
+ background:var(--glass-tint),rgba(118,118,128,.22);
+ border-color:var(--glass-hairline-top);
  color:#fff;
 }
 #sidebar .sidebar-tabs{
  background:rgba(255,255,255,.05);
- border:1px solid rgba(255,255,255,.08);
+ border:1px solid var(--glass-hairline);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
 }
 #sidebar .sidebar-tabs .nav{background:transparent;color:var(--glass-muted);font-weight:400}
 #sidebar .sidebar-tabs .nav:hover{background:rgba(255,255,255,.06);color:var(--glass-text)}
 #sidebar .sidebar-tabs .nav.active,#sidebar .sidebar-tabs .nav.active:hover{
- background:rgba(255,255,255,.12);
+ background:rgba(255,255,255,.13);
  color:#fff;
  font-weight:600;
- box-shadow:inset 0 1px 0 rgba(255,255,255,.2);
+ box-shadow:inset 0 0 0 1px rgba(255,255,255,.055),inset 0 1px 0 rgba(255,255,255,.14);
 }
 #sidebar #listTitle,#sidebar #historyPanel h2,#sidebar .history-group h3{color:var(--glass-muted)}
-#sidebar .history-group h3 small{color:rgba(200,206,198,.5)}
-#sidebar .history-item{color:rgba(229,237,223,.88)}
+#sidebar .history-group h3 small{color:rgba(214,214,212,.5)}
+#sidebar .history-item{color:rgba(238,238,236,.9)}
 #sidebar .history-item small{color:var(--glass-muted)}
 #sidebar .history-item:hover,#sidebar .history-row:hover{background:transparent}
 #sidebar .history-row:hover{background:rgba(255,255,255,.06)}
@@ -370,19 +394,29 @@ netlify-badge,netlify-toolbar,#netlify-badge,#netlify-toolbar,[data-netlify-badg
 #sidebar .pinned-group .history-row.current-conversation,
 #sidebar .regular-group .history-row.current-conversation,
 #sidebar .current-conversation{
- background:rgba(255,255,255,.1);
+ background:rgba(255,255,255,.13);
  color:#fff;
+ box-shadow:inset 0 0 0 1px rgba(255,255,255,.055),inset 0 1px 0 rgba(255,255,255,.12);
 }
 #sidebar .pinned-group{
  background:rgba(255,255,255,.04);
- border:1px solid var(--glass-rim);
+ border:1px solid var(--glass-hairline);
 }
 #sidebar .pinned-group h3{color:var(--glass-text)}
 #sidebar .pinned-group .history-row{border-left:2px solid rgba(255,255,255,.32);border-radius:2px 8px 8px 2px}
 #sidebar .pin-label{color:var(--glass-muted)}
-#sidebar .pinned-group+.regular-group{border-top:1px solid rgba(255,255,255,.08)}
-#sidebar .drawer-footer{border-top:1px solid rgba(255,255,255,.1)}
+#sidebar .pinned-group+.regular-group{border-top:1px solid var(--glass-hairline)}
+#sidebar .drawer-footer{border-top:1px solid var(--glass-hairline)}
 #sidebar .drawer-footer button{color:var(--glass-text)}
 #sidebar .drawer-footer button:hover{background:rgba(255,255,255,.08)}
 #sidebar .drawer-footer small{color:var(--glass-muted)}
 #sidebar #historyList{scrollbar-color:rgba(255,255,255,.18) transparent}
+@keyframes drawer-in{from{transform:translateX(calc(-100% - var(--sidebar-edge-left) - 8px))}to{transform:translateX(0)}}
+@keyframes drawer-out{to{transform:translateX(calc(-100% - var(--sidebar-edge-left) - 8px))}}
+@media(max-width:760px){
+ #sidebar{
+  --sidebar-inset:10px;
+  --sidebar-radius:24px;
+  --sidebar-width:min(380px,calc(100vw - var(--sidebar-edge-left) - var(--sidebar-edge-right)));
+ }
+}
