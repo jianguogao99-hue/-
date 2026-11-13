@@ -49,4 +49,4 @@ iPhone, iOS 26 Safari with the floating (transparent) bottom toolbar. Anything t
 - v20: merged the time-order select into the 按提问顺序 pill; tapping the active pill toggles 最早在前/最新在前.
 - v21 (Codax direct): hid scrollbars in #workspace/#sidebar, removed timeline kind label (首次提问/继续追问) from event-top; css ui-fx27, app.js ui-fx20.
 - v22 (Codax direct): iPad-only map heading/toolbar clearance (phone max-width:760 unchanged); locate jumps to the original question without a green frame and without scrolling to the latest message; calmer thinking animation keeps the nut logo. css ui-fx28, app.js ui-fx21. v22b: iPad fullscreen graph hides the switch/search bar; merge/collect/split dialog cards neutral gray (css ui-fx29).
-- v23 (Codax direct): iPad map/shell sized to visualViewport (fallback 100svh), overriding 100lvh which clipped the graph and 总览/全屏 below Safari’s top chrome; phone max-width:760 unchanged. css ui-fx30, layout.js ui-fx22.
+- v23 reverted (Codax direct): visualViewport shell sizing lifted the iPad composer and overflow:hidden blocked map list scrolling; restored v22b layout (css ui-fx31, layout.js ui-fx21). iPad map bottom clip deferred.
