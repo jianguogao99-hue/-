@@ -26,8 +26,8 @@ assert.match(html, /id="modelPillLabel"/, 'model pill needs a truncatable label'
 assert.match(html, /class="glass-backdrop"/, 'composer must include a backdrop layer');
 assert.match(html, /class="glass-specularity"/, 'composer must include a specular highlight layer');
 assert.match(html, /class="glass-rim"/, 'composer must include a liquid-glass rim');
-assert.match(html, /chat-layout\.css\?v=ui-fx12/, 'edited composer CSS needs a new cache token');
-assert.match(html, /app\.js\?v=ui-fx10/, 'edited composer JS needs a new cache token');
+assert.match(html, /chat-layout\.css\?v=ui-fx13/, 'edited composer CSS needs a new cache token');
+assert.match(html, /app\.js\?v=ui-fx13/, 'edited composer JS needs a new cache token');
 assert.match(html, /liquid-glass\.js\?v=ui-fx4/, 'liquid glass runtime must be included');
 assert.match(html, /rei-background\.css\?v=ui-fx9/, 'rei theme override needs a new cache token');
 assert.match(html, /layout\.js\?v=ui-fx8/, 'drawer JS needs a new cache token');
@@ -264,7 +264,7 @@ assert.match(typeScale, /\.event-title\{font-size:16px;font-weight:600/, 'timeli
 assert.match(typeScale, /\.event-path,\n#workspace #mapPanel \.find-open>small\{[\s\S]*?border-radius:999px;[\s\S]*?font-size:12px;\n font-weight:500;[\s\S]*?color:var\(--type-secondary\)/, 'topic paths are small muted chips');
 assert.match(typeScale, /\.account-summary\.settings-card small\{[^}]*font-size:12px[^}]*color:var\(--type-meta\)/, 'account sub-label is small muted meta');
 assert.match(typeScale, /\.organize-status\.done::before\{[^}]*background:var\(--accent\)/, 'accent survives only as a small dot');
-const pills = css.slice(css.indexOf('/* UI polish: Dynamic Island pills'));
+const pills = css.slice(css.indexOf('/* UI polish: Dynamic Island pills'), css.indexOf('/* UI polish v8'));
 for (const sel of ['#sidebar #newConversation{border-radius:999px', '#sidebar .sidebar-tabs{border-radius:999px', '#sidebar .sidebar-tabs .nav{border-radius:999px', '.map-view-switch button{border-radius:999px']) assert.ok(pills.includes(sel), 'key control must be a pill: ' + sel);
 for (const sel of ['#toggleMap,', '#workspace #timeOrder,', '#workspace #mapPanel #search,', '#settingsDialog #connect,', '#settingsDialog .sync-account button,', '#workspace .collect-actions button{border-radius:999px}']) assert.ok(pills.includes(sel), 'pill selector missing: ' + sel);
 assert.match(pills, /dialog \.review-header button\[aria-label="关闭"\][\s\S]*?width:32px;\n height:32px;[\s\S]*?border-radius:50%/, 'close buttons are round discs');
@@ -335,3 +335,25 @@ assert.match(html, /theme\.css\?v=ui-fx10/, 'theme tokens need a new cache token
 
 console.log('PASS: liquid-glass composer, floating sidebar glass, riding hamburger, compact map, accent picker, sidebar glass preview, Claude-neutral surfaces, compact send typography, overlay frost, Safari-first backdrop, displacement as PE, reduced motion and palette guard.');
 
+
+// v8: calmer map, standalone settings pills, solid accent close, accent active rows.
+assert.doesNotMatch(app, /class="timeline-note"/, 'map lists no longer render explanatory note lines');
+assert.doesNotMatch(app, /class="event-path"/, 'timeline events no longer render a topic-path chip');
+assert.doesNotMatch(app, /class="find-open"[^;]*?<small>'\+escape\(topicPath/, 'question cards no longer render a topic-path chip');
+assert.match(app, /keyword\)\.toLowerCase\(\)|toLowerCase\(\)\.includes\(keyword\)/, 'search still matches topic paths');
+assert.match(app, /deleteUndoFresh=deletedItem/, 'undo notice only appears for a delete made just now');
+assert.match(app, /deleteUndoTimer=setTimeout\(hideDeleteUndo,5000\)/, 'undo notice auto-dismisses after 5s');
+const v8 = css.slice(css.indexOf('/* UI polish v8'));
+assert.ok(v8.length > 400, 'v8 block must exist');
+assert.match(v8, /\.delete-undo\{\n position:fixed;[\s\S]*?border-radius:999px/, 'undo is a floating pill toast, not a bar');
+assert.match(v8, /#settingsDialog \.actions\.settings-card\{\n display:block;\n padding:0;\n border:0;\n background:transparent/, '模型与 API has no panel around its pill');
+assert.match(v8, /\.sync-account\.settings-card\{\n display:grid;\n grid-template-columns:1fr 1fr/, 'sync actions are two equal columns');
+assert.match(v8, /#importData\{grid-column:1 \/ -1\}/, 'import spans the second row');
+assert.match(v8, /button\[aria-label="关闭"\][\s\S]*?border-radius:50%;\n background:var\(--accent\);\n color:var\(--accent-on\)/, 'close is a solid accent disc with dark glyph');
+assert.match(v8, /button\[aria-label="关闭"\]:focus-visible,[\s\S]*?#dismissCollected:focus-visible\{box-shadow:none;outline:2px solid rgba\(255,255,255,\.5\);outline-offset:2px\}/, 'close focus is a subtle offset ring');
+assert.match(html, /<h2 tabindex="-1" autofocus>设置<\/h2>/, 'opening settings focuses the title, not the close button');
+assert.match(v8, /#sidebar \.history-row\.current-conversation,[\s\S]*?\{background:var\(--accent\);color:var\(--accent-on\)\}/, 'current conversation row follows the accent');
+assert.match(v8, /current-conversation \.history-item small\{color:var\(--accent-on\);opacity:\.72\}/, 'row subtitle uses accent-on at reduced opacity');
+assert.match(v8, /current-conversation \.conversation-more\{color:var\(--accent-on\)\}/, 'row menu dots use accent-on');
+assert.doesNotMatch(v8, /current-conversation[^{]*\{[^}]*border-radius:999px/, 'rows keep their shape');
+console.log('PASS: v8 map declutter, transient undo, standalone settings pills, accent close and accent active rows.');
