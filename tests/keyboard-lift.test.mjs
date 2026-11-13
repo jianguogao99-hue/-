@@ -13,12 +13,12 @@ assert.doesNotMatch(part, /--chat-viewport-height|--chat-viewport-top|keyboard-o
 assert.doesNotMatch(html, /interactive-widget/, 'no interactive-widget (Chrome resizes + our lift would double)');
 assert.match(html, /viewport-fit=cover/);
 assert.match(html, /<meta name="theme-color" content="#070907">/);
-const v11 = css.slice(css.indexOf('/* UI v11'));
-assert.match(v11, /height:100lvh!important/, 'shell paints full-bleed to the bottom edge');
-assert.match(v11, /padding-bottom:var\(--toolbar-gap\)!important/, 'content stops above the browser toolbar');
-assert.match(v11, /translate3d\(0,calc\(-1 \* var\(--kb-lift,0px\)\),0\)/, 'composer lift is one transform');
-assert.match(v11, /html\.kb-glide #workspace #form\.composer\{transition:transform 240ms cubic-bezier\(\.2,\.8,\.2,1\)\}/);
-for (const [file, token] of [['chat-layout.css', 'ui-fx17'], ['app.js', 'ui-fx17'], ['layout.js', 'ui-fx17']]) assert.ok(html.includes(file + '?v=' + token), file + ' cache token');
+const v12 = css.slice(css.indexOf('/* UI v12'));
+assert.match(v12, /height:100lvh!important/, 'document shell paints full-bleed to the bottom edge');
+assert.match(v12, /bottom:calc\(var\(--viewport-stack-gap\) \+ var\(--composer-inset\)\)/, 'composer rests above the dynamic viewport bottom');
+assert.match(css, /translate3d\(0,calc\(-1 \* var\(--kb-lift,0px\)\),0\)/, 'composer lift is one transform');
+assert.match(css, /html\.kb-glide #workspace #form\.composer\{transition:transform 240ms cubic-bezier\(\.2,\.8,\.2,1\)\}/);
+for (const [file, token] of [['chat-layout.css', 'ui-fx18'], ['app.js', 'ui-fx17'], ['layout.js', 'ui-fx17']]) assert.ok(html.includes(file + '?v=' + token), file + ' cache token');
 
 function makeEnv() {
   const props = new Map(), classes = new Set(); let frames = [], timers = [];

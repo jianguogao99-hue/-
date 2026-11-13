@@ -57,6 +57,22 @@ assert.match(app, /openSubDialog\(\$\('#importDialog'\),'settingsDialog'\)/, 'im
   assert.equal(settings.open, false, 'opened directly (model pill): closing does not resurrect 设置');
 }
 
+// --- UI v12: the document is the layout root; no fixed shell touches Safari's toolbar.
+const v12 = css.slice(css.indexOf('/* UI v12'));
+assert.ok(v12.length > 100, 'UI v12 shell present');
+assert.match(v12, /body\{\n position:relative!important;/, 'body stays in normal flow');
+assert.match(v12, /html:not\(\.keyboard-open\) main\{\n position:relative!important;/, 'main stays in normal flow');
+assert.doesNotMatch(v12, /(?:^|\n)(?:html\s+)?body[^{]*\{[^}]*position:\s*fixed/i, 'body is never fixed');
+assert.doesNotMatch(v12, /(?:^|\n)(?:html\s+)?main[^{]*\{[^}]*position:\s*fixed/i, 'main is never fixed');
+assert.match(v12, /\.rei-background\{\n position:absolute!important;/, 'ASCII background is absolute, not fixed');
+assert.match(v12, /min-height:100lvh!important/, 'body uses the large viewport height');
+assert.match(v12, /height:100lvh!important/, 'main and the background cover 100lvh');
+assert.match(v12, /--viewport-stack-gap:max\(0px,calc\(100lvh - 100dvh\)\)/, 'composer anchoring uses large/dynamic viewport math');
+assert.match(v12, /overscroll-behavior:none/, 'page rubber-banding is suppressed');
+assert.match(v12, /bottom:calc\(var\(--viewport-stack-gap\) \+ var\(--composer-inset\)\)/, 'composer sits above the dynamic viewport bottom');
+assert.match(v12, /padding-bottom:calc\(var\(--composer-reserve\) \+ var\(--viewport-stack-gap\) \+ var\(--composer-inset\) \+ 16px\)/, 'messages reserve room for the composer, safe area and toolbar');
+assert.match(v12, /html\.kb-lifted #workspace #chatPanel #messages,[\s\S]*?var\(--kb-lift,0px\) \+ 16px/, 'keyboard lift keeps the safe-area and toolbar reserve');
+
 // --- Close buttons: one solid accent disc everywhere, focus lands on titles.
 const v9 = css.slice(css.indexOf('/* UI polish v9'));
 assert.match(v9, /dialog button\.close,\ndialog button\[aria-label="关闭"\],[\s\S]*?border-radius:50%;\n background:var\(--accent\);\n color:var\(--accent-on\)/, 'all dialog close buttons are solid accent discs');
@@ -65,5 +81,5 @@ assert.match(html, /<dialog id="connection"><button class="close" id="closeConne
 for (const m of html.matchAll(/<dialog id="(\w+)">([\s\S]*?)<\/dialog>/g)) {
   if (/aria-label="关闭"/.test(m[2])) assert.match(m[2], /<h2[^>]*tabindex="-1" autofocus/, m[1] + ': opening focuses the title, not ✕');
 }
-for (const [file, token] of [['chat-layout.css', 'ui-fx17'], ['app.js', 'ui-fx17'], ['layout.js', 'ui-fx17']]) assert.ok(html.includes(file + '?v=' + token), file + ' cache token');
+for (const [file, token] of [['chat-layout.css', 'ui-fx18'], ['app.js', 'ui-fx17'], ['layout.js', 'ui-fx17']]) assert.ok(html.includes(file + '?v=' + token), file + ' cache token');
 console.log('PASS: drawer dismisses keyboard, no phone auto-focus, sub-dialogs return to settings, uniform accent close.');
