@@ -1,4 +1,6 @@
 'use strict';
+// Hoisted so render paths that run during boot (before this file finishes evaluating) never hit a temporal dead zone.
+var deleteUndoFresh=null,deleteUndoTimer=0;
 const categories=['使用条件','工具与模型','学习与探索','产品设计','待归类'];
 const initialMessages=[],seeds=[];
 const key='question-garden-v1';let state={messages:initialMessages,questions:seeds};let storageOK=true;
@@ -112,7 +114,7 @@ $('#mapPanel').hidden=true;$('#historyPanel').hidden=false;renderHistory();save(
 
 QuestionGraph.attach($('#tree'),path=>{if(collapsedGraphTopics.has(path))collapsedGraphTopics.delete(path);else collapsedGraphTopics.add(path);renderMap();},renameMapTitle);
 
-let deleteUndoFresh=null,deleteUndoTimer=0;function hideDeleteUndo(){clearTimeout(deleteUndoTimer);deleteUndoTimer=0;deleteUndoFresh=null;$('#deleteUndo').hidden=true;}function renderDeleteUndo(){const latest=state.deletedQuestions?.at(-1);if(!latest||latest!==deleteUndoFresh){if(!$('#deleteUndo').hidden||deleteUndoTimer)hideDeleteUndo();return;}if(!$('#deleteUndo').hidden)return;$('#deleteUndoText').textContent='已删除「'+latest.question.title+'」';$('#deleteUndo').hidden=false;clearTimeout(deleteUndoTimer);deleteUndoTimer=setTimeout(hideDeleteUndo,5000);}
+function hideDeleteUndo(){clearTimeout(deleteUndoTimer);deleteUndoTimer=0;deleteUndoFresh=null;const bar=document.getElementById('deleteUndo');if(bar)bar.hidden=true;}function renderDeleteUndo(){const bar=document.getElementById('deleteUndo'),text=document.getElementById('deleteUndoText');if(!bar)return;const latest=state&&Array.isArray(state.deletedQuestions)?state.deletedQuestions.at(-1):null;if(!latest||latest!==deleteUndoFresh||!latest.question){if(!bar.hidden||deleteUndoTimer)hideDeleteUndo();return;}if(!bar.hidden)return;if(text)text.textContent='已删除「'+(latest.question.title||'问题')+'」';bar.hidden=false;clearTimeout(deleteUndoTimer);deleteUndoTimer=setTimeout(hideDeleteUndo,5000);}
 $('#deleteQuestion').onclick=()=>{if(busy){toast('请等待当前回答完成后再删除');return;}if(selected)$('#deletePrompt').hidden=false;};
 $('#cancelDelete').onclick=()=>$('#deletePrompt').hidden=true;
 $('#confirmDelete').onclick=()=>{if(busy||!selected)return;const index=state.questions.findIndex(q=>q.id===selected.id);if(index<0)return;const question=state.questions[index];const linkedFrom=state.questions.filter(q=>q.links.includes(question.id)).map(q=>q.id);state.deletedQuestions=state.deletedQuestions||[];const deletedItem={question,index,linkedFrom};state.deletedQuestions.push(deletedItem);deleteUndoFresh=deletedItem;state.questions.splice(index,1);for(const q of state.questions)q.links=q.links.filter(id=>id!==question.id);selected=null;$('#deletePrompt').hidden=true;$('#detail').close();QuestionGraph.reset();save();renderMessages();renderMap();};
