@@ -26,7 +26,7 @@ assert.match(html, /id="modelPillLabel"/, 'model pill needs a truncatable label'
 assert.match(html, /class="glass-backdrop"/, 'composer must include a backdrop layer');
 assert.match(html, /class="glass-specularity"/, 'composer must include a specular highlight layer');
 assert.match(html, /class="glass-rim"/, 'composer must include a liquid-glass rim');
-assert.match(html, /chat-layout\.css\?v=ui-fx11/, 'edited composer CSS needs a new cache token');
+assert.match(html, /chat-layout\.css\?v=ui-fx12/, 'edited composer CSS needs a new cache token');
 assert.match(html, /app\.js\?v=ui-fx10/, 'edited composer JS needs a new cache token');
 assert.match(html, /liquid-glass\.js\?v=ui-fx4/, 'liquid glass runtime must be included');
 assert.match(html, /rei-background\.css\?v=ui-fx9/, 'rei theme override needs a new cache token');
@@ -246,7 +246,7 @@ assert.match(html, /data-accent="spotify"[^>]*aria-label="亮绿"/, 'settings in
 assert.match(compact, /\.accent-swatch\[data-accent="spotify"\]\{--swatch:#1ed760\}/, 'the 亮绿 swatch uses exact Spotify green');
 assert.doesNotMatch(compact, /--accent:#1ed760/, 'the default accent token must stay amber');
 assert.match(compact, /--accent-soft/, 'accent tokens include a soft fill');
-const solid = css.slice(css.indexOf('/* UI polish: solid accent selection'));
+const solid = css.slice(css.indexOf('/* UI polish: solid accent selection'), css.indexOf('/* UI polish: type hierarchy'));
 assert.ok(solid.length > 200, 'solid accent selection block must exist');
 assert.match(solid, /\.map-view-switch button\.active[\s\S]*?background:var\(--accent\);\n color:var\(--accent-on\)/, 'active map tabs are a solid accent block');
 assert.match(solid, /#sidebar \.sidebar-tabs \.nav\.active[\s\S]*?background:var\(--accent\);\n color:var\(--accent-on\)/, 'active sidebar tabs are a solid accent block');
@@ -256,6 +256,20 @@ assert.match(solid, /#form \.send,\n#form\.has-text \.send\{\n background:var\(-
 assert.match(solid, /#form \.send \.send-icon\{color:var\(--accent-on\)\}/, 'send arrow uses the accent-on ink');
 assert.match(solid, /background:var\(--accent-strong\)/, 'hover brightens while staying solid');
 assert.match(solid, /\.collect-actions button\[data-collect="collect"\][\s\S]*?background:var\(--accent\)/, '收录 is a solid accent chip');
+const typeScale = css.slice(css.indexOf('/* UI polish: type hierarchy'), css.indexOf('/* UI polish: Dynamic Island pills'));
+assert.ok(typeScale.length > 400, 'type hierarchy block must exist');
+assert.doesNotMatch(typeScale, /color:var\(--accent-text\)|color:var\(--accent\)/, 'hierarchy comes from size and weight, not accent-coloured text');
+assert.match(typeScale, /h3\.settings-label\{\n margin:22px 0 8px;\n font-size:18px;\n font-weight:700;[\s\S]*?color:var\(--type-primary\)/, 'settings sections are large, bold, primary text');
+assert.match(typeScale, /\.event-title\{font-size:16px;font-weight:600/, 'timeline question titles are stronger than meta');
+assert.match(typeScale, /\.event-path,\n#workspace #mapPanel \.find-open>small\{[\s\S]*?border-radius:999px;[\s\S]*?font-size:12px;\n font-weight:500;[\s\S]*?color:var\(--type-secondary\)/, 'topic paths are small muted chips');
+assert.match(typeScale, /\.account-summary\.settings-card small\{[^}]*font-size:12px[^}]*color:var\(--type-meta\)/, 'account sub-label is small muted meta');
+assert.match(typeScale, /\.organize-status\.done::before\{[^}]*background:var\(--accent\)/, 'accent survives only as a small dot');
+const pills = css.slice(css.indexOf('/* UI polish: Dynamic Island pills'));
+for (const sel of ['#sidebar #newConversation{border-radius:999px', '#sidebar .sidebar-tabs{border-radius:999px', '#sidebar .sidebar-tabs .nav{border-radius:999px', '.map-view-switch button{border-radius:999px']) assert.ok(pills.includes(sel), 'key control must be a pill: ' + sel);
+for (const sel of ['#toggleMap,', '#workspace #timeOrder,', '#workspace #mapPanel #search,', '#settingsDialog #connect,', '#settingsDialog .sync-account button,', '#workspace .collect-actions button{border-radius:999px}']) assert.ok(pills.includes(sel), 'pill selector missing: ' + sel);
+assert.match(pills, /dialog \.review-header button\[aria-label="关闭"\][\s\S]*?width:32px;\n height:32px;[\s\S]*?border-radius:50%/, 'close buttons are round discs');
+assert.match(pills, /button\[aria-label="关闭"\]:focus-visible[\s\S]*?\{outline:none;box-shadow:0 0 0 2px rgba\(255,255,255,\.45\)\}/, 'close focus ring is round and subtle, not a square accent outline');
+assert.doesNotMatch(pills, /\.(find-card|history-row|history-item|settings-card|q)\b[^{]*\{[^}]*border-radius:999px/, 'cards and rows keep their corners');
 for (const name of ['blue','purple','pink']) assert.match(reiJs, new RegExp(name + ":\\{[^}]*on:'#0b0b14'"), name + ' needs dark ink on a solid fill for contrast');
 assert.match(compact, /\.organize-status\.done\{color:var\(--accent-text\)\}/, '已整理入图 uses the accent');
 assert.match(html, /settings-card/, 'settings are grouped into cards');
