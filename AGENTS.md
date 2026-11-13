@@ -48,3 +48,4 @@ iPhone, iOS 26 Safari with the floating (transparent) bottom toolbar. Anything t
 - v19: removed the v17 map-zone measurement entirely — `layout.js` no longer writes `--map-top-zone` or observes the sticky/panel — and pinned the mobile map panel, sticky rail and top fade to CSS-only safe-area/header values, so every view switch keeps identical geometry in Safari and standalone.
 - v20: merged the time-order select into the 按提问顺序 pill; tapping the active pill toggles 最早在前/最新在前.
 - v21 (Codax direct): hid scrollbars in #workspace/#sidebar, removed timeline kind label (首次提问/继续追问) from event-top; css ui-fx27, app.js ui-fx20.
+- v22 (Codax direct): iPad-only map heading/toolbar clearance (phone max-width:760 unchanged); locate jumps to the original question without a green frame and without scrolling to the latest message; calmer thinking animation keeps the nut logo. css ui-fx28, app.js ui-fx21.
