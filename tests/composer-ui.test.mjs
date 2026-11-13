@@ -26,12 +26,12 @@ assert.match(html, /id="modelPillLabel"/, 'model pill needs a truncatable label'
 assert.match(html, /class="glass-backdrop"/, 'composer must include a backdrop layer');
 assert.match(html, /class="glass-specularity"/, 'composer must include a specular highlight layer');
 assert.match(html, /class="glass-rim"/, 'composer must include a liquid-glass rim');
-assert.match(html, /chat-layout\.css\?v=ui-fx10/, 'edited composer CSS needs a new cache token');
+assert.match(html, /chat-layout\.css\?v=ui-fx11/, 'edited composer CSS needs a new cache token');
 assert.match(html, /app\.js\?v=ui-fx10/, 'edited composer JS needs a new cache token');
 assert.match(html, /liquid-glass\.js\?v=ui-fx4/, 'liquid glass runtime must be included');
 assert.match(html, /rei-background\.css\?v=ui-fx9/, 'rei theme override needs a new cache token');
 assert.match(html, /layout\.js\?v=ui-fx8/, 'drawer JS needs a new cache token');
-assert.match(html, /rei-background\.js\?v=ui-fx10/, 'appearance JS needs a new cache token');
+assert.match(html, /rei-background\.js\?v=ui-fx11/, 'appearance JS needs a new cache token');
 
 const waitingStart = app.indexOf('function startWaiting');
 const waitingEnd = app.indexOf('function readableApiError');
@@ -246,9 +246,17 @@ assert.match(html, /data-accent="spotify"[^>]*aria-label="亮绿"/, 'settings in
 assert.match(compact, /\.accent-swatch\[data-accent="spotify"\]\{--swatch:#1ed760\}/, 'the 亮绿 swatch uses exact Spotify green');
 assert.doesNotMatch(compact, /--accent:#1ed760/, 'the default accent token must stay amber');
 assert.match(compact, /--accent-soft/, 'accent tokens include a soft fill');
-assert.match(compact, /\.map-view-switch button\.active[\s\S]*background:var\(--accent-soft\)/, 'active map tabs use the accent softly');
-assert.match(compact, /#sidebar \.sidebar-tabs \.nav\.active[\s\S]*background:var\(--accent-soft\)/, 'active sidebar tabs use the accent softly');
-assert.match(compact, /\.collect-actions button\[data-collect="collect"\][\s\S]*background:var\(--accent-soft\)/, '收录 uses the accent as a small fill');
+const solid = css.slice(css.indexOf('/* UI polish: solid accent selection'));
+assert.ok(solid.length > 200, 'solid accent selection block must exist');
+assert.match(solid, /\.map-view-switch button\.active[\s\S]*?background:var\(--accent\);\n color:var\(--accent-on\)/, 'active map tabs are a solid accent block');
+assert.match(solid, /#sidebar \.sidebar-tabs \.nav\.active[\s\S]*?background:var\(--accent\);\n color:var\(--accent-on\)/, 'active sidebar tabs are a solid accent block');
+assert.match(solid, /font-weight:600/, 'selected states read as a bold solid block');
+assert.doesNotMatch(solid, /--accent-soft|--accent-text/, 'selected states must not fall back to a faint tint or tinted text');
+assert.match(solid, /#form \.send,\n#form\.has-text \.send\{\n background:var\(--accent\)/, 'composer send is a solid accent disc');
+assert.match(solid, /#form \.send \.send-icon\{color:var\(--accent-on\)\}/, 'send arrow uses the accent-on ink');
+assert.match(solid, /background:var\(--accent-strong\)/, 'hover brightens while staying solid');
+assert.match(solid, /\.collect-actions button\[data-collect="collect"\][\s\S]*?background:var\(--accent\)/, '收录 is a solid accent chip');
+for (const name of ['blue','purple','pink']) assert.match(reiJs, new RegExp(name + ":\\{[^}]*on:'#0b0b14'"), name + ' needs dark ink on a solid fill for contrast');
 assert.match(compact, /\.organize-status\.done\{color:var\(--accent-text\)\}/, '已整理入图 uses the accent');
 assert.match(html, /settings-card/, 'settings are grouped into cards');
 assert.match(html, /<h3 class="settings-label">账号<\/h3>/, 'settings have an account section');

@@ -5,9 +5,9 @@ const GLASS_DEFAULT=1,GLASS_MIN=.2,GLASS_MAX=2.5,SIDEBAR_BG=.24;
 const ACCENT_DEFAULT='amber';
 const ACCENTS={
  amber:{name:'琥珀',accent:'#b88246',soft:'rgba(184,130,70,.22)',strong:'#d4a05c',text:'#e8c48a',on:'#1a1208'},
- blue:{name:'蓝',accent:'#4d8dff',soft:'rgba(77,141,255,.22)',strong:'#7aabff',text:'#9cc2ff',on:'#fff'},
- purple:{name:'紫',accent:'#9b7ef0',soft:'rgba(155,126,240,.22)',strong:'#b59aff',text:'#cbbfff',on:'#fff'},
- pink:{name:'粉',accent:'#e36aa8',soft:'rgba(227,106,168,.22)',strong:'#f08ac0',text:'#f3b0d4',on:'#fff'},
+ blue:{name:'蓝',accent:'#4d8dff',soft:'rgba(77,141,255,.22)',strong:'#7aabff',text:'#9cc2ff',on:'#0b0b14'},
+ purple:{name:'紫',accent:'#9b7ef0',soft:'rgba(155,126,240,.22)',strong:'#b59aff',text:'#cbbfff',on:'#0b0b14'},
+ pink:{name:'粉',accent:'#e36aa8',soft:'rgba(227,106,168,.22)',strong:'#f08ac0',text:'#f3b0d4',on:'#0b0b14'},
  orange:{name:'橙',accent:'#e8923a',soft:'rgba(232,146,58,.22)',strong:'#f0a954',text:'#f3c07a',on:'#1a1208'},
  teal:{name:'青',accent:'#2db8b2',soft:'rgba(45,184,178,.22)',strong:'#4ad0ca',text:'#7ee0db',on:'#062221'},
  green:{name:'绿',accent:'#2fbf71',soft:'rgba(47,191,113,.22)',strong:'#4fd68b',text:'#86e0b0',on:'#062015'},

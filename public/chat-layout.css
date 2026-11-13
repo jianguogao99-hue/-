@@ -1177,3 +1177,58 @@ dialog select:focus,
  fill:none;
 }
 .mind-fav{fill:#e1c572;stroke:none}
+
+
+/* UI polish: solid accent selection. Selected, active and primary states are one full accent block like the original. */
+#sidebar .sidebar-tabs .nav.active,
+#sidebar .sidebar-tabs .nav.active:hover,
+#workspace #mapPanel .map-view-switch button.active,
+#workspace #mapPanel .map-view-switch button.active:hover,
+#workspace[data-mode="map"] #mapPanel .map-view-switch button.active,
+#workspace .collect-actions button[data-collect="collect"],
+.filter.active,
+.tabs button.active,
+dialog .send,
+#locate,
+#confirmImport,
+#collectReview .send,
+#detail .send,
+.send{
+ background:var(--accent);
+ color:var(--accent-on);
+ border-color:transparent;
+ font-weight:600;
+ box-shadow:none;
+ text-shadow:none;
+}
+#sidebar .sidebar-tabs .nav.active:hover,
+#workspace #mapPanel .map-view-switch button.active:hover,
+#workspace .collect-actions button[data-collect="collect"]:hover,
+.filter.active:hover,
+dialog .send:hover,
+#locate:hover,
+#confirmImport:hover,
+#collectReview .send:hover,
+.send:hover{
+ background:var(--accent-strong);
+ color:var(--accent-on);
+ filter:none;
+}
+#workspace .collect-actions button[data-collect="collect"]{border:1px solid transparent}
+#workspace #mapPanel .map-view-switch button.active .ui-icon{color:var(--accent-on)}
+#workspace #mapPanel .map-view-switch button.active .star-icon:not(.is-filled){fill:none;stroke:currentColor}
+
+/* Composer send: solid accent disc with a dark arrow, same 38/36px circle and glass composer around it. */
+#form .send,
+#form.has-text .send{
+ background:var(--accent);
+ color:var(--accent-on);
+ box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);
+}
+#form .send:hover,
+#form.has-text .send:hover{background:var(--accent-strong)}
+#form .send .send-icon{color:var(--accent-on)}
+#form .send.is-busy::after{
+ border-color:color-mix(in srgb,var(--accent-on) 30%,transparent);
+ border-top-color:var(--accent-on);
+}
