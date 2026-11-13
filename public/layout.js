@@ -57,6 +57,36 @@ document.addEventListener('click',e=>{if(suppressClick){suppressClick=false;e.pr
 })();
 (()=>{
 'use strict';
+// iPad only: size the shell to the visual viewport. 100lvh often equals 100dvh
+// here, while the top Safari chrome still shrinks the visible area.
+const mq=window.matchMedia&&window.matchMedia('(min-width:761px) and (max-width:1366px) and (any-pointer:coarse)');
+const root=document.documentElement;
+const vv=window.visualViewport;
+function syncIpadViewport(){
+ if(!mq||!mq.matches){
+  root.style.removeProperty('--chat-viewport-top');
+  root.style.removeProperty('--chat-viewport-height');
+  return;
+ }
+ const top=vv?Math.max(0,Math.round(vv.offsetTop)):0;
+ const height=Math.max(1,Math.round((vv&&vv.height)||window.innerHeight||0));
+ root.style.setProperty('--chat-viewport-top',top+'px');
+ root.style.setProperty('--chat-viewport-height',height+'px');
+}
+if(vv&&vv.addEventListener){
+ vv.addEventListener('resize',syncIpadViewport);
+ vv.addEventListener('scroll',syncIpadViewport);
+}
+if(window.addEventListener){
+ window.addEventListener('resize',syncIpadViewport);
+ window.addEventListener('orientationchange',syncIpadViewport);
+}
+if(mq&&mq.addEventListener)mq.addEventListener('change',syncIpadViewport);
+else if(mq&&mq.addListener)mq.addListener(syncIpadViewport);
+syncIpadViewport();
+})();
+(()=>{
+'use strict';
 // Keyboard handling, v15: while focused, pin the composer to the visual viewport by absolute top.
 // top = vv.offsetTop + vv.height - composerHeight - 8. This is not a delta lift: iOS Safari's own
 // page shift and the keyboard are each counted exactly once, and every vv resize/scroll updates it.
