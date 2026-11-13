@@ -14,8 +14,10 @@ function setExpanded(open){
  if(card&&card.setAttribute)card.setAttribute('aria-expanded',value);
 }
 function focusedOn(node){return node&&document.activeElement===node;}
+function blurEditable(){const el=document.activeElement;if(el&&el!==document.body&&(el.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))&&typeof el.blur==='function')el.blur();}
 function open(){
  clearTimeout(closing);
+ blurEditable();
  drawer.classList.remove('drawer-closing');
  const head=summary(),card=cardMenu();
  const keep=focusedOn(head);
@@ -57,22 +59,47 @@ document.addEventListener('click',e=>{if(suppressClick){suppressClick=false;e.pr
 'use strict';
 const viewport=window.visualViewport;
 const input=document.querySelector('#input');
-let frame=0;
-function syncViewport(){
- cancelAnimationFrame(frame);
- frame=requestAnimationFrame(()=>{
-  // visualViewport shrinks with the iOS keyboard; 100dvh alone often does not.
-  const height=viewport?viewport.height:window.innerHeight;
-  const top=viewport?viewport.offsetTop:0;
-  if(height>0){document.documentElement.style.setProperty('--chat-viewport-height',height+'px');document.documentElement.style.setProperty('--chat-viewport-top',top+'px');}
- });
+const root=document.documentElement;
+// The software keyboard only counts as open when something editable has focus AND the visual
+// viewport is clearly shorter than the layout viewport. Otherwise the shell uses plain 100dvh, so a
+// stale keyboard-height lock can never survive the keyboard closing (iOS sometimes skips the resize).
+const KEYBOARD_MIN=120;
+let frame=0,settleTimers=[];
+function editableFocused(){const el=document.activeElement;return Boolean(el&&el!==document.body&&(el.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)));}
+function keyboardState(){
+ const layoutHeight=window.innerHeight||0;
+ const height=viewport?viewport.height:layoutHeight;
+ const top=viewport?viewport.offsetTop:0;
+ const open=Boolean(viewport)&&editableFocused()&&layoutHeight-height>KEYBOARD_MIN;
+ return {open,height,top,layoutHeight};
 }
+function applyViewport(){
+ const state=keyboardState();
+ if(state.open&&state.height>0){
+  root.style.setProperty('--chat-viewport-height',state.height+'px');
+  root.style.setProperty('--chat-viewport-top',state.top+'px');
+  root.classList.add('keyboard-open');
+ }else{
+  root.style.removeProperty('--chat-viewport-height');
+  root.style.removeProperty('--chat-viewport-top');
+  root.classList.remove('keyboard-open');
+  // iOS can leave the page scrolled by the keyboard's height after it closes.
+  if((window.scrollY||window.pageYOffset||0)!==0||(viewport&&viewport.offsetTop>0))window.scrollTo(0,0);
+ }
+ return state;
+}
+function syncViewport(){cancelAnimationFrame(frame);frame=requestAnimationFrame(applyViewport);}
+// Keyboard open/close animates over ~250-600ms and iOS may fire viewport events early or not at all.
+function settle(){settleTimers.forEach(clearTimeout);settleTimers=[0,120,350,700].map(ms=>setTimeout(syncViewport,ms));}
+window.WenjiViewport={apply:applyViewport,sync:syncViewport,settle,keyboardState};
 function growInput(){input.style.height='auto';input.style.height=Math.min(input.scrollHeight,120)+'px';syncViewport();}
 viewport?.addEventListener('resize',syncViewport);viewport?.addEventListener('scroll',syncViewport);
-window.addEventListener('resize',syncViewport);window.addEventListener('orientationchange',syncViewport);
-input.addEventListener('input',growInput);input.addEventListener('focus',()=>{syncViewport();setTimeout(syncViewport,320);setTimeout(syncViewport,650);});input.addEventListener('blur',()=>{setTimeout(syncViewport,320);});
+window.addEventListener('resize',syncViewport);window.addEventListener('orientationchange',settle);window.addEventListener('pageshow',settle);
+document.addEventListener('focusin',settle);document.addEventListener('focusout',settle);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)settle();});
+input?.addEventListener('input',growInput);
 const search=document.querySelector('#search');const panel=document.querySelector('#mapPanel');
-search?.addEventListener('focus',()=>{panel.classList.add('search-editing');syncViewport();setTimeout(syncViewport,320);});
-search?.addEventListener('blur',()=>{setTimeout(()=>{panel.classList.toggle('search-editing',document.activeElement===search||Boolean(search.value.trim()));syncViewport();},220);});
+search?.addEventListener('focus',()=>{panel?.classList.add('search-editing');});
+search?.addEventListener('blur',()=>{setTimeout(()=>{panel?.classList.toggle('search-editing',document.activeElement===search||Boolean(search.value.trim()));},220);});
 syncViewport();
 })();

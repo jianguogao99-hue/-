@@ -1,6 +1,11 @@
 'use strict';
 // Hoisted so render paths that run during boot (before this file finishes evaluating) never hit a temporal dead zone.
 var deleteUndoFresh=null,deleteUndoTimer=0;
+// On phones, focusing the composer pops the keyboard over a just-closed drawer; let the user tap to type.
+function focusComposerUnlessTouch(){const coarse=window.matchMedia&&window.matchMedia('(pointer: coarse)').matches;if(coarse)return;const input=document.getElementById('input');if(input)input.focus();}
+// Sub-dialogs opened from another dialog (e.g. 模型与 API from 设置) return to it when closed.
+function openSubDialog(child,parentId){if(!child)return;const parent=document.getElementById(parentId);if(parent&&parent.open){child.dataset.returnTo=parentId;parent.close();}else delete child.dataset.returnTo;if(!child.open)child.showModal();}
+document.querySelectorAll('dialog').forEach(dialog=>dialog.addEventListener('close',()=>{const id=dialog.dataset.returnTo;if(!id)return;delete dialog.dataset.returnTo;const parent=document.getElementById(id);if(parent&&!parent.open&&!document.querySelector('dialog[open]'))parent.showModal();}));
 const categories=['使用条件','工具与模型','学习与探索','产品设计','待归类'];
 const initialMessages=[],seeds=[];
 const key='question-garden-v1';let state={messages:initialMessages,questions:seeds};let storageOK=true;
@@ -53,7 +58,7 @@ function syncComposerTextState(){const form=$('#form'),input=$('#input');if(form
 $('#input').addEventListener('input',syncComposerTextState);$('#input').addEventListener('change',syncComposerTextState);syncComposerTextState();
 function syncModelPill(){const pill=$('#modelPill'),label=$('#modelPillLabel');if(!pill||!label)return;const tail=String(modelId||'').split('/').filter(Boolean).pop()||'选择模型';label.textContent=tail;pill.title=modelId?provider+' · '+modelId:'选择模型';}
 function connectionLabel(){ $('#connect').innerHTML=UI_ICON_GEAR+'模型与 API'+(apiKey?' · 已连接':'');syncModelPill(); }
-connectionLabel();$('#connect').onclick=()=>{$('#settingsDialog').close();$('#connectionStatus').textContent=apiKey?'已保存连接，可直接聊天；如需更换密钥请在此填写。':'';$('#connection').showModal();};
+connectionLabel();$('#connect').onclick=()=>{$('#connectionStatus').textContent=apiKey?'已保存连接，可直接聊天；如需更换密钥请在此填写。':'';openSubDialog($('#connection'),'settingsDialog');};
 $('#modelPill').onclick=()=>{$('#settingsDialog').open&&$('#settingsDialog').close();const dialog=$('#connection');if(!dialog.open)dialog.showModal();$('#connectionStatus').textContent=apiKey?'已保存连接，可直接聊天；如需更换模型请在此填写。':'';};
 $('#closeConnection').onclick=()=>$('#connection').close();
 $('#disconnect').onclick=async()=>{try{await CloudAccount.clearKey(provider);apiKey='';localStorage.removeItem(provider==='openrouter'?connectionStorageKey:connectionStorageKey+'-'+provider);$('#apiKey').value='';connectionLabel();$('#connectionStatus').textContent='该账号的服务商密钥已清除，会同步到其他设备。';}catch{$('#connectionStatus').textContent='云端密钥未能清除，请联网后重试。';}};
@@ -106,7 +111,7 @@ $('#cancelRename').onclick=()=>$('#renameDialog').close();
 $('#renameForm').onsubmit=e=>{e.preventDefault();const name=$('#renameValue').value.trim();if(!name){$('#renameError').textContent='请输入名称';return;}try{renameAction?.(name);save();renderHistory();$('#renameDialog').close();toast('名称已更新');}catch(error){$('#renameError').textContent=error.message;}};
 function renameMapTitle(path){const conversation=state;if(!path){requestRename('更改对话名称',conversation.title||'新对话',name=>{conversation.title=name;conversation.titleGenerated=true;renderMessages();renderMap();});return;}const prefix=path.split('/').filter(Boolean);requestRename('修改分类名称',prefix.at(-1),name=>{ConversationUI.renameBranch(conversation.questions,prefix,name,topicPath);collapsedGraphTopics.clear();openedBranches.clear();renderMap();});}
 $('#toggleMap').onclick=()=>openConversation(state.id,$('#workspace').dataset.mode==='map'?'chat':'map');
-$('#newConversation').onclick=()=>{if(busy){toast('请等待当前回答完成');return;}const conversation={id:'conversation'+Date.now(),title:'新对话',messages:[],questions:[],summary:'',titleGenerated:false};library.conversations.push(conversation);openConversation(conversation.id,'chat');$('#input').focus();};
+$('#newConversation').onclick=()=>{if(busy){toast('请等待当前回答完成');return;}const conversation={id:'conversation'+Date.now(),title:'新对话',messages:[],questions:[],summary:'',titleGenerated:false};library.conversations.push(conversation);openConversation(conversation.id,'chat');focusComposerUnlessTouch();};
 $('#tree').addEventListener('toggle',e=>{const node=e.target;if(!node.matches?.('details[data-path]'))return;if(node.open)openedBranches.add(node.dataset.path);else openedBranches.delete(node.dataset.path);},true);
 $('#continueQuestion').onclick=()=>{$('#detail').close();view('chat');$('#input').value='继续讨论：'+selected.title+(selected.summary?'\n之前的要点：'+selected.summary:'');$('#input').dispatchEvent(new Event('input'));$('#input').focus();};
 $('#rememberKey').onchange=()=>{if(!apiKey)return;try{if($('#rememberKey').checked)localStorage.setItem(provider==='openrouter'?connectionStorageKey:connectionStorageKey+'-'+provider,apiKey);else localStorage.removeItem(provider==='openrouter'?connectionStorageKey:connectionStorageKey+'-'+provider);}catch{toast('浏览器未能保存连接');}};
@@ -185,6 +190,6 @@ function toolSources(message){if(!Array.isArray(message.tools)||!message.tools.l
 
 let pendingImport=null;
 $('#importData').onclick=()=>{if(!CloudAccount.ready||busy||organizing){toast('请等待账号连接和当前操作完成');return;}$('#importFile').value='';$('#importFile').click();};
-$('#importFile').onchange=async()=>{const file=$('#importFile').files[0];if(!file)return;try{if(file.size>5*1024*1024)throw Error('备份文件过大，请先分批处理。');const plan=BackupImport.prepare(JSON.parse(await file.text()),library);pendingImport={input:JSON.parse(await file.text()),user:CloudAccount.user};$('#importAccount').textContent='导入至：'+$('#accountName').textContent;$('#importSummary').textContent='将导入 '+plan.added+' 个对话、'+plan.messages+' 条消息、'+plan.questions+' 个问题；跳过 '+plan.skipped+' 个相同对话。';$('#importError').textContent='';$('#settingsDialog').close();$('#importDialog').showModal();}catch(error){toast(error.message);}};
+$('#importFile').onchange=async()=>{const file=$('#importFile').files[0];if(!file)return;try{if(file.size>5*1024*1024)throw Error('备份文件过大，请先分批处理。');const plan=BackupImport.prepare(JSON.parse(await file.text()),library);pendingImport={input:JSON.parse(await file.text()),user:CloudAccount.user};$('#importAccount').textContent='导入至：'+$('#accountName').textContent;$('#importSummary').textContent='将导入 '+plan.added+' 个对话、'+plan.messages+' 条消息、'+plan.questions+' 个问题；跳过 '+plan.skipped+' 个相同对话。';$('#importError').textContent='';openSubDialog($('#importDialog'),'settingsDialog');}catch(error){toast(error.message);}};
 $('#cancelImport').onclick=()=>{pendingImport=null;$('#importDialog').close();};
 $('#confirmImport').onclick=async()=>{if(!pendingImport)return;if(!CloudAccount.ready||CloudAccount.user!==pendingImport.user||busy||organizing){$('#importError').textContent='账号或操作状态已变化，请重新选择备份。';return;}try{const plan=BackupImport.prepare(pendingImport.input,library);applyCloudLibrary(plan.document);save();pendingImport=null;$('#importDialog').close();await CloudAccount.sync();toast('已导入 '+plan.added+' 个对话，请在设置中确认云端同步状态。');}catch(error){$('#importError').textContent=error.message;}};
