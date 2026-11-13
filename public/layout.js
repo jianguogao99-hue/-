@@ -64,42 +64,65 @@ const root=document.documentElement;
 // viewport is clearly shorter than the layout viewport. Otherwise the shell uses plain 100dvh, so a
 // stale keyboard-height lock can never survive the keyboard closing (iOS sometimes skips the resize).
 const KEYBOARD_MIN=120;
-let frame=0,settleTimers=[];
+let frame=0,settleTimer=0,applied={open:false,height:0,top:0},changes=0;
 function editableFocused(){const el=document.activeElement;return Boolean(el&&el!==document.body&&(el.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)));}
 function keyboardState(){
  const layoutHeight=window.innerHeight||0;
- const height=viewport?viewport.height:layoutHeight;
- const top=viewport?viewport.offsetTop:0;
+ const height=viewport?Math.round(viewport.height):layoutHeight;
+ const top=viewport?Math.round(viewport.offsetTop):0;
  const open=Boolean(viewport)&&editableFocused()&&layoutHeight-height>KEYBOARD_MIN;
  return {open,height,top,layoutHeight};
+}
+const composer=()=>document.querySelector('#form');
+const messages=()=>document.querySelector('#messages');
+// FLIP: the shell height snaps once; the composer glides from where it was with a cheap transform.
+function glideComposer(before){
+ const node=composer();if(!node||before==null||!node.getBoundingClientRect)return;
+ const after=node.getBoundingClientRect().top;const delta=before-after;
+ if(!delta||Math.abs(delta)<2)return;
+ node.style.transition='none';node.style.transform='translateY('+delta+'px)';
+ void node.offsetHeight;
+ node.style.transition='transform 240ms cubic-bezier(.2,.8,.2,1)';node.style.transform='';
+ clearTimeout(node._glide);node._glide=setTimeout(()=>{node.style.transition='';},280);
 }
 function applyViewport(){
  const state=keyboardState();
  if(state.open&&state.height>0){
+  if(applied.open&&applied.height===state.height){
+   if(applied.top!==state.top){root.style.setProperty('--chat-viewport-top',state.top+'px');applied.top=state.top;}
+   return state;
+  }
+  const list=messages();const pinned=list&&list.scrollHeight-list.scrollTop-list.clientHeight<24;
+  const before=composer()?.getBoundingClientRect?.().top;
   root.style.setProperty('--chat-viewport-height',state.height+'px');
   root.style.setProperty('--chat-viewport-top',state.top+'px');
   root.classList.add('keyboard-open');
- }else{
+  applied={open:true,height:state.height,top:state.top};changes++;
+  if(pinned&&list)list.scrollTop=list.scrollHeight;
+  glideComposer(before);
+ }else if(applied.open){
+  const before=composer()?.getBoundingClientRect?.().top;
   root.style.removeProperty('--chat-viewport-height');
   root.style.removeProperty('--chat-viewport-top');
   root.classList.remove('keyboard-open');
-  // iOS can leave the page scrolled by the keyboard's height after it closes.
-  if((window.scrollY||window.pageYOffset||0)!==0||(viewport&&viewport.offsetTop>0))window.scrollTo(0,0);
+  applied={open:false,height:0,top:0};changes++;
+  glideComposer(before);
  }
+ // Only once nothing is being edited: iOS can leave the page scrolled by the keyboard's height.
+ // Never while an input has focus, or we would fight iOS scrolling the field into view (the jump).
+ if(!editableFocused()&&((window.scrollY||window.pageYOffset||0)!==0||(viewport&&viewport.offsetTop>0)))window.scrollTo(0,0);
  return state;
 }
 function syncViewport(){cancelAnimationFrame(frame);frame=requestAnimationFrame(applyViewport);}
-// Keyboard open/close animates over ~250-600ms and iOS may fire viewport events early or not at all.
-function settle(){settleTimers.forEach(clearTimeout);settleTimers=[0,120,350,700].map(ms=>setTimeout(syncViewport,ms));}
-window.WenjiViewport={apply:applyViewport,sync:syncViewport,settle,keyboardState};
-function growInput(){input.style.height='auto';input.style.height=Math.min(input.scrollHeight,120)+'px';syncViewport();}
+// One coalesced settle after focus changes, for when iOS skips or delays its viewport resize.
+function settle(){clearTimeout(settleTimer);settleTimer=setTimeout(syncViewport,320);}
+window.WenjiViewport={apply:applyViewport,sync:syncViewport,settle,keyboardState,get changes(){return changes;}};
+function growInput(){input.style.height='auto';input.style.height=Math.min(input.scrollHeight,120)+'px';}
 viewport?.addEventListener('resize',syncViewport);viewport?.addEventListener('scroll',syncViewport);
 window.addEventListener('resize',syncViewport);window.addEventListener('orientationchange',settle);window.addEventListener('pageshow',settle);
 document.addEventListener('focusin',settle);document.addEventListener('focusout',settle);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)settle();});
 input?.addEventListener('input',growInput);
-const search=document.querySelector('#search');const panel=document.querySelector('#mapPanel');
-search?.addEventListener('focus',()=>{panel?.classList.add('search-editing');});
-search?.addEventListener('blur',()=>{setTimeout(()=>{panel?.classList.toggle('search-editing',document.activeElement===search||Boolean(search.value.trim()));},220);});
+// Search focus no longer hides the map header (that was the jump when the field was tapped).
 syncViewport();
 })();

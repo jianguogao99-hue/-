@@ -8,7 +8,7 @@
   },
   "scripts": {
     "build": "node scripts/build-netlify.mjs",
-    "test": "node tests/sync.test.mjs && node tests/navigation.test.mjs && node tests/graph-hold.test.mjs && node tests/background.test.mjs && node tests/glyph-pixels.test.mjs && node tests/weather-routing.test.mjs && node tests/tools.test.mjs && node tests/netlify-store.test.mjs && node tests/netlify-auth.test.mjs && node tests/backup-import.test.mjs && node tests/composer-ui.test.mjs && node tests/boot-guards.test.mjs && node tests/viewport-keyboard.test.mjs",
+    "test": "node tests/sync.test.mjs && node tests/navigation.test.mjs && node tests/graph-hold.test.mjs && node tests/background.test.mjs && node tests/glyph-pixels.test.mjs && node tests/weather-routing.test.mjs && node tests/tools.test.mjs && node tests/netlify-store.test.mjs && node tests/netlify-auth.test.mjs && node tests/backup-import.test.mjs && node tests/composer-ui.test.mjs && node tests/boot-guards.test.mjs && node tests/viewport-keyboard.test.mjs && node tests/conversation-delete.test.mjs",
     "build:vercel": "node scripts/build-vercel.mjs",
     "build:netlify": "node scripts/build-netlify.mjs",
     "test:supabase": "node tests/supabase-isolation.test.mjs"

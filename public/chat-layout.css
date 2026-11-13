@@ -1508,3 +1508,64 @@ dialog button[aria-label="关闭"]:focus-visible{outline:2px solid rgba(255,255,
 /* Keyboard-free shell uses the dynamic viewport; only an open keyboard locks the height (layout.js). */
 html:not(.keyboard-open) main{top:0!important;height:100dvh!important;max-height:100dvh!important}
 html:not(.keyboard-open) #sidebar[open]{top:0;height:100dvh}
+
+/* UI polish v10: no iOS text selection on controls, long-press feedback, delete conversation, tighter cards. */
+#sidebar .history-row,
+#sidebar .history-item,
+#sidebar .history-item *,
+#sidebar .sidebar-tabs,
+#sidebar button,
+#sidebar summary,
+#workspace .map-view-switch,
+#workspace #mapPanel .find-card,
+#workspace #mapPanel .find-open,
+#workspace #mapPanel .find-open *,
+#workspace #mapPanel .timeline-event,
+#workspace #mapPanel .timeline-event *,
+#workspace #mapPanel .staged-card button,
+#workspace .collect-actions,
+#workspace .collect-actions button,
+#toggleMap,
+#form .model-pill,
+#form .send,
+dialog button,
+.delete-undo{
+ -webkit-user-select:none;
+ user-select:none;
+ -webkit-touch-callout:none;
+ -webkit-tap-highlight-color:transparent;
+}
+#workspace .msg .bubble,
+input,
+textarea,
+#detail #detailAnswer,
+#detail .source{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
+#sidebar .history-row{transition:transform 160ms cubic-bezier(.2,.8,.2,1),background-color 160ms ease}
+#sidebar .history-row.is-pressing{transform:scale(.985)}
+#sidebar .history-row.is-long-pressed{transform:scale(.96)}
+/* Delete conversation: red text in the menu, danger fill in the confirm. */
+.conversation-actions button.danger-action,
+#conversationActions .conversation-actions #deleteConversation{color:#ff6b5e;font-weight:600}
+.conversation-actions button.danger-action:hover{background:#2c1f1d}
+#deleteConversationDialog .sub{font-size:14px;line-height:1.6;color:var(--type-secondary,#b3b3b3);margin:10px 0 4px}
+#deleteConversationDialog .danger-send{
+ background:#e5484d;
+ color:#fff;
+ border:0;
+ border-radius:999px;
+ padding:10px 20px;
+ font-weight:600;
+ font-size:14px;
+}
+#deleteConversationDialog .danger-send:hover{background:#f05a5e}
+#deleteConversationDialog .dialog-actions .outline{border-radius:999px;padding:10px 20px}
+#conversationUndo #conversationUndoText{font-size:13px;font-weight:500;color:#eee;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#conversationUndo #undoConversationDelete{padding:6px 14px;border-radius:999px;background:var(--accent);color:var(--accent-on);font-size:13px;font-weight:600;line-height:1.3}
+#conversationUndo[hidden]{display:none!important}
+/* Map cards without the 收录于 line: star + 在图中定位 sit right under the title. */
+#workspace #mapPanel .find-card,
+#workspace[data-mode="map"] #mapPanel .find-card{padding:10px 12px 8px}
+#workspace #mapPanel .find-card .find-open{padding-bottom:0}
+#workspace #mapPanel .find-card .find-meta{justify-content:flex-end;margin-top:2px;min-height:0}
+/* The conversation undo pill floats above the composer, not on top of it. */
+#conversationUndo.delete-undo{bottom:calc(env(safe-area-inset-bottom,0px) + 152px)}

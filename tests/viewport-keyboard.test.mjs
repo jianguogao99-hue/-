@@ -109,5 +109,5 @@ assert.match(html, /<dialog id="connection"><button class="close" id="closeConne
 for (const m of html.matchAll(/<dialog id="(\w+)">([\s\S]*?)<\/dialog>/g)) {
   if (/aria-label="关闭"/.test(m[2])) assert.match(m[2], /<h2[^>]*tabindex="-1" autofocus/, m[1] + ': opening focuses the title, not ✕');
 }
-for (const [file, token] of [['chat-layout.css', 'ui-fx15'], ['app.js', 'ui-fx15'], ['layout.js', 'ui-fx15']]) assert.ok(html.includes(file + '?v=' + token), file + ' cache token');
+for (const [file, token] of [['chat-layout.css', 'ui-fx16'], ['app.js', 'ui-fx16'], ['layout.js', 'ui-fx16']]) assert.ok(html.includes(file + '?v=' + token), file + ' cache token');
 console.log('PASS: keyboard height lock only while editing and restored on blur without resize, drawer dismisses keyboard, no phone auto-focus, sub-dialogs return to settings, uniform accent close.');

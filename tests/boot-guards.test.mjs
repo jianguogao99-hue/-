@@ -7,7 +7,7 @@ const html = fs.readFileSync(new URL('../public/index.html', import.meta.url), '
 
 // Boot regression (v8): renderMap() runs during boot before the whole file has evaluated.
 // State it touches must not be a let/const declared later in the file (temporal dead zone froze the loading screen).
-assert.match(app, /^'use strict';\n(?:\/\/[^\n]*\n)?var deleteUndoFresh=null,deleteUndoTimer=0;/, 'undo state is hoisted to the top of app.js with var');
+assert.match(app, /^'use strict';\n(?:\/\/[^\n]*\n)?var deleteUndoFresh=null,deleteUndoTimer=0[,;]/, 'undo state is hoisted to the top of app.js with var');
 assert.doesNotMatch(app, /\blet deleteUndoFresh|\bconst deleteUndoFresh|\blet deleteUndoTimer|\bconst deleteUndoTimer/, 'undo state must not be re-declared with let/const later in the file');
 
 // Every name renderMap's helpers read at boot must be declared before the first top-level renderMap() call.
@@ -48,5 +48,5 @@ assert.equal(text.textContent, '已删除「旧的」');
 for (const id of ['deleteUndo', 'deleteUndoText', 'undoDelete', 'tree', 'search', 'timeOrder', 'syncLoading', 'mapPanel', 'historyList']) {
   assert.match(html, new RegExp('id="' + id + '"'), 'index.html keeps #' + id);
 }
-assert.match(html, /app\.js\?v=ui-fx15/, 'fixed app.js needs a new cache token');
+assert.match(html, /app\.js\?v=ui-fx16/, 'fixed app.js needs a new cache token');
 console.log('PASS: boot order (no TDZ on undo state), undo helpers survive missing elements and odd stored data, required map elements present.');
