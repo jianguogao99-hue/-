@@ -24,7 +24,7 @@ const v16 = css.slice(css.indexOf('/* UI v16'));
 assert.match(v16, /padding-bottom:var\(--list-bottom-pad\)!important/, 'mobile list padding comes from the measured composer position');
 assert.match(v16, /#messages>\.msg:last-child\{margin-bottom:0!important\}/, 'the final message leaves exactly the measured 16px gap');
 assert.match(v16, /padding-bottom:calc\(var\(--list-bottom-pad\) \+ var\(--kb-lift,0px\)\)!important/, 'keyboard reserve stacks on the exact list padding');
-for (const [file, token] of [['chat-layout.css', 'ui-fx22'], ['app.js', 'ui-fx18'], ['layout.js', 'ui-fx19']]) assert.ok(html.includes(file + '?v=' + token), file + ' cache token');
+for (const [file, token] of [['chat-layout.css', 'ui-fx23'], ['app.js', 'ui-fx18'], ['layout.js', 'ui-fx20']]) assert.ok(html.includes(file + '?v=' + token), file + ' cache token');
 
 function makeEnv() {
   const props = new Map(), classes = new Set(); let frames = [], timers = [];
@@ -58,6 +58,7 @@ function makeEnv() {
   assert.equal(R({ innerHeight: 852, vvHeight: 852, vvTop: 0 }), 0, 'no keyboard: no extra message reserve');
   assert.equal(api.listBottomPad({ messagesBottom: 852, composerTop: 710 }), 158, 'list padding = messages bottom - resting composer top + 16');
   assert.equal(api.listBottomPad({ messagesBottom: 0, composerTop: 710 }), 0, 'missing layout measurements do not create padding');
+  assert.equal(api.mapTopZone({ stickyBottom: 206 }), 206, 'map content starts below the measured header + sticky zone');
 }
 
 // --- Event flow: open, iOS page-shift, scroll drag, close, restore.

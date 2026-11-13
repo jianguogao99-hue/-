@@ -84,8 +84,14 @@ function listBottomPad(m){
  if(!messagesBottom||!composerTop)return 0;
  return Math.max(16,Math.round(messagesBottom-composerTop+16));
 }
+function mapTopZone(m){
+ const stickyBottom=Math.max(0,Number(m.stickyBottom)||0);
+ return Math.round(stickyBottom);
+}
 const composer=()=>document.querySelector('#form');
 const messages=()=>document.querySelector('#messages');
+const mapPanel=()=>document.querySelector('#mapPanel');
+const mapSticky=()=>document.querySelector('#mapPanel .map-sticky');
 function composerFocused(){const el=document.activeElement;return Boolean(el&&input&&el===input);}
 function editableFocused(){const el=document.activeElement;return Boolean(el&&el!==document.body&&(el.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)));}
 function measure(){
@@ -129,10 +135,23 @@ function updateListBottomPad(){
  root.style.setProperty('--list-bottom-pad',next+'px');listPad=next;changes++;
  return true;
 }
+let mapZone=0;
+function updateMapTopZone(){
+ const panel=mapPanel(),sticky=mapSticky();
+ if(!panel||!sticky||panel.hidden)return false;
+ if(typeof panel.getBoundingClientRect!=='function'||typeof sticky.getBoundingClientRect!=='function')return false;
+ const panelRect=panel.getBoundingClientRect(),stickyRect=sticky.getBoundingClientRect();
+ if(!(panelRect.width>0)||!(stickyRect.height>0))return false;
+ const next=mapTopZone({stickyBottom:stickyRect.bottom});
+ if(next===mapZone)return false;
+ root.style.setProperty('--map-top-zone',next+'px');mapZone=next;changes++;
+ return true;
+}
 function update(){
  const m=measure();
- if(!m.focused){setPlacement(0,0);updateListBottomPad();return;}
- setPlacement(composerTop(m),composerReserve(m));
+ if(!m.focused){setPlacement(0,0);updateListBottomPad();}
+ else setPlacement(composerTop(m),composerReserve(m));
+ updateMapTopZone();
 }
 function schedule(){cancelAnimationFrame(frame);frame=requestAnimationFrame(update);}
 // iOS leaves the page scrolled by the keyboard after it closes; put it back once nothing is edited.
@@ -149,7 +168,7 @@ function onFocusOut(){
   clearTimeout(restoreTimer);restoreTimer=setTimeout(restoreScroll,360);
  });
 }
-window.WenjiViewport={composerTop,composerReserve,listBottomPad,measure,update,updateListBottomPad,restoreScroll,get top(){return top;},get lift(){return reserve;},get fixed(){return fixed;},get listPad(){return listPad;},get changes(){return changes;}};
+window.WenjiViewport={composerTop,composerReserve,listBottomPad,mapTopZone,measure,update,updateListBottomPad,updateMapTopZone,restoreScroll,get top(){return top;},get lift(){return reserve;},get fixed(){return fixed;},get listPad(){return listPad;},get mapZone(){return mapZone;},get changes(){return changes;}};
 function growInput(){input.style.height='auto';input.style.height=Math.min(input.scrollHeight,120)+'px';if(composerFocused())schedule();}
 // Keyboard appearing/disappearing and page shifts both move the visual viewport; follow it directly.
 vv?.addEventListener('resize',schedule);
@@ -159,7 +178,16 @@ window.addEventListener('orientationchange',schedule);
 document.addEventListener('focusin',e=>{if(e.target===input)schedule();});
 document.addEventListener('focusout',onFocusOut);
 input?.addEventListener('input',growInput);
-if(window.ResizeObserver){const form=composer();if(form)new window.ResizeObserver(schedule).observe(form);}
+if(window.ResizeObserver){
+ const form=composer(),sticky=mapSticky();
+ if(form)new window.ResizeObserver(schedule).observe(form);
+ if(sticky)new window.ResizeObserver(schedule).observe(sticky);
+}
+if(window.MutationObserver){
+ const panel=mapPanel(),workspace=document.querySelector('#workspace');
+ if(panel)new MutationObserver(schedule).observe(panel,{attributes:true,attributeFilter:['class','hidden']});
+ if(workspace)new MutationObserver(schedule).observe(workspace,{attributes:true,attributeFilter:['data-mode']});
+}
 schedule();
 // Safari / Android toolbar colour follows the page background.
 const meta=document.querySelector('meta[name="theme-color"]');

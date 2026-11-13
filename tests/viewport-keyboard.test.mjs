@@ -99,5 +99,10 @@ assert.match(html, /<dialog id="connection"><button class="close" id="closeConne
 for (const m of html.matchAll(/<dialog id="(\w+)">([\s\S]*?)<\/dialog>/g)) {
   if (/aria-label="关闭"/.test(m[2])) assert.match(m[2], /<h2[^>]*tabindex="-1" autofocus/, m[1] + ': opening focuses the title, not ✕');
 }
-for (const [file, token] of [['chat-layout.css', 'ui-fx22'], ['rei-background.css', 'ui-fx11'], ['app.js', 'ui-fx18'], ['layout.js', 'ui-fx19']]) assert.ok(html.includes(file + '?v=' + token), file + ' cache token');
+const v17 = css.slice(css.indexOf('/* UI v17'));
+assert.match(v17, /#mapPanel \.map-heading\{display:none!important\}/, 'mobile map heading cannot collide with the floating header');
+assert.match(v17, /#mapPanel \.map-sticky\{[\s\S]*?position:fixed!important;[\s\S]*?top:calc\(env\(safe-area-inset-top,0px\) \+ 54px\)!important/, 'map controls use one fixed position in every view');
+assert.match(v17, /#mapPanel:has\(\.mind-shell\):not\(\.graph-immersive\)\{[\s\S]*?padding-bottom:calc\(100lvh - 100dvh \+ env\(safe-area-inset-bottom,0px\) \+ 16px\)!important/, 'graph fits above the bottom safe area');
+assert.match(v17, /#sidebar\[open\]>aside,[\s\S]*?bottom:calc\(100lvh - 100dvh \+ var\(--sidebar-inset\) \+ env\(safe-area-inset-bottom,0px\)\)!important;[\s\S]*?border-radius:var\(--sidebar-radius\)!important/, 'drawer card floats above the bottom safe area with rounded corners');
+for (const [file, token] of [['chat-layout.css', 'ui-fx23'], ['rei-background.css', 'ui-fx11'], ['app.js', 'ui-fx18'], ['layout.js', 'ui-fx20']]) assert.ok(html.includes(file + '?v=' + token), file + ' cache token');
 console.log('PASS: drawer dismisses keyboard, no phone auto-focus, sub-dialogs return to settings, uniform accent close.');
