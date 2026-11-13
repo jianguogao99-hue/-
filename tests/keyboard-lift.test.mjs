@@ -5,8 +5,8 @@ import vm from 'node:vm';
 const layout = fs.readFileSync(new URL('../public/layout.js', import.meta.url), 'utf8');
 const css = fs.readFileSync(new URL('../public/chat-layout.css', import.meta.url), 'utf8');
 const html = fs.readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
-const part = layout.slice(layout.indexOf("(()=>{\n'use strict';\n// Keyboard handling, v11"));
-assert.ok(part.length > 100, 'v11 keyboard block present');
+const part = layout.slice(layout.indexOf("(()=>{\n'use strict';\n// Keyboard handling, v15"));
+assert.ok(part.length > 100, 'v15 keyboard block present');
 
 // No JS height pinning anywhere: the shell is CSS-only.
 assert.doesNotMatch(part, /--chat-viewport-height|--chat-viewport-top|keyboard-open|style\.height\s*=\s*[^'"]*viewport/, 'no viewport-height pinning');
@@ -16,15 +16,16 @@ assert.match(html, /<meta name="theme-color" content="#070907">/);
 const v12 = css.slice(css.indexOf('/* UI v12'));
 assert.match(v12, /height:100lvh!important/, 'document shell paints full-bleed to the bottom edge');
 assert.match(v12, /bottom:calc\(var\(--viewport-stack-gap\) \+ var\(--composer-inset\)\)/, 'composer rests above the dynamic viewport bottom');
-assert.match(css, /translate3d\(0,calc\(-1 \* var\(--kb-lift,0px\)\),0\)/, 'composer lift is one transform');
-assert.match(css, /html\.kb-glide #workspace #form\.composer\{transition:transform 240ms cubic-bezier\(\.2,\.8,\.2,1\)\}/);
-for (const [file, token] of [['chat-layout.css', 'ui-fx20'], ['app.js', 'ui-fx17'], ['layout.js', 'ui-fx17']]) assert.ok(html.includes(file + '?v=' + token), file + ' cache token');
+const v15 = css.slice(css.indexOf('/* UI v15'));
+assert.match(v15, /html\.kb-fixed #workspace #form\.composer,[\s\S]*?position:fixed!important;[\s\S]*?top:0!important;[\s\S]*?bottom:auto!important;/, 'focused composer is fixed from the visual viewport top');
+assert.match(v15, /transform:translate3d\(0,var\(--kb-top,0px\),0\)!important/, 'visual-viewport top is applied as one transform');
+assert.match(v15, /transition:none!important/, 'keyboard tracking does not lag behind the visual viewport');
+for (const [file, token] of [['chat-layout.css', 'ui-fx21'], ['app.js', 'ui-fx17'], ['layout.js', 'ui-fx18']]) assert.ok(html.includes(file + '?v=' + token), file + ' cache token');
 
 function makeEnv() {
   const props = new Map(), classes = new Set(); let frames = [], timers = [];
   const vv = { height: 852, offsetTop: 0, l: {}, addEventListener(n, f) { this.l[n] = f; } };
-  // Composer rests 34px (safe area) above the bottom; its rect moves with the applied lift.
-  const composer = { getBoundingClientRect: () => ({ bottom: 852 - 34 - parseInt(props.get('--kb-lift') || '0') }) };
+  const composer = { getBoundingClientRect: () => ({ height: 108 }) };
   const textarea = { tagName: 'TEXTAREA', style: {}, scrollHeight: 40, addEventListener() {} };
   const search = { tagName: 'INPUT' }, body = { tagName: 'BODY' };
   const dl = {};
@@ -40,50 +41,48 @@ function makeEnv() {
 // --- Pure math.
 {
   const { api } = makeEnv();
-  const L = m => api.composerLift(m);
-  assert.equal(L({ focused: false, innerHeight: 852, vvHeight: 500, vvTop: 0, restingBottom: 818 }), 0, 'not editing the composer: never lifted');
-  assert.equal(L({ focused: true, innerHeight: 852, vvHeight: 852, vvTop: 0, restingBottom: 818 }), 0, 'no keyboard: 0');
-  // Keyboard 336px tall, iOS did not scroll the page: lift to just above it.
-  assert.equal(L({ focused: true, innerHeight: 852, vvHeight: 516, vvTop: 0, restingBottom: 818 }), 818 + 8 - 516);
-  // iOS ALSO scrolled the page up by 250px itself: that scroll already moved the composer; we only add the rest.
-  assert.equal(L({ focused: true, innerHeight: 852, vvHeight: 516, vvTop: 250, restingBottom: 818 }), 818 + 8 - 766, 'iOS page shift is not added twice');
-  // iOS scrolled far enough on its own: 0, never negative.
-  assert.equal(L({ focused: true, innerHeight: 852, vvHeight: 516, vvTop: 336, restingBottom: 818 }), 0);
-  // Chrome Android resizing the layout (innerHeight shrinks with vv): CSS already moved it -> 0, no double.
-  assert.equal(L({ focused: true, innerHeight: 516, vvHeight: 516, vvTop: 0, restingBottom: 482 }), 0, 'resized layout: no extra lift');
-  // Spec shape: lift == innerHeight - vv.height - vv.offsetTop minus the composer's own resting gap (+8px margin).
-  for (const [vh, top] of [[516, 0], [480, 120], [600, 40]]) {
-    const gap = 34;
-    assert.equal(L({ focused: true, innerHeight: 852, vvHeight: vh, vvTop: top, restingBottom: 852 - gap }), Math.max(0, 852 - vh - top - gap + 8));
-  }
+  const T = m => api.composerTop(m);
+  assert.equal(T({ innerHeight: 852, vvHeight: 852, vvTop: 0, composerHeight: 108 }), 736, 'no keyboard: 8px above the visible bottom');
+  assert.equal(T({ innerHeight: 852, vvHeight: 516, vvTop: 0, composerHeight: 108 }), 400, 'keyboard: absolute top from the visual viewport');
+  assert.equal(T({ innerHeight: 852, vvHeight: 516, vvTop: 250, composerHeight: 108 }), 650, 'iOS page shift is counted once');
+  assert.equal(T({ innerHeight: 516, vvHeight: 516, vvTop: 0, composerHeight: 108 }), 400, 'resized layout uses the same formula');
+  assert.equal(T({ innerHeight: 852, vvHeight: null, vvTop: 0, composerHeight: 108 }), 736, 'missing vv height falls back to innerHeight');
+  const R = m => api.composerReserve(m);
+  assert.equal(R({ innerHeight: 852, vvHeight: 516, vvTop: 0 }), 336, 'message reserve = occluded keyboard height');
+  assert.equal(R({ innerHeight: 852, vvHeight: 516, vvTop: 200 }), 136, 'page shift reduces the reserve');
+  assert.equal(R({ innerHeight: 852, vvHeight: 852, vvTop: 0 }), 0, 'no keyboard: no extra message reserve');
 }
 
 // --- Event flow: open, iOS page-shift, scroll drag, close, restore.
 {
   const e = makeEnv(); e.run();
-  assert.equal(e.api.lift, 0);
+  assert.equal(e.api.top, 0);
   const c0 = e.api.changes;
   e.document.activeElement = e.textarea; e.dl.focusin({ target: e.textarea });
   e.vv.height = 516; e.vv.l.resize(); e.vv.l.resize(); e.vv.l.resize(); e.run();
-  assert.equal(e.props.get('--kb-lift'), '310px', 'open: one lift to just above the keyboard');
+  assert.equal(e.props.get('--kb-top'), '400px', 'open: absolute top just above the keyboard');
+  assert.equal(e.props.get('--kb-lift'), '336px', 'open: message reserve matches the occluded keyboard');
   assert.equal(e.api.changes - c0, 1, 'a burst of resizes = one change');
-  assert.ok(e.classes.has('kb-glide'), 'keyboard opening animates');
+  assert.ok(e.classes.has('kb-fixed'), 'composer enters fixed visual-viewport mode');
+  assert.ok(e.classes.has('kb-lifted'), 'bottom fade yields to the keyboard');
   assert.equal(e.window.scrolls, 0, 'never scrollTo while typing (that fights iOS)');
-  // iOS then scrolls the page 200px: lift shrinks by exactly that, without animation (follows the scroll).
+  // iOS then scrolls the page 200px: the composer top includes offsetTop exactly once.
   e.vv.offsetTop = 200; e.vv.l.scroll(); e.run();
-  assert.equal(e.props.get('--kb-lift'), '110px', 'page shift: total movement stays exactly at the keyboard top');
-  assert.equal(e.classes.has('kb-glide'), false, 'scroll-driven updates do not animate');
-  // Re-measuring with the lift applied is stable (resting bottom = rect + lift), no drift.
+  assert.equal(e.props.get('--kb-top'), '600px', 'page shift: top = offsetTop + height - composerH - 8');
+  assert.equal(e.props.get('--kb-lift'), '136px', 'page shift also shrinks the message reserve');
+  // Re-measuring with the placement applied is stable, no drift.
   const c1 = e.api.changes; e.vv.l.scroll(); e.vv.l.resize(); e.run();
   assert.equal(e.api.changes - c1, 0, 'stable: no extra writes');
   // Close: blur; iOS leaves the page scrolled and the viewport stale.
   e.window.scrollY = 200; e.document.activeElement = e.body; e.dl.focusout(); e.run();
-  assert.equal(e.props.get('--kb-lift'), '0px', 'blur resets the lift to 0 even if iOS never fires resize');
-  assert.ok(e.classes.has('kb-glide'), 'closing animates');
+  assert.equal(e.props.get('--kb-top'), '0px', 'blur leaves fixed mode');
+  assert.equal(e.props.get('--kb-lift'), '0px', 'blur clears the message reserve even if iOS never fires resize');
+  assert.equal(e.classes.has('kb-fixed'), false, 'composer returns to the v14 resting position');
+  assert.equal(e.classes.has('kb-lifted'), false, 'bottom fade returns');
   assert.ok(e.window.scrolls >= 1, 'leftover iOS page scroll is restored');
   assert.equal(e.window.scrollY, 0);
   e.vv.height = 852; e.vv.l.resize(); e.run();
-  assert.equal(e.props.get('--kb-lift'), '0px');
+  assert.equal(e.props.get('--kb-top'), '0px');
 }
 
 // --- Map search: no lift at all; blur only restores the scroll.
@@ -91,9 +90,11 @@ function makeEnv() {
   const e = makeEnv(); e.run();
   e.document.activeElement = e.search; e.dl.focusin({ target: e.search });
   e.vv.height = 516; e.vv.offsetTop = 180; e.window.scrollY = 180; e.vv.l.resize(); e.vv.l.scroll(); e.run();
-  assert.equal(e.api.lift, 0, 'search focus never moves the composer or any container');
+  assert.equal(e.api.fixed, false, 'search focus never pins the composer');
+  assert.equal(e.api.top, 0, 'search focus never moves the composer');
+  assert.equal(e.api.lift, 0, 'search focus never adds a message reserve');
   assert.equal(e.window.scrolls, 0, 'and lets iOS scroll it into view');
   e.document.activeElement = e.body; e.dl.focusout(); e.run();
   assert.equal(e.window.scrolls >= 1 && e.window.scrollY === 0, true, 'blur puts the page back (no clipped half screen)');
 }
-console.log('PASS: keyboard lift math (no double offset with iOS page shift or Chrome resize, restore to 0), no height pinning, full-bleed CSS, search untouched.');
+console.log('PASS: visual-viewport composer top, 8px keyboard gap, page-shift reserve, blur reset, no height pinning, search untouched.');

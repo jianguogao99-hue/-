@@ -5,3 +5,9 @@
 .rei-background{height:100lvh}
 .rei-art{height:100lvh;width:100lvh}
 @media(max-width:760px){.rei-art{right:-13lvh}}
+
+/* UI v15: the mobile header has no ink gradient; the top fade is the only edge glass. */
+@media(max-width:760px){
+ .rei-theme main header{background:transparent!important;background-image:none!important}
+ html.rei-theme,html.rei-theme body{background:#070907!important}
+}

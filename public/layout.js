@@ -57,27 +57,26 @@ document.addEventListener('click',e=>{if(suppressClick){suppressClick=false;e.pr
 })();
 (()=>{
 'use strict';
-// Keyboard handling, v11: CSS owns every height (100lvh shell, no JS-pinned heights). The only thing
-// JS does is lift the bottom composer by one translateY so it sits just above the keyboard.
-// Lift = how far the composer's resting bottom edge is below the visible bottom edge
-// (vv.offsetTop + vv.height). That already accounts for iOS scrolling the page itself (offsetTop)
-// and for browsers that shrink the layout instead (Chrome with resizes-content: vv.height==innerHeight -> 0),
-// so the composer is never lifted twice.
+// Keyboard handling, v15: while focused, pin the composer to the visual viewport by absolute top.
+// top = vv.offsetTop + vv.height - composerHeight - 8. This is not a delta lift: iOS Safari's own
+// page shift and the keyboard are each counted exactly once, and every vv resize/scroll updates it.
 const vv=window.visualViewport;
 const root=document.documentElement;
 const input=document.querySelector('#input');
 const MARGIN=8,KEYBOARD_MIN=120;
-let lift=0,changes=0,frame=0,restoreTimer=0;
-function composerLift(m){
- const innerHeight=Math.max(0,Number(m.innerHeight)||0);
- const vvHeight=m.vvHeight==null?innerHeight:Math.max(0,Number(m.vvHeight)||0);
+let top=0,reserve=0,changes=0,frame=0,restoreTimer=0,fixed=false,lifted=false;
+function composerTop(m){
  const vvTop=Math.max(0,Number(m.vvTop)||0);
- if(!m.focused)return 0;
- // No keyboard (or the browser already resized the layout for it): nothing to do.
- if(innerHeight-vvHeight<=KEYBOARD_MIN)return 0;
- const restingBottom=m.restingBottom==null?innerHeight:Number(m.restingBottom);
- const visibleBottom=vvTop+vvHeight;
- return Math.max(0,Math.round(restingBottom+MARGIN-visibleBottom));
+ const vvHeight=m.vvHeight==null?Math.max(0,Number(m.innerHeight)||0):Math.max(0,Number(m.vvHeight)||0);
+ const composerHeight=Math.max(0,Number(m.composerHeight)||0);
+ return Math.max(0,Math.round(vvTop+vvHeight-composerHeight-MARGIN));
+}
+function composerReserve(m){
+ const innerHeight=Math.max(0,Number(m.innerHeight)||0);
+ const vvTop=Math.max(0,Number(m.vvTop)||0);
+ const vvHeight=m.vvHeight==null?innerHeight:Math.max(0,Number(m.vvHeight)||0);
+ const occluded=Math.max(0,Math.round(innerHeight-vvTop-vvHeight));
+ return occluded>KEYBOARD_MIN?occluded:0;
 }
 const composer=()=>document.querySelector('#form');
 const messages=()=>document.querySelector('#messages');
@@ -90,23 +89,34 @@ function measure(){
   innerHeight:window.innerHeight||0,
   vvHeight:vv?vv.height:null,
   vvTop:vv?vv.offsetTop:0,
-  // Resting position = where it would be with no lift applied.
-  restingBottom:rect?rect.bottom+lift:null,
+  composerHeight:rect?rect.height:0,
   focused:composerFocused()
  };
 }
-function setLift(next,glide){
- if(next===lift)return false;
- const list=messages();const pinned=list&&list.scrollHeight-list.scrollTop-list.clientHeight<24;
- root.classList.toggle('kb-glide',Boolean(glide));
- root.style.setProperty('--kb-lift',next+'px');
- root.classList.toggle('kb-lifted',next>0);
- lift=next;changes++;
- if(pinned&&list)list.scrollTop=list.scrollHeight;
+function setPlacement(nextTop,nextReserve){
+ const nextFixed=composerFocused();
+ const nextLifted=nextReserve>0;
+ let changed=false;
+ if(nextFixed!==fixed){fixed=nextFixed;root.classList.toggle('kb-fixed',fixed);changed=true;}
+ if(nextFixed){
+  if(nextTop!==top){root.style.setProperty('--kb-top',nextTop+'px');top=nextTop;changed=true;}
+ }else if(top!==0){
+  root.style.setProperty('--kb-top','0px');top=0;changed=true;
+ }
+ if(nextReserve!==reserve){root.style.setProperty('--kb-lift',nextReserve+'px');reserve=nextReserve;changed=true;}
+ if(nextLifted!==lifted){lifted=nextLifted;root.classList.toggle('kb-lifted',lifted);changed=true;}
+ if(!changed)return false;
+ changes++;
+ const list=messages();
+ if(list&&nextFixed&&list.scrollHeight-list.scrollTop-list.clientHeight<24)list.scrollTop=list.scrollHeight;
  return true;
 }
-function update(glide){return setLift(composerLift(measure()),glide);}
-function schedule(glide){cancelAnimationFrame(frame);frame=requestAnimationFrame(()=>update(glide));}
+function update(){
+ const m=measure();
+ if(!m.focused){setPlacement(0,0);return;}
+ setPlacement(composerTop(m),composerReserve(m));
+}
+function schedule(){cancelAnimationFrame(frame);frame=requestAnimationFrame(update);}
 // iOS leaves the page scrolled by the keyboard after it closes; put it back once nothing is edited.
 function restoreScroll(){
  if(editableFocused())return false;
@@ -116,18 +126,18 @@ function restoreScroll(){
 }
 function onFocusOut(){
  requestAnimationFrame(()=>{
-  if(!composerFocused())setLift(0,true);
+  if(!composerFocused())setPlacement(0,0);
   restoreScroll();
   clearTimeout(restoreTimer);restoreTimer=setTimeout(restoreScroll,360);
  });
 }
-window.WenjiViewport={composerLift,measure,update,restoreScroll,get lift(){return lift;},get changes(){return changes;}};
-function growInput(){input.style.height='auto';input.style.height=Math.min(input.scrollHeight,120)+'px';}
-// Keyboard appearing/disappearing = resize (animate); the user dragging the visual viewport = scroll (follow 1:1).
-vv?.addEventListener('resize',()=>schedule(true));
-vv?.addEventListener('scroll',()=>schedule(false));
-window.addEventListener('orientationchange',()=>schedule(false));
-document.addEventListener('focusin',e=>{if(e.target===input)schedule(true);});
+window.WenjiViewport={composerTop,composerReserve,measure,update,restoreScroll,get top(){return top;},get lift(){return reserve;},get fixed(){return fixed;},get changes(){return changes;}};
+function growInput(){input.style.height='auto';input.style.height=Math.min(input.scrollHeight,120)+'px';if(composerFocused())schedule();}
+// Keyboard appearing/disappearing and page shifts both move the visual viewport; follow it directly.
+vv?.addEventListener('resize',schedule);
+vv?.addEventListener('scroll',schedule);
+window.addEventListener('orientationchange',schedule);
+document.addEventListener('focusin',e=>{if(e.target===input)schedule();});
 document.addEventListener('focusout',onFocusOut);
 input?.addEventListener('input',growInput);
 // Safari / Android toolbar colour follows the page background.
