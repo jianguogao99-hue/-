@@ -33,6 +33,7 @@ iPhone, iOS 26 Safari with the floating (transparent) bottom toolbar. Anything t
 
 ## Known pitfalls
 - `100svh` caused a bottom black band on the floating-toolbar iPhone; use `100lvh` for full-screen paint and `100dvh` for interactive edges.
+- Do not measure `.map-sticky` into a top-zone CSS variable. View switches replace `#tree`, changing the measured bottom; v17's banner/padding then produced a large empty black block on Safari. Map geometry is CSS-only, with `overflow-anchor:none` on the scroll panel/tree.
 - Long resumed Codex sessions are slow; start a fresh session and locate rules with `rg -n` instead of reading whole files.
 
 ## Progress log (newest last)
@@ -44,3 +45,4 @@ iPhone, iOS 26 Safari with the floating (transparent) bottom toolbar. Anything t
 - v16: conversation opens measure the resting composer position into `--list-bottom-pad` instead of stacking reserve + toolbar gap + safe area, and re-pin `#messages` to the bottom over two animation frames; the last mobile message leaves exactly a 16px gap above the composer.
 - v17: mobile map controls are pinned in one fixed header-adjacent glass zone for every view, that zone is measured into `--map-top-zone`, the graph fills between it and the safe bottom, and the drawer card keeps a rounded bottom inset that accounts for the Safari toolbar and home indicator in both tab and standalone modes.
 - v18: restored the large mobile map heading below the floating header, replaced the opaque map banner with sticky sidebar-glass switch/search pills driven by `#sidebarGlass`, kept the active tab solid accent, and renamed the slider to 玻璃透明度.
+- v19: removed the v17 map-zone measurement entirely — `layout.js` no longer writes `--map-top-zone` or observes the sticky/panel — and pinned the mobile map panel, sticky rail and top fade to CSS-only safe-area/header values, so every view switch keeps identical geometry in Safari and standalone.

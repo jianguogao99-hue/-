@@ -2063,3 +2063,38 @@ html:not(.keyboard-open) main{
   mask-image:linear-gradient(to bottom,#000 0%,transparent 100%)!important;
  }
 }
+
+/* UI v19: map chrome is CSS flow only; a view switch never writes or reads a measured top zone. */
+@media(max-width:760px){
+ /* If an older rule still asks for the v17 variable, give it the header height, never a live measurement. */
+ html{--map-top-zone:calc(env(safe-area-inset-top,0px) + 54px)}
+ #workspace[data-mode="map"] #mapPanel:not(:has(.mind-shell)):not(.graph-immersive),
+ #workspace[data-mode="map"] #mapPanel:has(.mind-shell):not(.graph-immersive){
+  height:100lvh!important;
+  min-height:100lvh!important;
+  max-height:100lvh!important;
+  padding-top:calc(env(safe-area-inset-top,0px) + 62px)!important;
+  scroll-padding-top:0!important;
+  overflow-anchor:none!important;
+ }
+ #workspace[data-mode="map"] #mapPanel:not(:has(.mind-shell)):not(.graph-immersive) #tree{
+  overflow-anchor:none!important;
+ }
+ #workspace[data-mode="map"] #mapPanel:not(:has(.mind-shell)):not(.graph-immersive) .map-sticky,
+ #workspace[data-mode="map"] #mapPanel:has(.mind-shell):not(.graph-immersive) .map-sticky{
+  position:sticky!important;
+  top:0!important;
+  left:auto!important;
+  right:auto!important;
+  padding-left:0!important;
+  padding-right:0!important;
+ }
+ main:has(#workspace[data-mode="map"] #mapPanel:not(.graph-immersive))::before{
+  height:calc(env(safe-area-inset-top,0px) + 78px)!important;
+  background:linear-gradient(to bottom,rgba(7,9,7,.55) 0%,rgba(7,9,7,0) 100%)!important;
+  -webkit-backdrop-filter:blur(14px) saturate(1.2)!important;
+  backdrop-filter:blur(14px) saturate(1.2)!important;
+  -webkit-mask-image:linear-gradient(to bottom,#000 0%,transparent 100%)!important;
+  mask-image:linear-gradient(to bottom,#000 0%,transparent 100%)!important;
+ }
+}

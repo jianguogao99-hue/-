@@ -109,5 +109,10 @@ assert.match(v18, /\.map-sticky,[\s\S]*?position:sticky!important;[\s\S]*?top:0!
 assert.match(v18, /\.map-sticky,[\s\S]*?background:transparent!important/, 'the sticky rail has no opaque banner');
 assert.match(v18, /#mapPanel \.map-view-switch,[\s\S]*?background:var\(--glass-tint\),var\(--sidebar-bg\)!important/, 'the switch reuses the sidebar glass fill');
 assert.match(v18, /#mapPanel #search\{[\s\S]*?backdrop-filter:blur\(var\(--sidebar-blur\)\) saturate\(var\(--sidebar-sat\)\)!important/, 'the search field reuses the sidebar glass blur');
-for (const [file, token] of [['chat-layout.css', 'ui-fx24'], ['rei-background.css', 'ui-fx11'], ['app.js', 'ui-fx18'], ['layout.js', 'ui-fx20']]) assert.ok(html.includes(file + '?v=' + token), file + ' cache token');
+const v19 = css.slice(css.indexOf('/* UI v19'));
+assert.match(v19, /html\{--map-top-zone:calc\(env\(safe-area-inset-top,0px\) \+ 54px\)\}/, 'any legacy map-zone fallback is the fixed header height');
+assert.match(v19, /padding-top:calc\(env\(safe-area-inset-top,0px\) \+ 62px\)!important;[\s\S]*?scroll-padding-top:0!important;[\s\S]*?overflow-anchor:none!important/, 'map panel geometry is CSS-only and ignores view-switch anchoring');
+assert.match(v19, /\.map-sticky\{[\s\S]*?position:sticky!important;[\s\S]*?top:0!important/, 'the sticky rail pins inside the padded map scrollport');
+assert.doesNotMatch(v19, /var\(--map-top-zone\)/, 'no v19 rule reads a measured map zone');
+for (const [file, token] of [['chat-layout.css', 'ui-fx25'], ['rei-background.css', 'ui-fx11'], ['app.js', 'ui-fx18'], ['layout.js', 'ui-fx21']]) assert.ok(html.includes(file + '?v=' + token), file + ' cache token');
 console.log('PASS: drawer dismisses keyboard, no phone auto-focus, sub-dialogs return to settings, uniform accent close.');
