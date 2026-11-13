@@ -7,51 +7,7 @@ const app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8'
 const css = fs.readFileSync(new URL('../public/chat-layout.css', import.meta.url), 'utf8');
 const html = fs.readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
 
-// --- Viewport: simulate the iOS keyboard opening and closing against the real layout.js code.
-const viewportPart = layout.slice(layout.indexOf("(()=>{\n'use strict';\nconst viewport=window.visualViewport;"));
-function makeEnv() {
-  const listeners = {}, vvListeners = {}, docListeners = {}, timers = [];
-  const props = new Map(), classes = new Set();
-  const textarea = { tagName: 'TEXTAREA', style: {}, scrollHeight: 40, addEventListener() {} };
-  const body = { tagName: 'BODY' };
-  const env = { scrolledTo: null };
-  const visualViewport = { height: 852, offsetTop: 0, addEventListener: (n, f) => (vvListeners[n] = f) };
-  const document = {
-    activeElement: body, body, hidden: false,
-    documentElement: { style: { setProperty: (k, v) => props.set(k, v), removeProperty: k => props.delete(k) }, classList: { add: c => classes.add(c), remove: c => classes.delete(c) } },
-    querySelector: s => (s === '#input' ? textarea : null),
-    addEventListener: (n, f) => (docListeners[n] = f)
-  };
-  const window = {
-    innerHeight: 852, scrollY: 0, visualViewport,
-    addEventListener: (n, f) => (listeners[n] = f),
-    scrollTo: (x, y) => { env.scrolledTo = [x, y]; window.scrollY = 0; }
-  };
-  const ctx = { window, document, requestAnimationFrame: f => (f(), 1), cancelAnimationFrame() {}, setTimeout: f => (timers.push(f), timers.length), clearTimeout() {} };
-  vm.createContext(ctx);
-  vm.runInContext(viewportPart, ctx);
-  Object.assign(env, { ctx, window, document, visualViewport, textarea, body, props, classes, timers, docListeners, vvListeners, flush() { while (timers.length) timers.shift()(); } });
-  return env;
-}
-{
-  const e = makeEnv();
-  assert.equal(e.props.has('--chat-viewport-height'), false, 'no keyboard: no height lock, CSS 100dvh applies');
-  // Keyboard opens: composer focused, visual viewport shrinks.
-  e.document.activeElement = e.textarea; e.docListeners.focusin(); e.visualViewport.height = 480; e.visualViewport.offsetTop = 0; e.vvListeners.resize(); e.flush();
-  assert.equal(e.props.get('--chat-viewport-height'), '480px', 'keyboard open: shell follows the visual viewport so the composer stays above it');
-  assert.ok(e.classes.has('keyboard-open'));
-  // Keyboard closes but iOS reports no resize at all and leaves the page scrolled: blur alone must restore.
-  e.window.scrollY = 372; e.document.activeElement = e.body; e.docListeners.focusout(); e.flush();
-  assert.equal(e.props.has('--chat-viewport-height'), false, 'focus left editing: the height lock is cleared even if the viewport still reads short');
-  assert.equal(e.classes.has('keyboard-open'), false);
-  assert.deepEqual(e.scrolledTo, [0, 0], 'leftover keyboard scroll offset is reset');
-  // Viewport grows back later: still unlocked.
-  e.visualViewport.height = 852; e.vvListeners.resize(); e.flush();
-  assert.equal(e.props.has('--chat-viewport-height'), false);
-  // Focused input but no keyboard (hardware keyboard / desktop): never lock.
-  e.document.activeElement = e.textarea; e.docListeners.focusin(); e.flush();
-  assert.equal(e.props.has('--chat-viewport-height'), false, 'focus without a keyboard-sized shrink does not lock the height');
-}
+// Keyboard lift (v11) is covered in tests/keyboard-lift.test.mjs.
 
 // --- Drawer: opening the sidebar dismisses the keyboard first, so it gets the full screen and its gestures.
 {
@@ -109,5 +65,5 @@ assert.match(html, /<dialog id="connection"><button class="close" id="closeConne
 for (const m of html.matchAll(/<dialog id="(\w+)">([\s\S]*?)<\/dialog>/g)) {
   if (/aria-label="关闭"/.test(m[2])) assert.match(m[2], /<h2[^>]*tabindex="-1" autofocus/, m[1] + ': opening focuses the title, not ✕');
 }
-for (const [file, token] of [['chat-layout.css', 'ui-fx16'], ['app.js', 'ui-fx16'], ['layout.js', 'ui-fx16']]) assert.ok(html.includes(file + '?v=' + token), file + ' cache token');
-console.log('PASS: keyboard height lock only while editing and restored on blur without resize, drawer dismisses keyboard, no phone auto-focus, sub-dialogs return to settings, uniform accent close.');
+for (const [file, token] of [['chat-layout.css', 'ui-fx17'], ['app.js', 'ui-fx17'], ['layout.js', 'ui-fx17']]) assert.ok(html.includes(file + '?v=' + token), file + ' cache token');
+console.log('PASS: drawer dismisses keyboard, no phone auto-focus, sub-dialogs return to settings, uniform accent close.');

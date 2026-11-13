@@ -57,72 +57,82 @@ document.addEventListener('click',e=>{if(suppressClick){suppressClick=false;e.pr
 })();
 (()=>{
 'use strict';
-const viewport=window.visualViewport;
-const input=document.querySelector('#input');
+// Keyboard handling, v11: CSS owns every height (100lvh shell, no JS-pinned heights). The only thing
+// JS does is lift the bottom composer by one translateY so it sits just above the keyboard.
+// Lift = how far the composer's resting bottom edge is below the visible bottom edge
+// (vv.offsetTop + vv.height). That already accounts for iOS scrolling the page itself (offsetTop)
+// and for browsers that shrink the layout instead (Chrome with resizes-content: vv.height==innerHeight -> 0),
+// so the composer is never lifted twice.
+const vv=window.visualViewport;
 const root=document.documentElement;
-// The software keyboard only counts as open when something editable has focus AND the visual
-// viewport is clearly shorter than the layout viewport. Otherwise the shell uses plain 100dvh, so a
-// stale keyboard-height lock can never survive the keyboard closing (iOS sometimes skips the resize).
-const KEYBOARD_MIN=120;
-let frame=0,settleTimer=0,applied={open:false,height:0,top:0},changes=0;
-function editableFocused(){const el=document.activeElement;return Boolean(el&&el!==document.body&&(el.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)));}
-function keyboardState(){
- const layoutHeight=window.innerHeight||0;
- const height=viewport?Math.round(viewport.height):layoutHeight;
- const top=viewport?Math.round(viewport.offsetTop):0;
- const open=Boolean(viewport)&&editableFocused()&&layoutHeight-height>KEYBOARD_MIN;
- return {open,height,top,layoutHeight};
+const input=document.querySelector('#input');
+const MARGIN=8,KEYBOARD_MIN=120;
+let lift=0,changes=0,frame=0,restoreTimer=0;
+function composerLift(m){
+ const innerHeight=Math.max(0,Number(m.innerHeight)||0);
+ const vvHeight=m.vvHeight==null?innerHeight:Math.max(0,Number(m.vvHeight)||0);
+ const vvTop=Math.max(0,Number(m.vvTop)||0);
+ if(!m.focused)return 0;
+ // No keyboard (or the browser already resized the layout for it): nothing to do.
+ if(innerHeight-vvHeight<=KEYBOARD_MIN)return 0;
+ const restingBottom=m.restingBottom==null?innerHeight:Number(m.restingBottom);
+ const visibleBottom=vvTop+vvHeight;
+ return Math.max(0,Math.round(restingBottom+MARGIN-visibleBottom));
 }
 const composer=()=>document.querySelector('#form');
 const messages=()=>document.querySelector('#messages');
-// FLIP: the shell height snaps once; the composer glides from where it was with a cheap transform.
-function glideComposer(before){
- const node=composer();if(!node||before==null||!node.getBoundingClientRect)return;
- const after=node.getBoundingClientRect().top;const delta=before-after;
- if(!delta||Math.abs(delta)<2)return;
- node.style.transition='none';node.style.transform='translateY('+delta+'px)';
- void node.offsetHeight;
- node.style.transition='transform 240ms cubic-bezier(.2,.8,.2,1)';node.style.transform='';
- clearTimeout(node._glide);node._glide=setTimeout(()=>{node.style.transition='';},280);
+function composerFocused(){const el=document.activeElement;return Boolean(el&&input&&el===input);}
+function editableFocused(){const el=document.activeElement;return Boolean(el&&el!==document.body&&(el.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)));}
+function measure(){
+ const node=composer();
+ const rect=node&&node.getBoundingClientRect?node.getBoundingClientRect():null;
+ return {
+  innerHeight:window.innerHeight||0,
+  vvHeight:vv?vv.height:null,
+  vvTop:vv?vv.offsetTop:0,
+  // Resting position = where it would be with no lift applied.
+  restingBottom:rect?rect.bottom+lift:null,
+  focused:composerFocused()
+ };
 }
-function applyViewport(){
- const state=keyboardState();
- if(state.open&&state.height>0){
-  if(applied.open&&applied.height===state.height){
-   if(applied.top!==state.top){root.style.setProperty('--chat-viewport-top',state.top+'px');applied.top=state.top;}
-   return state;
-  }
-  const list=messages();const pinned=list&&list.scrollHeight-list.scrollTop-list.clientHeight<24;
-  const before=composer()?.getBoundingClientRect?.().top;
-  root.style.setProperty('--chat-viewport-height',state.height+'px');
-  root.style.setProperty('--chat-viewport-top',state.top+'px');
-  root.classList.add('keyboard-open');
-  applied={open:true,height:state.height,top:state.top};changes++;
-  if(pinned&&list)list.scrollTop=list.scrollHeight;
-  glideComposer(before);
- }else if(applied.open){
-  const before=composer()?.getBoundingClientRect?.().top;
-  root.style.removeProperty('--chat-viewport-height');
-  root.style.removeProperty('--chat-viewport-top');
-  root.classList.remove('keyboard-open');
-  applied={open:false,height:0,top:0};changes++;
-  glideComposer(before);
- }
- // Only once nothing is being edited: iOS can leave the page scrolled by the keyboard's height.
- // Never while an input has focus, or we would fight iOS scrolling the field into view (the jump).
- if(!editableFocused()&&((window.scrollY||window.pageYOffset||0)!==0||(viewport&&viewport.offsetTop>0)))window.scrollTo(0,0);
- return state;
+function setLift(next,glide){
+ if(next===lift)return false;
+ const list=messages();const pinned=list&&list.scrollHeight-list.scrollTop-list.clientHeight<24;
+ root.classList.toggle('kb-glide',Boolean(glide));
+ root.style.setProperty('--kb-lift',next+'px');
+ root.classList.toggle('kb-lifted',next>0);
+ lift=next;changes++;
+ if(pinned&&list)list.scrollTop=list.scrollHeight;
+ return true;
 }
-function syncViewport(){cancelAnimationFrame(frame);frame=requestAnimationFrame(applyViewport);}
-// One coalesced settle after focus changes, for when iOS skips or delays its viewport resize.
-function settle(){clearTimeout(settleTimer);settleTimer=setTimeout(syncViewport,320);}
-window.WenjiViewport={apply:applyViewport,sync:syncViewport,settle,keyboardState,get changes(){return changes;}};
+function update(glide){return setLift(composerLift(measure()),glide);}
+function schedule(glide){cancelAnimationFrame(frame);frame=requestAnimationFrame(()=>update(glide));}
+// iOS leaves the page scrolled by the keyboard after it closes; put it back once nothing is edited.
+function restoreScroll(){
+ if(editableFocused())return false;
+ const y=window.scrollY||window.pageYOffset||0;
+ if(y!==0||(vv&&vv.offsetTop>0)){window.scrollTo(0,0);return true;}
+ return false;
+}
+function onFocusOut(){
+ requestAnimationFrame(()=>{
+  if(!composerFocused())setLift(0,true);
+  restoreScroll();
+  clearTimeout(restoreTimer);restoreTimer=setTimeout(restoreScroll,360);
+ });
+}
+window.WenjiViewport={composerLift,measure,update,restoreScroll,get lift(){return lift;},get changes(){return changes;}};
 function growInput(){input.style.height='auto';input.style.height=Math.min(input.scrollHeight,120)+'px';}
-viewport?.addEventListener('resize',syncViewport);viewport?.addEventListener('scroll',syncViewport);
-window.addEventListener('resize',syncViewport);window.addEventListener('orientationchange',settle);window.addEventListener('pageshow',settle);
-document.addEventListener('focusin',settle);document.addEventListener('focusout',settle);
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)settle();});
+// Keyboard appearing/disappearing = resize (animate); the user dragging the visual viewport = scroll (follow 1:1).
+vv?.addEventListener('resize',()=>schedule(true));
+vv?.addEventListener('scroll',()=>schedule(false));
+window.addEventListener('orientationchange',()=>schedule(false));
+document.addEventListener('focusin',e=>{if(e.target===input)schedule(true);});
+document.addEventListener('focusout',onFocusOut);
 input?.addEventListener('input',growInput);
-// Search focus no longer hides the map header (that was the jump when the field was tapped).
-syncViewport();
+// Safari / Android toolbar colour follows the page background.
+const meta=document.querySelector('meta[name="theme-color"]');
+function syncThemeColor(){if(meta)meta.setAttribute('content',root.classList.contains('rei-theme')?'#070907':'#101010');}
+if(window.MutationObserver)new MutationObserver(syncThemeColor).observe(root,{attributes:true,attributeFilter:['class']});
+syncThemeColor();
 })();

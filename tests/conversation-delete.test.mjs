@@ -60,37 +60,24 @@ assert.match(v10, /#sidebar \.history-row,[\s\S]*?\{\n -webkit-user-select:none;
 assert.match(v10, /#workspace \.msg \.bubble,\ninput,\ntextarea,[\s\S]*?\{-webkit-user-select:text;user-select:text/, 'chat text and inputs remain selectable');
 assert.match(v10, /#deleteConversation\{color:#ff6b5e/, 'delete is red');
 
-// --- Keyboard smoothness: exactly one shell height change per open and per close, composer glides.
+// v11 delete motion: row folds (220ms), chat cross-fades (240ms, 8px), reduced motion skips both.
+assert.match(app, /collapseHistoryRow\(conversation\.id,\(\)=>deleteConversation\(conversation\.id\)\)/, 'confirm folds the row before deleting');
+assert.match(app, /function collapseHistoryRow[^\n]*duration:220/, 'row collapse is 220ms');
+assert.match(app, /function crossfadeConversation[^\n]*translateY\(8px\)[^\n]*duration:240/, 'chat cross-fades in from 8px over 240ms');
+assert.match(app, /crossfadeConversation\(\(\)=>openConversation\(next\.id,'chat'\)\)/, 'switching after deleting the active conversation cross-fades');
+assert.match(app, /function motionAllowed\(\)\{return !\(window\.matchMedia&&window\.matchMedia\('\(prefers-reduced-motion: reduce\)'\)\.matches\);\}/, 'respects reduced motion');
 {
-  const part = layout.slice(layout.indexOf("(()=>{\n'use strict';\nconst viewport=window.visualViewport;"));
-  const props = new Map(), classes = new Set(), timers = []; let frames = [];
-  const vv = { height: 852, offsetTop: 0, l: {}, addEventListener(n, f) { this.l[n] = f; } };
-  const composerNode = { style: {}, offsetHeight: 0, getBoundingClientRect: () => ({ top: (props.has('--chat-viewport-height') ? parseInt(props.get('--chat-viewport-height')) : 852) - 120 }) };
-  const textarea = { tagName: 'TEXTAREA', style: {}, scrollHeight: 40, addEventListener() {} }, body = { tagName: 'BODY' };
-  const dl = {};
-  const document = { activeElement: body, body, hidden: false, documentElement: { style: { setProperty: (k, v) => props.set(k, v), removeProperty: k => props.delete(k) }, classList: { add: c => classes.add(c), remove: c => classes.delete(c) } }, querySelector: s => (s === '#input' ? textarea : s === '#form' ? composerNode : null), addEventListener: (n, f) => (dl[n] = f) };
-  const window = { innerHeight: 852, scrollY: 0, visualViewport: vv, addEventListener() {}, scrollTo() { this.scrolls = (this.scrolls || 0) + 1; } };
-  const ctx = { window, document, requestAnimationFrame: f => (frames.push(f), frames.length), cancelAnimationFrame: () => { frames = []; }, setTimeout: f => (timers.push(f), timers.length), clearTimeout() {} };
-  vm.createContext(ctx); vm.runInContext(part, ctx);
-  const run = () => { for (let i = 0; i < 10 && (frames.length || timers.length); i++) { const f = frames; frames = []; f.forEach(x => x()); const t = timers.splice(0); t.forEach(x => x()); } };
-  run();
-  const start = window.WenjiViewport.changes;
-  // Open: focus, then iOS fires several resize/scroll events while the keyboard animates.
-  document.activeElement = textarea; dl.focusin(); vv.height = 520; vv.l.resize(); vv.height = 480; vv.l.resize(); vv.l.scroll(); vv.l.resize(); run();
-  assert.equal(props.get('--chat-viewport-height'), '480px');
-  const afterOpen = window.WenjiViewport.changes;
-  assert.ok(afterOpen - start <= 2, 'open: at most the intermediate + final height');
-  // Same frame bursts coalesce to one write.
-  const c0 = window.WenjiViewport.changes; vv.height = 470; vv.l.resize(); vv.l.resize(); vv.l.resize(); run();
-  assert.equal(window.WenjiViewport.changes - c0, 1, 'a burst of resizes in one frame is one height change');
-  // Repeated settles / scroll events with the same height do not touch layout again.
-  const c1 = window.WenjiViewport.changes; dl.focusin(); vv.l.scroll(); window.WenjiViewport.settle(); run();
-  assert.equal(window.WenjiViewport.changes - c1, 0, 'no extra jumps once settled');
-  assert.match(composerNode.style.transition || '', /transform 240ms cubic-bezier\(\.2,\.8,\.2,1\)|^$/, 'composer glides with a transform');
-  assert.ok(window.scrolls === undefined || window.scrolls === 0, 'never scrollTo while the field is focused (that fought iOS and jumped)');
-  // Close: blur, iOS stale viewport, multiple settles: exactly one change back.
-  const c2 = window.WenjiViewport.changes; document.activeElement = body; dl.focusout(); window.WenjiViewport.settle(); run(); vv.height = 852; vv.l.resize(); run();
-  assert.equal(window.WenjiViewport.changes - c2, 1, 'close: exactly one height change');
-  assert.equal(props.has('--chat-viewport-height'), false);
+  const start = app.indexOf('function motionAllowed');
+  const code = app.slice(start, app.indexOf('\n', app.indexOf('function crossfadeConversation')));
+  for (const reduce of [true, false]) {
+    const calls = []; let swapped = 0;
+    const node = { animate: (k, o) => { calls.push(o.duration); return { finished: Promise.resolve(), cancel() {} }; } };
+    const ctx = { window: { matchMedia: () => ({ matches: reduce }) }, $: () => node, document: { querySelectorAll: () => [] }, setTimeout: f => f(), Promise };
+    vm.createContext(ctx); vm.runInContext(code + ';crossfadeConversation(()=>{globalThis.s=(globalThis.s||0)+1});', ctx);
+    await new Promise(r => setTimeout(r, 5));
+    swapped = ctx.s;
+    assert.equal(swapped, 1, 'swap runs exactly once');
+    assert.equal(calls.length ? 1 : 0, reduce ? 0 : 1, reduce ? 'reduced motion: no animation' : 'animates');
+  }
 }
-console.log('PASS: delete conversation (tombstone sync, import safety, active switch, undo), long-press menu, no control text selection, 收录于 removed, smooth single-change keyboard handling.');
+console.log('PASS: delete conversation (tombstone sync, import safety, active switch, undo), long-press menu, no control text selection, 收录于 removed, row collapse + chat cross-fade.');
