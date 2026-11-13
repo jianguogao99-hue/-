@@ -1850,3 +1850,19 @@ html:not(.keyboard-open) main{
   will-change:transform;
  }
 }
+
+/* UI v16: exact mobile message padding measured from the resting composer. */
+@media(max-width:760px){
+ html{--list-bottom-pad:calc(var(--composer-reserve) + (100lvh - 100dvh) + env(safe-area-inset-bottom,0px) + 16px)}
+ html #workspace #chatPanel #messages,
+ html.rei-theme #workspace #chatPanel #messages{
+  padding-bottom:var(--list-bottom-pad)!important;
+  scroll-padding-bottom:var(--list-bottom-pad)!important;
+ }
+ html #workspace #chatPanel #messages>.msg:last-child{margin-bottom:0!important}
+ html.kb-lifted #workspace #chatPanel #messages,
+ html.kb-lifted.rei-theme #workspace #chatPanel #messages{
+  padding-bottom:calc(var(--list-bottom-pad) + var(--kb-lift,0px))!important;
+  scroll-padding-bottom:calc(var(--list-bottom-pad) + var(--kb-lift,0px))!important;
+ }
+}

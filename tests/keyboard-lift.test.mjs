@@ -20,22 +20,27 @@ const v15 = css.slice(css.indexOf('/* UI v15'));
 assert.match(v15, /html\.kb-fixed #workspace #form\.composer,[\s\S]*?position:fixed!important;[\s\S]*?top:0!important;[\s\S]*?bottom:auto!important;/, 'focused composer is fixed from the visual viewport top');
 assert.match(v15, /transform:translate3d\(0,var\(--kb-top,0px\),0\)!important/, 'visual-viewport top is applied as one transform');
 assert.match(v15, /transition:none!important/, 'keyboard tracking does not lag behind the visual viewport');
-for (const [file, token] of [['chat-layout.css', 'ui-fx21'], ['app.js', 'ui-fx17'], ['layout.js', 'ui-fx18']]) assert.ok(html.includes(file + '?v=' + token), file + ' cache token');
+const v16 = css.slice(css.indexOf('/* UI v16'));
+assert.match(v16, /padding-bottom:var\(--list-bottom-pad\)!important/, 'mobile list padding comes from the measured composer position');
+assert.match(v16, /#messages>\.msg:last-child\{margin-bottom:0!important\}/, 'the final message leaves exactly the measured 16px gap');
+assert.match(v16, /padding-bottom:calc\(var\(--list-bottom-pad\) \+ var\(--kb-lift,0px\)\)!important/, 'keyboard reserve stacks on the exact list padding');
+for (const [file, token] of [['chat-layout.css', 'ui-fx22'], ['app.js', 'ui-fx18'], ['layout.js', 'ui-fx19']]) assert.ok(html.includes(file + '?v=' + token), file + ' cache token');
 
 function makeEnv() {
   const props = new Map(), classes = new Set(); let frames = [], timers = [];
   const vv = { height: 852, offsetTop: 0, l: {}, addEventListener(n, f) { this.l[n] = f; } };
-  const composer = { getBoundingClientRect: () => ({ height: 108 }) };
+  const messages = { getBoundingClientRect: () => ({ top: 0, bottom: 852, height: 852 }) };
+  const composer = { getBoundingClientRect: () => ({ top: 710, bottom: 818, height: 108 }) };
   const textarea = { tagName: 'TEXTAREA', style: {}, scrollHeight: 40, addEventListener() {} };
   const search = { tagName: 'INPUT' }, body = { tagName: 'BODY' };
   const dl = {};
   const root = { style: { setProperty: (k, v) => props.set(k, v), removeProperty: k => props.delete(k) }, classList: { toggle: (c, on) => (on ? classes.add(c) : classes.delete(c)), contains: c => classes.has(c) }, };
-  const document = { activeElement: body, body, documentElement: root, querySelector: s => (s === '#input' ? textarea : s === '#form' ? composer : null), addEventListener: (n, f) => (dl[n] = f) };
+  const document = { activeElement: body, body, documentElement: root, querySelector: s => (s === '#input' ? textarea : s === '#form' ? composer : s === '#messages' ? messages : null), addEventListener: (n, f) => (dl[n] = f) };
   const window = { innerHeight: 852, scrollY: 0, visualViewport: vv, addEventListener() {}, scrolls: 0, scrollTo() { this.scrolls++; this.scrollY = 0; vv.offsetTop = 0; } };
   const ctx = { window, document, requestAnimationFrame: f => (frames.push(f), frames.length), cancelAnimationFrame: () => { frames = []; }, setTimeout: f => (timers.push(f), timers.length), clearTimeout() {} };
   vm.createContext(ctx); vm.runInContext(part, ctx);
   const run = () => { for (let i = 0; i < 10 && (frames.length || timers.length); i++) { const f = frames; frames = []; f.forEach(x => x()); const t = timers; timers = []; t.forEach(x => x()); } };
-  return { props, classes, vv, window, document, textarea, search, body, dl, run, api: window.WenjiViewport };
+  return { props, classes, vv, window, document, textarea, search, body, messages, dl, run, api: window.WenjiViewport };
 }
 
 // --- Pure math.
@@ -51,12 +56,15 @@ function makeEnv() {
   assert.equal(R({ innerHeight: 852, vvHeight: 516, vvTop: 0 }), 336, 'message reserve = occluded keyboard height');
   assert.equal(R({ innerHeight: 852, vvHeight: 516, vvTop: 200 }), 136, 'page shift reduces the reserve');
   assert.equal(R({ innerHeight: 852, vvHeight: 852, vvTop: 0 }), 0, 'no keyboard: no extra message reserve');
+  assert.equal(api.listBottomPad({ messagesBottom: 852, composerTop: 710 }), 158, 'list padding = messages bottom - resting composer top + 16');
+  assert.equal(api.listBottomPad({ messagesBottom: 0, composerTop: 710 }), 0, 'missing layout measurements do not create padding');
 }
 
 // --- Event flow: open, iOS page-shift, scroll drag, close, restore.
 {
   const e = makeEnv(); e.run();
   assert.equal(e.api.top, 0);
+  assert.equal(e.props.get('--list-bottom-pad'), '158px', 'initial layout measures the exact composer offset');
   const c0 = e.api.changes;
   e.document.activeElement = e.textarea; e.dl.focusin({ target: e.textarea });
   e.vv.height = 516; e.vv.l.resize(); e.vv.l.resize(); e.vv.l.resize(); e.run();

@@ -65,6 +65,8 @@ assert.match(app, /collapseHistoryRow\(conversation\.id,\(\)=>deleteConversation
 assert.match(app, /function collapseHistoryRow[^\n]*duration:220/, 'row collapse is 220ms');
 assert.match(app, /function crossfadeConversation[^\n]*translateY\(8px\)[^\n]*duration:240/, 'chat cross-fades in from 8px over 240ms');
 assert.match(app, /crossfadeConversation\(\(\)=>openConversation\(next\.id,'chat'\)\)/, 'switching after deleting the active conversation cross-fades');
+assert.match(app, /function scrollMessagesToBottom\(\)\{[^\n]*requestAnimationFrame[^\n]*requestAnimationFrame[^\n]*\}/, 'conversation opens re-pin the list over two animation frames');
+assert.match(app, /function openConversation[^\n]*scrollMessagesToBottom\(\);/, 'opening or switching a conversation scrolls to the bottom');
 assert.match(app, /function motionAllowed\(\)\{return !\(window\.matchMedia&&window\.matchMedia\('\(prefers-reduced-motion: reduce\)'\)\.matches\);\}/, 'respects reduced motion');
 {
   const start = app.indexOf('function motionAllowed');

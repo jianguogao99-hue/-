@@ -26,11 +26,11 @@ assert.match(html, /id="modelPillLabel"/, 'model pill needs a truncatable label'
 assert.match(html, /class="glass-backdrop"/, 'composer must include a backdrop layer');
 assert.match(html, /class="glass-specularity"/, 'composer must include a specular highlight layer');
 assert.match(html, /class="glass-rim"/, 'composer must include a liquid-glass rim');
-assert.match(html, /chat-layout\.css\?v=ui-fx21/, 'edited composer CSS needs a new cache token');
-assert.match(html, /app\.js\?v=ui-fx17/, 'edited composer JS needs a new cache token');
+assert.match(html, /chat-layout\.css\?v=ui-fx22/, 'edited composer CSS needs a new cache token');
+assert.match(html, /app\.js\?v=ui-fx18/, 'edited composer JS needs a new cache token');
 assert.match(html, /liquid-glass\.js\?v=ui-fx4/, 'liquid glass runtime must be included');
 assert.match(html, /rei-background\.css\?v=ui-fx11/, 'rei theme override needs a new cache token');
-assert.match(html, /layout\.js\?v=ui-fx18/, 'drawer JS needs a new cache token');
+assert.match(html, /layout\.js\?v=ui-fx19/, 'drawer JS needs a new cache token');
 assert.match(html, /rei-background\.js\?v=ui-fx11/, 'appearance JS needs a new cache token');
 
 const waitingStart = app.indexOf('function startWaiting');
