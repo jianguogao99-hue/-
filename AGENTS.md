@@ -47,3 +47,4 @@ iPhone, iOS 26 Safari with the floating (transparent) bottom toolbar. Anything t
 - v18: restored the large mobile map heading below the floating header, replaced the opaque map banner with sticky sidebar-glass switch/search pills driven by `#sidebarGlass`, kept the active tab solid accent, and renamed the slider to 玻璃透明度.
 - v19: removed the v17 map-zone measurement entirely — `layout.js` no longer writes `--map-top-zone` or observes the sticky/panel — and pinned the mobile map panel, sticky rail and top fade to CSS-only safe-area/header values, so every view switch keeps identical geometry in Safari and standalone.
 - v20: merged the time-order select into the 按提问顺序 pill; tapping the active pill toggles 最早在前/最新在前.
+- v21 (Codax direct): hid scrollbars in #workspace/#sidebar, removed timeline kind label (首次提问/继续追问) from event-top; css ui-fx27, app.js ui-fx20.

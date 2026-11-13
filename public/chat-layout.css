@@ -2102,3 +2102,6 @@ html:not(.keyboard-open) main{
 /* UI v20 */
 .map-view-switch #byTime .order-arrow{width:12px;height:12px;margin-left:4px;vertical-align:-1px;transition:transform .2s}
 .order-arrow.desc{transform:rotate(180deg)}
+
+/* UI v21 */
+#workspace *,#sidebar *{scrollbar-width:none!important}#workspace *::-webkit-scrollbar,#sidebar *::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}.timeline-event .event-top{justify-content:flex-end}
