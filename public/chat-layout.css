@@ -1708,3 +1708,100 @@ html:not(.keyboard-open) main{
  }
  #sidebar #historyList{overflow-y:auto!important}
 }
+
+/* UI v14: mobile chat runs edge to edge under a floating header and composer, with frosted edge fades. */
+@media(max-width:760px){
+ html main{--composer-reserve:132px}
+ html main header{
+  position:absolute!important;
+  top:0!important;
+  left:0!important;
+  right:0!important;
+  z-index:6!important;
+  height:calc(54px + env(safe-area-inset-top,0px))!important;
+  flex-basis:auto!important;
+  padding-top:env(safe-area-inset-top,0px)!important;
+  background:transparent!important;
+  border-bottom:0!important;
+ }
+ .workspace{
+  position:relative;
+  flex:1 1 auto!important;
+  width:100%!important;
+  height:100lvh!important;
+  min-height:100lvh!important;
+  max-height:100lvh!important;
+  padding:0!important;
+  overflow:hidden!important;
+ }
+ #workspace #chatPanel,
+ #workspace[data-mode="chat"] #chatPanel{
+  width:100%!important;
+  height:100lvh!important;
+  min-height:100lvh!important;
+  max-height:100lvh!important;
+  margin:0!important;
+  overflow:hidden!important;
+ }
+ #workspace #chatPanel #messages,
+ .rei-theme #workspace #chatPanel #messages{
+  position:absolute!important;
+  inset:0!important;
+  width:auto!important;
+  height:auto!important;
+  max-height:none!important;
+  padding-top:calc(54px + env(safe-area-inset-top,0px) + 8px)!important;
+  padding-bottom:calc(var(--composer-reserve) + (100lvh - 100dvh) + env(safe-area-inset-bottom,0px) + 16px)!important;
+  scroll-padding-top:calc(54px + env(safe-area-inset-top,0px) + 8px)!important;
+  scroll-padding-bottom:calc(var(--composer-reserve) + (100lvh - 100dvh) + env(safe-area-inset-bottom,0px) + 16px)!important;
+  background:transparent!important;
+ }
+ html.kb-lifted #workspace #chatPanel #messages{
+  padding-bottom:calc(var(--composer-reserve) + (100lvh - 100dvh) + env(safe-area-inset-bottom,0px) + var(--kb-lift,0px) + 16px)!important;
+  scroll-padding-bottom:calc(var(--composer-reserve) + (100lvh - 100dvh) + env(safe-area-inset-bottom,0px) + var(--kb-lift,0px) + 16px)!important;
+ }
+ #workspace[data-mode="map"] #mapPanel:not(:has(.mind-shell)):not(.graph-immersive){
+  padding-top:calc(54px + env(safe-area-inset-top,0px) + 8px)!important;
+  padding-bottom:calc(100lvh - 100dvh + env(safe-area-inset-bottom,0px) + 16px)!important;
+  background:transparent!important;
+ }
+ #workspace[data-mode="map"] #mapPanel:not(:has(.mind-shell)):not(.graph-immersive) .map-sticky{
+  top:calc(54px + env(safe-area-inset-top,0px) + 8px)!important;
+  background:linear-gradient(180deg,rgba(7,9,7,.38),rgba(7,9,7,.06))!important;
+ }
+ main::before,
+ main::after{
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  z-index:3;
+  pointer-events:none;
+ }
+ main::before{
+  top:0;
+  height:calc(54px + env(safe-area-inset-top,0px) + 24px);
+  background:linear-gradient(to bottom,rgba(7,9,7,.55) 0%,rgba(7,9,7,0) 100%);
+  -webkit-backdrop-filter:blur(14px) saturate(1.2);
+  backdrop-filter:blur(14px) saturate(1.2);
+  -webkit-mask-image:linear-gradient(to bottom,#000 0%,transparent 100%);
+  mask-image:linear-gradient(to bottom,#000 0%,transparent 100%);
+ }
+ main::after{
+  bottom:0;
+  height:calc(var(--composer-reserve) + (100lvh - 100dvh) + env(safe-area-inset-bottom,0px) + 24px);
+  background:linear-gradient(to top,rgba(7,9,7,.55) 0%,rgba(7,9,7,0) 100%);
+  -webkit-backdrop-filter:blur(14px) saturate(1.2);
+  backdrop-filter:blur(14px) saturate(1.2);
+  -webkit-mask-image:linear-gradient(to top,#000 0%,transparent 100%);
+  mask-image:linear-gradient(to top,#000 0%,transparent 100%);
+ }
+ main:has(#workspace[data-mode="map"])::after{
+  height:calc(100lvh - 100dvh + env(safe-area-inset-bottom,0px) + 24px);
+ }
+ html.kb-lifted main::after{display:none!important}
+ main:has(#workspace[data-mode="map"] #mapPanel.graph-immersive)::before,
+ main:has(#workspace[data-mode="map"] #mapPanel.graph-immersive)::after,
+ main:has(#workspace[data-mode="map"] #mapPanel .mind-shell)::before,
+ main:has(#workspace[data-mode="map"] #mapPanel .mind-shell)::after{display:none!important}
+}

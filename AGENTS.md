@@ -29,3 +29,4 @@ iPhone, iOS 26 Safari with the floating (transparent) bottom toolbar. Anything t
 - v11 (6754247): 100lvh shell, CSS-only heights, single translateY keyboard lift.
 - v12 (90f8d04): made body/main document-flow, rei-background absolute. RESULT ON PHONE: bad — whole page became draggable, sidebar card stops above toolbar, bottom still black (the .rei-art is only 100svh tall so the bottom band is plain #070907).
 - v13: locked html/body to 100lvh with overflow hidden (no document rubber band), rei art to 100lvh, mobile drawer card to the 100lvh bottom behind the toolbar with the footer clearing it; composer stack gap and layout.js unchanged.
+- v14: mobile chat runs edge to edge under a floating transparent header and composer, with masked frosted-glass bands at the top and bottom; the map list gets the same edge treatment and graph/immersive views skip it.

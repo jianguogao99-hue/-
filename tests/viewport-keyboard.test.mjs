@@ -75,13 +75,21 @@ assert.match(v12, /padding-bottom:calc\(var\(--composer-reserve\) \+ var\(--view
 assert.match(v12, /html\.kb-lifted #workspace #chatPanel #messages,[\s\S]*?var\(--kb-lift,0px\) \+ 16px/, 'keyboard lift keeps the safe-area and toolbar reserve');
 
 // --- UI v13: the document itself cannot scroll; art and the drawer card reach 100lvh.
-const v13 = css.slice(css.indexOf('/* UI v13'));
+const v13 = css.slice(css.indexOf('/* UI v13'), css.indexOf('/* UI v14'));
 assert.ok(v13.length > 100, 'UI v13 scroll lock present');
 assert.match(v13, /html,body\{\n height:100%!important;\n height:100lvh!important;\n overflow:hidden!important;\n overscroll-behavior:none!important;/, 'html and body are locked to the large viewport');
 assert.match(v13, /#sidebar\[open\]>aside,[\s\S]*?height:auto!important;[\s\S]*?bottom:var\(--sidebar-inset\)!important/, 'drawer card stretches to the inset above 100lvh');
 assert.match(v13, /#sidebar\[open\] \.drawer-footer\{\n  padding-bottom:calc\(100lvh - 100dvh \+ env\(safe-area-inset-bottom,0px\)\)/, 'drawer footer clears Safari\'s toolbar');
 assert.match(rei, /\/\* UI v13[\s\S]*?\.rei-art\{height:100lvh;width:100lvh\}/, 'ASCII art uses the large viewport');
 assert.match(rei, /@media\(max-width:760px\)\{\.rei-art\{right:-13lvh\}\}/, 'mobile art keeps its right offset in lvh');
+
+// --- UI v14: mobile scroll edges fade under the floating header and composer.
+const v14 = css.slice(css.indexOf('/* UI v14'));
+assert.ok(v14.length > 100, 'UI v14 edge glass present');
+assert.match(v14, /@media\(max-width:760px\)\{/, 'edge glass is mobile-only');
+assert.match(v14, /backdrop-filter:blur\(14px\) saturate\(1\.2\)/, 'edge bands use frosted backdrop blur');
+assert.match(v14, /-webkit-mask-image:linear-gradient\(to bottom,#000 0%,transparent 100%\)/, 'top band fades into content');
+assert.match(v14, /mask-image:linear-gradient\(to top,#000 0%,transparent 100%\)/, 'bottom band fades into content');
 
 // --- Close buttons: one solid accent disc everywhere, focus lands on titles.
 const v9 = css.slice(css.indexOf('/* UI polish v9'));
@@ -91,5 +99,5 @@ assert.match(html, /<dialog id="connection"><button class="close" id="closeConne
 for (const m of html.matchAll(/<dialog id="(\w+)">([\s\S]*?)<\/dialog>/g)) {
   if (/aria-label="关闭"/.test(m[2])) assert.match(m[2], /<h2[^>]*tabindex="-1" autofocus/, m[1] + ': opening focuses the title, not ✕');
 }
-for (const [file, token] of [['chat-layout.css', 'ui-fx19'], ['rei-background.css', 'ui-fx10'], ['app.js', 'ui-fx17'], ['layout.js', 'ui-fx17']]) assert.ok(html.includes(file + '?v=' + token), file + ' cache token');
+for (const [file, token] of [['chat-layout.css', 'ui-fx20'], ['rei-background.css', 'ui-fx10'], ['app.js', 'ui-fx17'], ['layout.js', 'ui-fx17']]) assert.ok(html.includes(file + '?v=' + token), file + ' cache token');
 console.log('PASS: drawer dismisses keyboard, no phone auto-focus, sub-dialogs return to settings, uniform accent close.');
