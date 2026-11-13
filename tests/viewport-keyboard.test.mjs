@@ -5,6 +5,7 @@ import vm from 'node:vm';
 const layout = fs.readFileSync(new URL('../public/layout.js', import.meta.url), 'utf8');
 const app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
 const css = fs.readFileSync(new URL('../public/chat-layout.css', import.meta.url), 'utf8');
+const rei = fs.readFileSync(new URL('../public/rei-background.css', import.meta.url), 'utf8');
 const html = fs.readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
 
 // Keyboard lift (v11) is covered in tests/keyboard-lift.test.mjs.
@@ -58,7 +59,7 @@ assert.match(app, /openSubDialog\(\$\('#importDialog'\),'settingsDialog'\)/, 'im
 }
 
 // --- UI v12: the document is the layout root; no fixed shell touches Safari's toolbar.
-const v12 = css.slice(css.indexOf('/* UI v12'));
+const v12 = css.slice(css.indexOf('/* UI v12'), css.indexOf('/* UI v13'));
 assert.ok(v12.length > 100, 'UI v12 shell present');
 assert.match(v12, /body\{\n position:relative!important;/, 'body stays in normal flow');
 assert.match(v12, /html:not\(\.keyboard-open\) main\{\n position:relative!important;/, 'main stays in normal flow');
@@ -73,6 +74,15 @@ assert.match(v12, /bottom:calc\(var\(--viewport-stack-gap\) \+ var\(--composer-i
 assert.match(v12, /padding-bottom:calc\(var\(--composer-reserve\) \+ var\(--viewport-stack-gap\) \+ var\(--composer-inset\) \+ 16px\)/, 'messages reserve room for the composer, safe area and toolbar');
 assert.match(v12, /html\.kb-lifted #workspace #chatPanel #messages,[\s\S]*?var\(--kb-lift,0px\) \+ 16px/, 'keyboard lift keeps the safe-area and toolbar reserve');
 
+// --- UI v13: the document itself cannot scroll; art and the drawer card reach 100lvh.
+const v13 = css.slice(css.indexOf('/* UI v13'));
+assert.ok(v13.length > 100, 'UI v13 scroll lock present');
+assert.match(v13, /html,body\{\n height:100%!important;\n height:100lvh!important;\n overflow:hidden!important;\n overscroll-behavior:none!important;/, 'html and body are locked to the large viewport');
+assert.match(v13, /#sidebar\[open\]>aside,[\s\S]*?height:auto!important;[\s\S]*?bottom:var\(--sidebar-inset\)!important/, 'drawer card stretches to the inset above 100lvh');
+assert.match(v13, /#sidebar\[open\] \.drawer-footer\{\n  padding-bottom:calc\(100lvh - 100dvh \+ env\(safe-area-inset-bottom,0px\)\)/, 'drawer footer clears Safari\'s toolbar');
+assert.match(rei, /\/\* UI v13[\s\S]*?\.rei-art\{height:100lvh;width:100lvh\}/, 'ASCII art uses the large viewport');
+assert.match(rei, /@media\(max-width:760px\)\{\.rei-art\{right:-13lvh\}\}/, 'mobile art keeps its right offset in lvh');
+
 // --- Close buttons: one solid accent disc everywhere, focus lands on titles.
 const v9 = css.slice(css.indexOf('/* UI polish v9'));
 assert.match(v9, /dialog button\.close,\ndialog button\[aria-label="关闭"\],[\s\S]*?border-radius:50%;\n background:var\(--accent\);\n color:var\(--accent-on\)/, 'all dialog close buttons are solid accent discs');
@@ -81,5 +91,5 @@ assert.match(html, /<dialog id="connection"><button class="close" id="closeConne
 for (const m of html.matchAll(/<dialog id="(\w+)">([\s\S]*?)<\/dialog>/g)) {
   if (/aria-label="关闭"/.test(m[2])) assert.match(m[2], /<h2[^>]*tabindex="-1" autofocus/, m[1] + ': opening focuses the title, not ✕');
 }
-for (const [file, token] of [['chat-layout.css', 'ui-fx18'], ['app.js', 'ui-fx17'], ['layout.js', 'ui-fx17']]) assert.ok(html.includes(file + '?v=' + token), file + ' cache token');
+for (const [file, token] of [['chat-layout.css', 'ui-fx19'], ['rei-background.css', 'ui-fx10'], ['app.js', 'ui-fx17'], ['layout.js', 'ui-fx17']]) assert.ok(html.includes(file + '?v=' + token), file + ' cache token');
 console.log('PASS: drawer dismisses keyboard, no phone auto-focus, sub-dialogs return to settings, uniform accent close.');

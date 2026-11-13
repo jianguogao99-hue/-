@@ -1675,3 +1675,36 @@ html.kb-lifted.rei-theme #workspace #chatPanel #messages{
  }
  #sidebar[open]>aside{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 76px)!important}
 }
+
+/* UI v13: lock the document so the page cannot rubber-band; art and sidebar reach 100lvh. */
+html,body{
+ height:100%!important;
+ height:100lvh!important;
+ overflow:hidden!important;
+ overscroll-behavior:none!important;
+}
+html main,
+html:not(.keyboard-open) main{
+ height:100lvh!important;
+ max-height:none!important;
+ overflow:hidden!important;
+}
+@media(max-width:760px){
+ #sidebar[open]{
+  top:0!important;
+  bottom:auto!important;
+  height:100lvh!important;
+  max-height:none!important;
+ }
+ #sidebar[open]>aside,
+ .rei-theme #sidebar[open]>aside{
+  height:auto!important;
+  max-height:none!important;
+  bottom:var(--sidebar-inset)!important;
+  padding-bottom:0!important;
+ }
+ #sidebar[open] .drawer-footer{
+  padding-bottom:calc(100lvh - 100dvh + env(safe-area-inset-bottom,0px));
+ }
+ #sidebar #historyList{overflow-y:auto!important}
+}

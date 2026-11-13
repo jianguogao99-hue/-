@@ -18,7 +18,7 @@ assert.match(v12, /height:100lvh!important/, 'document shell paints full-bleed t
 assert.match(v12, /bottom:calc\(var\(--viewport-stack-gap\) \+ var\(--composer-inset\)\)/, 'composer rests above the dynamic viewport bottom');
 assert.match(css, /translate3d\(0,calc\(-1 \* var\(--kb-lift,0px\)\),0\)/, 'composer lift is one transform');
 assert.match(css, /html\.kb-glide #workspace #form\.composer\{transition:transform 240ms cubic-bezier\(\.2,\.8,\.2,1\)\}/);
-for (const [file, token] of [['chat-layout.css', 'ui-fx18'], ['app.js', 'ui-fx17'], ['layout.js', 'ui-fx17']]) assert.ok(html.includes(file + '?v=' + token), file + ' cache token');
+for (const [file, token] of [['chat-layout.css', 'ui-fx19'], ['app.js', 'ui-fx17'], ['layout.js', 'ui-fx17']]) assert.ok(html.includes(file + '?v=' + token), file + ' cache token');
 
 function makeEnv() {
   const props = new Map(), classes = new Set(); let frames = [], timers = [];
