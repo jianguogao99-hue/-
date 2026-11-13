@@ -45,8 +45,8 @@ assert.equal(bar.hidden, false, 'a fresh delete shows the undo toast');
 assert.equal(text.textContent, '已删除「旧的」');
 
 // Elements app.js still looks up for the map must exist in index.html.
-for (const id of ['deleteUndo', 'deleteUndoText', 'undoDelete', 'tree', 'search', 'timeOrder', 'syncLoading', 'mapPanel', 'historyList']) {
+for (const id of ['deleteUndo', 'deleteUndoText', 'undoDelete', 'tree', 'search', 'syncLoading', 'mapPanel', 'historyList']) {
   assert.match(html, new RegExp('id="' + id + '"'), 'index.html keeps #' + id);
 }
-assert.match(html, /app\.js\?v=ui-fx18/, 'fixed app.js needs a new cache token');
+assert.match(html, /app\.js\?v=ui-fx19/, 'fixed app.js needs a new cache token');
 console.log('PASS: boot order (no TDZ on undo state), undo helpers survive missing elements and odd stored data, required map elements present.');

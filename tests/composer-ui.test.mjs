@@ -26,8 +26,8 @@ assert.match(html, /id="modelPillLabel"/, 'model pill needs a truncatable label'
 assert.match(html, /class="glass-backdrop"/, 'composer must include a backdrop layer');
 assert.match(html, /class="glass-specularity"/, 'composer must include a specular highlight layer');
 assert.match(html, /class="glass-rim"/, 'composer must include a liquid-glass rim');
-assert.match(html, /chat-layout\.css\?v=ui-fx25/, 'edited composer CSS needs a new cache token');
-assert.match(html, /app\.js\?v=ui-fx18/, 'edited composer JS needs a new cache token');
+assert.match(html, /chat-layout\.css\?v=ui-fx26/, 'edited composer CSS needs a new cache token');
+assert.match(html, /app\.js\?v=ui-fx19/, 'edited composer JS needs a new cache token');
 assert.match(html, /liquid-glass\.js\?v=ui-fx4/, 'liquid glass runtime must be included');
 assert.match(html, /rei-background\.css\?v=ui-fx11/, 'rei theme override needs a new cache token');
 assert.match(html, /layout\.js\?v=ui-fx21/, 'drawer JS needs a new cache token');
@@ -266,7 +266,7 @@ assert.match(typeScale, /\.account-summary\.settings-card small\{[^}]*font-size:
 assert.match(typeScale, /\.organize-status\.done::before\{[^}]*background:var\(--accent\)/, 'accent survives only as a small dot');
 const pills = css.slice(css.indexOf('/* UI polish: Dynamic Island pills'), css.indexOf('/* UI polish v8'));
 for (const sel of ['#sidebar #newConversation{border-radius:999px', '#sidebar .sidebar-tabs{border-radius:999px', '#sidebar .sidebar-tabs .nav{border-radius:999px', '.map-view-switch button{border-radius:999px']) assert.ok(pills.includes(sel), 'key control must be a pill: ' + sel);
-for (const sel of ['#toggleMap,', '#workspace #timeOrder,', '#workspace #mapPanel #search,', '#settingsDialog #connect,', '#settingsDialog .sync-account button,', '#workspace .collect-actions button{border-radius:999px}']) assert.ok(pills.includes(sel), 'pill selector missing: ' + sel);
+for (const sel of ['#toggleMap,', '#workspace #mapPanel #search,', '#settingsDialog #connect,', '#settingsDialog .sync-account button,', '#workspace .collect-actions button{border-radius:999px}']) assert.ok(pills.includes(sel), 'pill selector missing: ' + sel);
 assert.match(pills, /dialog \.review-header button\[aria-label="关闭"\][\s\S]*?width:32px;\n height:32px;[\s\S]*?border-radius:50%/, 'close buttons are round discs');
 assert.match(pills, /button\[aria-label="关闭"\]:focus-visible[\s\S]*?\{outline:none;box-shadow:0 0 0 2px rgba\(255,255,255,\.45\)\}/, 'close focus ring is round and subtle, not a square accent outline');
 assert.doesNotMatch(pills, /\.(find-card|history-row|history-item|settings-card|q)\b[^{]*\{[^}]*border-radius:999px/, 'cards and rows keep their corners');

@@ -2098,3 +2098,7 @@ html:not(.keyboard-open) main{
   mask-image:linear-gradient(to bottom,#000 0%,transparent 100%)!important;
  }
 }
+
+/* UI v20 */
+.map-view-switch #byTime .order-arrow{width:12px;height:12px;margin-left:4px;vertical-align:-1px;transition:transform .2s}
+.order-arrow.desc{transform:rotate(180deg)}
