@@ -25,6 +25,16 @@ Production: https://wenji-ten.vercel.app (do not deploy; the human operator depl
 ## Target device
 iPhone, iOS 26 Safari with the floating (transparent) bottom toolbar. Anything that should look "full screen" must paint down to 100lvh (the large viewport), and interactive content must stay above the toolbar using 100dvh / env(safe-area-inset-bottom).
 
+## User requirements
+- Glass surfaces must reuse the sidebar liquid-glass material; the `#sidebarGlass` slider controls the sidebar, map view switch and map search live.
+- Test mobile changes in iPhone Home Screen standalone as well as Safari.
+- No black bands at the bottom; full-screen surfaces paint to 100lvh while controls stay clear of the toolbar.
+- The mobile map order is floating header → visible large `.map-heading` → sticky glass switch/search; do not hide the heading.
+
+## Known pitfalls
+- `100svh` caused a bottom black band on the floating-toolbar iPhone; use `100lvh` for full-screen paint and `100dvh` for interactive edges.
+- Long resumed Codex sessions are slow; start a fresh session and locate rules with `rg -n` instead of reading whole files.
+
 ## Progress log (newest last)
 - v11 (6754247): 100lvh shell, CSS-only heights, single translateY keyboard lift.
 - v12 (90f8d04): made body/main document-flow, rei-background absolute. RESULT ON PHONE: bad — whole page became draggable, sidebar card stops above toolbar, bottom still black (the .rei-art is only 100svh tall so the bottom band is plain #070907).
@@ -33,3 +43,4 @@ iPhone, iOS 26 Safari with the floating (transparent) bottom toolbar. Anything t
 - v15: map list sticky controls sit directly under the floating header with frosted full-width glass; the focused composer pins to the visual viewport with an 8px keyboard gap; the top chat fade now matches the bottom and the mobile header keeps no gradient.
 - v16: conversation opens measure the resting composer position into `--list-bottom-pad` instead of stacking reserve + toolbar gap + safe area, and re-pin `#messages` to the bottom over two animation frames; the last mobile message leaves exactly a 16px gap above the composer.
 - v17: mobile map controls are pinned in one fixed header-adjacent glass zone for every view, that zone is measured into `--map-top-zone`, the graph fills between it and the safe bottom, and the drawer card keeps a rounded bottom inset that accounts for the Safari toolbar and home indicator in both tab and standalone modes.
+- v18: restored the large mobile map heading below the floating header, replaced the opaque map banner with sticky sidebar-glass switch/search pills driven by `#sidebarGlass`, kept the active tab solid accent, and renamed the slider to 玻璃透明度.

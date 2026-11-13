@@ -1923,3 +1923,143 @@ html:not(.keyboard-open) main{
  }
  #sidebar[open] .drawer-footer{padding-bottom:0!important}
 }
+
+/* UI v18: mobile map chrome — large title, then floating liquid-glass switch/search pills. */
+@media(max-width:760px){
+ /* The header stays separate: title first, controls below it, both in the normal flow until the controls stick. */
+ #workspace[data-mode="map"] #mapPanel:not(.graph-immersive) .map-heading{
+  display:block!important;
+  padding:8px 4px 16px!important;
+  margin:0!important;
+  flex-shrink:0!important;
+ }
+ #workspace[data-mode="map"] #mapPanel .map-heading h2{
+  font-size:30px!important;
+  font-weight:700!important;
+  line-height:1.12!important;
+  letter-spacing:-.035em!important;
+  color:var(--type-primary,#fff)!important;
+ }
+ #workspace[data-mode="map"] #mapPanel .map-heading p,
+ #workspace[data-mode="map"] #mapPanel .map-heading #mapTitle{
+  margin:7px 0 0!important;
+  font-size:13px!important;
+  font-weight:500!important;
+  line-height:1.35!important;
+  color:var(--type-meta,#a7a7a7)!important;
+ }
+ /* The sticky wrapper is only a positioning rail. The glass lives on the two pills. */
+ #workspace[data-mode="map"] #mapPanel:not(:has(.mind-shell)):not(.graph-immersive) .map-sticky,
+ #workspace[data-mode="map"] #mapPanel:has(.mind-shell):not(.graph-immersive) .map-sticky{
+  position:sticky!important;
+  top:0!important;
+  left:auto!important;
+  right:auto!important;
+  width:auto!important;
+  z-index:5!important;
+  display:flex!important;
+  flex-direction:column!important;
+  gap:9px!important;
+  margin:0!important;
+  margin-left:0!important;
+  margin-right:0!important;
+  padding:0 0 10px!important;
+  background:transparent!important;
+  -webkit-backdrop-filter:none!important;
+  backdrop-filter:none!important;
+  box-shadow:none!important;
+ }
+ #workspace[data-mode="map"] #mapPanel .map-view-tools{
+  display:block!important;
+  width:100%!important;
+  margin:0!important;
+ }
+ #workspace[data-mode="map"] #mapPanel .map-view-switch,
+ #workspace[data-mode="map"] #mapPanel .search,
+ #workspace[data-mode="map"] #mapPanel #search{
+  background:var(--glass-tint),var(--sidebar-bg)!important;
+  border:1px solid var(--glass-hairline)!important;
+  -webkit-backdrop-filter:blur(var(--sidebar-blur)) saturate(var(--sidebar-sat))!important;
+  backdrop-filter:blur(var(--sidebar-blur)) saturate(var(--sidebar-sat))!important;
+  box-shadow:
+   inset 0 1px 0 rgba(255,255,255,.16),
+   inset 0 0 0 1px rgba(255,255,255,.025),
+   0 12px 32px rgba(0,0,0,.28),
+   0 2px 8px rgba(0,0,0,.16)!important;
+ }
+ #workspace[data-mode="map"] #mapPanel .map-view-switch{
+  display:flex!important;
+  width:100%!important;
+  min-height:44px!important;
+  gap:3px!important;
+  padding:4px!important;
+  border-radius:999px!important;
+  overflow-x:auto!important;
+  overscroll-behavior-x:contain!important;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+ }
+ #workspace[data-mode="map"] #mapPanel .map-view-switch::-webkit-scrollbar{display:none}
+ #workspace[data-mode="map"] #mapPanel .map-view-switch button{
+  flex:0 0 auto;
+  min-height:34px;
+  padding:7px 12px!important;
+  border:0!important;
+  border-radius:999px!important;
+  background:transparent;
+  color:var(--glass-text)!important;
+  font-size:12px!important;
+  font-weight:600!important;
+  white-space:nowrap;
+ }
+ #workspace[data-mode="map"] #mapPanel .map-view-switch button.active,
+ #workspace[data-mode="map"] #mapPanel .map-view-switch button.active:hover{
+  background:var(--accent)!important;
+  color:var(--accent-on)!important;
+  box-shadow:none!important;
+ }
+ #workspace[data-mode="map"] #mapPanel .search,
+ #workspace[data-mode="map"] #mapPanel #search{
+  width:100%!important;
+  min-height:44px!important;
+  margin:0!important;
+  padding:10px 18px!important;
+  border-radius:999px!important;
+  color:var(--glass-text)!important;
+  font-size:16px!important;
+  -webkit-appearance:none;
+  appearance:none;
+ }
+ #workspace[data-mode="map"] #mapPanel .search::placeholder,
+ #workspace[data-mode="map"] #mapPanel #search::placeholder{
+  color:rgba(236,240,232,.58)!important;
+  opacity:1;
+ }
+ /* The title and both pills remain in place while the search field is focused. */
+ #workspace[data-mode="map"] #mapPanel.search-editing .map-heading{display:block!important}
+ #workspace[data-mode="map"] #mapPanel.search-editing .map-view-tools{display:block!important}
+ #workspace[data-mode="map"] #mapPanel.search-editing .map-sticky{padding-top:0!important}
+
+ /* Content begins under the floating header; the large title is not clipped or overlapped. */
+ #workspace[data-mode="map"] #mapPanel:not(:has(.mind-shell)):not(.graph-immersive){
+  padding-top:calc(env(safe-area-inset-top,0px) + 62px)!important;
+ }
+ #workspace[data-mode="map"] #mapPanel:has(.mind-shell):not(.graph-immersive){
+  padding-top:calc(env(safe-area-inset-top,0px) + 62px)!important;
+ }
+ #workspace[data-mode="map"] #mapPanel:not(.graph-immersive){
+  padding-left:max(12px,env(safe-area-inset-left,0px))!important;
+  padding-right:max(12px,env(safe-area-inset-right,0px))!important;
+ }
+
+ /* No opaque map banner: the top edge keeps the same soft mask as the bottom edge. */
+ main:has(#workspace[data-mode="map"] #mapPanel:not(.graph-immersive))::before{
+  display:block!important;
+  height:calc(env(safe-area-inset-top,0px) + 54px + 24px)!important;
+  background:linear-gradient(to bottom,rgba(7,9,7,.55) 0%,rgba(7,9,7,0) 100%)!important;
+  -webkit-backdrop-filter:blur(14px) saturate(1.2)!important;
+  backdrop-filter:blur(14px) saturate(1.2)!important;
+  -webkit-mask-image:linear-gradient(to bottom,#000 0%,transparent 100%)!important;
+  mask-image:linear-gradient(to bottom,#000 0%,transparent 100%)!important;
+ }
+}

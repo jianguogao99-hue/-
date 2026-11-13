@@ -99,10 +99,15 @@ assert.match(html, /<dialog id="connection"><button class="close" id="closeConne
 for (const m of html.matchAll(/<dialog id="(\w+)">([\s\S]*?)<\/dialog>/g)) {
   if (/aria-label="关闭"/.test(m[2])) assert.match(m[2], /<h2[^>]*tabindex="-1" autofocus/, m[1] + ': opening focuses the title, not ✕');
 }
-const v17 = css.slice(css.indexOf('/* UI v17'));
-assert.match(v17, /#mapPanel \.map-heading\{display:none!important\}/, 'mobile map heading cannot collide with the floating header');
-assert.match(v17, /#mapPanel \.map-sticky\{[\s\S]*?position:fixed!important;[\s\S]*?top:calc\(env\(safe-area-inset-top,0px\) \+ 54px\)!important/, 'map controls use one fixed position in every view');
+const v17 = css.slice(css.indexOf('/* UI v17'), css.indexOf('/* UI v18'));
 assert.match(v17, /#mapPanel:has\(\.mind-shell\):not\(\.graph-immersive\)\{[\s\S]*?padding-bottom:calc\(100lvh - 100dvh \+ env\(safe-area-inset-bottom,0px\) \+ 16px\)!important/, 'graph fits above the bottom safe area');
 assert.match(v17, /#sidebar\[open\]>aside,[\s\S]*?bottom:calc\(100lvh - 100dvh \+ var\(--sidebar-inset\) \+ env\(safe-area-inset-bottom,0px\)\)!important;[\s\S]*?border-radius:var\(--sidebar-radius\)!important/, 'drawer card floats above the bottom safe area with rounded corners');
-for (const [file, token] of [['chat-layout.css', 'ui-fx23'], ['rei-background.css', 'ui-fx11'], ['app.js', 'ui-fx18'], ['layout.js', 'ui-fx20']]) assert.ok(html.includes(file + '?v=' + token), file + ' cache token');
+const v18 = css.slice(css.indexOf('/* UI v18'));
+assert.match(v18, /#mapPanel:not\(\.graph-immersive\) \.map-heading\{[\s\S]*?display:block!important/, 'mobile map heading is visible above the controls');
+assert.match(v18, /#mapPanel \.map-heading h2\{[\s\S]*?font-size:30px!important/, 'mobile map title is a large App Store-style title');
+assert.match(v18, /\.map-sticky,[\s\S]*?position:sticky!important;[\s\S]*?top:0!important/, 'map controls stick under the padded floating header in every view');
+assert.match(v18, /\.map-sticky,[\s\S]*?background:transparent!important/, 'the sticky rail has no opaque banner');
+assert.match(v18, /#mapPanel \.map-view-switch,[\s\S]*?background:var\(--glass-tint\),var\(--sidebar-bg\)!important/, 'the switch reuses the sidebar glass fill');
+assert.match(v18, /#mapPanel #search\{[\s\S]*?backdrop-filter:blur\(var\(--sidebar-blur\)\) saturate\(var\(--sidebar-sat\)\)!important/, 'the search field reuses the sidebar glass blur');
+for (const [file, token] of [['chat-layout.css', 'ui-fx24'], ['rei-background.css', 'ui-fx11'], ['app.js', 'ui-fx18'], ['layout.js', 'ui-fx20']]) assert.ok(html.includes(file + '?v=' + token), file + ' cache token');
 console.log('PASS: drawer dismisses keyboard, no phone auto-focus, sub-dialogs return to settings, uniform accent close.');

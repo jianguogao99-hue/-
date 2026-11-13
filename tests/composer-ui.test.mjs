@@ -26,7 +26,7 @@ assert.match(html, /id="modelPillLabel"/, 'model pill needs a truncatable label'
 assert.match(html, /class="glass-backdrop"/, 'composer must include a backdrop layer');
 assert.match(html, /class="glass-specularity"/, 'composer must include a specular highlight layer');
 assert.match(html, /class="glass-rim"/, 'composer must include a liquid-glass rim');
-assert.match(html, /chat-layout\.css\?v=ui-fx23/, 'edited composer CSS needs a new cache token');
+assert.match(html, /chat-layout\.css\?v=ui-fx24/, 'edited composer CSS needs a new cache token');
 assert.match(html, /app\.js\?v=ui-fx18/, 'edited composer JS needs a new cache token');
 assert.match(html, /liquid-glass\.js\?v=ui-fx4/, 'liquid glass runtime must be included');
 assert.match(html, /rei-background\.css\?v=ui-fx11/, 'rei theme override needs a new cache token');
@@ -283,7 +283,7 @@ assert.match(html, /id="backgroundChoice"/, 'background control remains');
 assert.match(html, /id="backgroundMotion"/, 'motion control remains');
 
 assert.match(html, /id="sidebarGlass"/, 'settings must include a sidebar glass slider');
-assert.match(html, /<label for="sidebarGlass">侧栏玻璃透明度<\/label>/, 'slider is labeled as sidebar-only');
+assert.match(html, /<label for="sidebarGlass">玻璃透明度<\/label>/, 'slider label reflects that it controls shared glass');
 assert.match(html, /id="sidebarGlass"[^>]*value="1"/, 'slider default reproduces the v2 sidebar fill');
 assert.match(html, /id="sidebarGlass"[^>]*min="0\.2"/, 'slider must allow more transparent than default');
 assert.match(html, /id="sidebarGlass"[^>]*max="2\.5"/, 'slider must allow more solid than default');
