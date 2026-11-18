@@ -12,7 +12,7 @@ assert.ok(part.length > 100, 'v15 keyboard block present');
 assert.doesNotMatch(part, /--chat-viewport-height|--chat-viewport-top|keyboard-open|style\.height\s*=\s*[^'"]*viewport/, 'no viewport-height pinning');
 assert.doesNotMatch(html, /interactive-widget/, 'no interactive-widget (Chrome resizes + our lift would double)');
 assert.match(html, /viewport-fit=cover/);
-assert.match(html, /<meta name="theme-color" content="#070907">/);
+assert.match(html, /<meta name="theme-color" content="#101010">/);
 const v12 = css.slice(css.indexOf('/* UI v12'));
 assert.match(v12, /height:100lvh!important/, 'document shell paints full-bleed to the bottom edge');
 assert.match(v12, /bottom:calc\(var\(--viewport-stack-gap\) \+ var\(--composer-inset\)\)/, 'composer rests above the dynamic viewport bottom');
@@ -25,7 +25,7 @@ assert.match(v16, /padding-bottom:var\(--list-bottom-pad\)!important/, 'mobile l
 assert.match(v16, /#messages>\.msg:last-child\{margin-bottom:0!important\}/, 'the final message leaves exactly the measured 16px gap');
 assert.match(v16, /padding-bottom:calc\(var\(--list-bottom-pad\) \+ var\(--kb-lift,0px\)\)!important/, 'keyboard reserve stacks on the exact list padding');
 assert.doesNotMatch(part, /--map-top-zone|updateMapTopZone|mapTopZone/, 'map chrome never uses a viewport-measured top zone');
-for (const [file, token] of [['chat-layout.css', 'ui-fx32'], ['app.js', 'ui-fx21'], ['layout.js', 'ui-fx21']]) assert.ok(html.includes(file + '?v=' + token), file + ' cache token');
+for (const [file, token] of [['chat-layout.css', 'ui-fx33'], ['app.js', 'ui-fx21'], ['layout.js', 'ui-fx21']]) assert.ok(html.includes(file + '?v=' + token), file + ' cache token');
 
 function makeEnv() {
   const props = new Map(), classes = new Set(); let frames = [], timers = [];

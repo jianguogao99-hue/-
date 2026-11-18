@@ -2303,3 +2303,47 @@ dialog .candidate-item small{color:#9a9a9a!important}
   bottom:calc(10px + env(safe-area-inset-bottom,0px) + (100lvh - 100dvh));
  }
 }
+
+/* UI v25: mobile top/bottom surface continuity */
+@media(max-width:760px){
+ /* 1) Chat top. The page-controlled status-bar strip is painted with the same
+    surface as the current page (plain #101010, rei #070907), then fades into
+    the transcript. This replaces the old rgba(7,9,7,.55) frosted scrim, which
+    read as a separate black slab. The header keeps its safe-area padding. */
+ main:has(#workspace[data-mode="chat"])::before{
+  height:calc(env(safe-area-inset-top,0px) + 54px + 32px)!important;
+  background:linear-gradient(to bottom,#101010 0,#101010 calc(env(safe-area-inset-top,0px) + 54px),rgba(16,16,16,0) 100%)!important;
+  -webkit-backdrop-filter:none!important;
+  backdrop-filter:none!important;
+  -webkit-mask-image:none!important;
+  mask-image:none!important;
+ }
+ html.rei-theme main:has(#workspace[data-mode="chat"])::before{
+  background:linear-gradient(to bottom,#070907 0,#070907 calc(env(safe-area-inset-top,0px) + 54px),rgba(7,9,7,0) 100%)!important;
+ }
+
+ /* 2) Map graph. The panel used to stop at the toolbar/safe-area padding, so
+    the chat surface showed below the card. Remove that gap, paint the panel
+    with the card's bottom surface, and let the card run to 100lvh. */
+ #workspace[data-mode="map"] #mapPanel:has(.mind-shell):not(.graph-immersive){
+  padding-bottom:0!important;
+  background:#0b0b0b!important;
+ }
+ #workspace[data-mode="map"] #mapPanel:has(.mind-shell):not(.graph-immersive) #tree{
+  padding-bottom:0!important;
+ }
+ #workspace[data-mode="map"] #mapPanel:has(.mind-shell):not(.graph-immersive) .mind-shell{
+  border-bottom:0!important;
+  border-radius:14px 14px 0 0!important;
+ }
+
+ /* The graph now paints behind the floating toolbar, so lift only its
+    interactive chrome by the same v24 safe-area + large-viewport delta.
+    The immersive rules above stay untouched. */
+ #workspace[data-mode="map"] #mapPanel:has(.mind-shell):not(.graph-immersive) .mind-controls{
+  bottom:calc(35px + env(safe-area-inset-bottom,0px) + (100lvh - 100dvh))!important;
+ }
+ #workspace[data-mode="map"] #mapPanel:has(.mind-shell):not(.graph-immersive) .mind-legend{
+  bottom:calc(10px + env(safe-area-inset-bottom,0px) + (100lvh - 100dvh))!important;
+ }
+}
