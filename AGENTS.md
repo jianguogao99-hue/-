@@ -52,3 +52,4 @@ iPhone, iOS 26 Safari with the floating (transparent) bottom toolbar. Anything t
 - v23 reverted (Codax direct): visualViewport shell sizing lifted the iPad composer and overflow:hidden blocked map list scrolling; restored v22b layout (css ui-fx31, layout.js ui-fx21). iPad map bottom clip deferred.
 - v24: mobile immersive graph lifts `.mind-controls` / `.mind-legend` by `env(safe-area-inset-bottom)` + `(100lvh - 100dvh)` so they clear Safari's floating toolbar and the home indicator; desktop and iPad rules untouched; css ui-fx32.
 - v25a/v25b: mobile top/bottom surface continuity (css ui-fx34); phone sphere knowledge-map visual in mindmap.js (desktop flat unchanged).
+- v26: mobile map card fits 100dvh with full border/radius and a bottom safe-area gap; immersive graph is an independent opaque 100dvh overlay with no card chrome; css ui-fx35.

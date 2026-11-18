@@ -2368,3 +2368,94 @@ dialog .candidate-item small{color:#9a9a9a!important}
  .mind-shell.mind-shell--sphere .mind-hint{color:#8a939c;font-size:8px}
  .mind-shell.mind-shell--sphere .mind-legend{color:#7e878f}
 }
+
+/* UI v26: mobile map card bounds + opaque immersive */
+@media(max-width:760px){
+ /* 1) Normal graph. The panel itself is the visible dynamic viewport and is
+    border-box, so the top chrome inset and the bottom safe-area gap both eat
+    into the height instead of extending the card past the screen. The tree is
+    a flex column and the mind-shell is the only growing child: the card ends
+    above Safari's toolbar with all four borders and both bottom corners. */
+ #workspace[data-mode="map"] #mapPanel:has(.mind-shell):not(.graph-immersive){
+  display:flex!important;
+  flex-direction:column!important;
+  box-sizing:border-box!important;
+  height:100dvh!important;
+  min-height:100dvh!important;
+  max-height:100dvh!important;
+  padding-top:calc(env(safe-area-inset-top,0px) + 62px)!important;
+  padding-bottom:calc(env(safe-area-inset-bottom,0px) + 10px)!important;
+  background:transparent!important;
+  overflow:hidden!important;
+ }
+ #workspace[data-mode="map"] #mapPanel:has(.mind-shell):not(.graph-immersive) #tree{
+  display:flex!important;
+  flex-direction:column!important;
+  flex:1 1 0%!important;
+  min-height:0!important;
+  max-height:none!important;
+  padding:0!important;
+  overflow:hidden!important;
+ }
+ #workspace[data-mode="map"] #mapPanel:has(.mind-shell):not(.graph-immersive) #tree .mind-shell{
+  flex:1 1 auto!important;
+  box-sizing:border-box!important;
+  width:100%!important;
+  height:100%!important;
+  max-height:100%!important;
+  min-height:0!important;
+  border-width:1px!important;
+  border-style:solid!important;
+  border-radius:14px!important;
+  overflow:hidden!important;
+ }
+ /* v25a lifted the controls because the card painted behind the toolbar. The
+    card now ends above the safe area, so keep only the design offsets. */
+ #workspace[data-mode="map"] #mapPanel:has(.mind-shell):not(.graph-immersive) .mind-controls{
+  bottom:35px!important;
+ }
+ #workspace[data-mode="map"] #mapPanel:has(.mind-shell):not(.graph-immersive) .mind-legend{
+  bottom:10px!important;
+ }
+
+ /* 2) Immersive graph. A real opaque overlay over the visible page, not a
+    bordered card: no inset padding, no radius, no side border stubs. It is
+    independent of the chat/code surfaces underneath. */
+ #workspace #mapPanel.graph-immersive,
+ #mapPanel.graph-immersive{
+  position:fixed!important;
+  inset:0!important;
+  box-sizing:border-box!important;
+  width:100%!important;
+  height:100dvh!important;
+  min-height:100dvh!important;
+  max-height:100dvh!important;
+  max-width:none!important;
+  margin:0!important;
+  padding:0!important;
+  background:#0b0b0b!important;
+  overflow:hidden!important;
+  z-index:40!important;
+ }
+ #workspace #mapPanel.graph-immersive #tree{
+  display:flex!important;
+  flex-direction:column!important;
+  flex:1 1 0%!important;
+  min-height:0!important;
+  max-height:none!important;
+  padding:0!important;
+  overflow:hidden!important;
+ }
+ #workspace #mapPanel.graph-immersive .mind-shell{
+  flex:1 1 auto!important;
+  box-sizing:border-box!important;
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+  max-height:100%!important;
+  border:0!important;
+  border-radius:0!important;
+  background-color:#0b0b0b!important;
+  overflow:hidden!important;
+ }
+}
