@@ -13,3 +13,4 @@ coverage/
 
 # Also exclude a local dependency symlink.
 node_modules
+tmp/

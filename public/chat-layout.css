@@ -2347,3 +2347,24 @@ dialog .candidate-item small{color:#9a9a9a!important}
   bottom:calc(10px + env(safe-area-inset-bottom,0px) + (100lvh - 100dvh))!important;
  }
 }
+
+/* UI v25b: mobile sphere graph look (phone only; desktop flat path untouched) */
+@media(max-width:760px){
+ .mind-shell.mind-shell--sphere{
+  background:radial-gradient(ellipse at 50% 42%,#1a1d22 0%,#0b0b0b 58%,#070707 100%)!important;
+  border-color:#222!important;
+ }
+ .mind-shell.mind-shell--sphere .mind-svg{background:transparent}
+ .mind-shell.mind-shell--sphere .mind-edges line{
+  stroke-width:1.05!important;
+  opacity:.42!important;
+ }
+ .mind-shell.mind-shell--sphere .mind-node text{
+  fill:#f2f2f2;
+  paint-order:stroke;
+  stroke:#000000aa;
+  stroke-width:.6px;
+ }
+ .mind-shell.mind-shell--sphere .mind-hint{color:#8a939c;font-size:8px}
+ .mind-shell.mind-shell--sphere .mind-legend{color:#7e878f}
+}
