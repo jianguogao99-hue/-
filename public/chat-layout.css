@@ -2333,8 +2333,7 @@ dialog .candidate-item small{color:#9a9a9a!important}
   padding-bottom:0!important;
  }
  #workspace[data-mode="map"] #mapPanel:has(.mind-shell):not(.graph-immersive) .mind-shell{
-  border-bottom:0!important;
-  border-radius:14px 14px 0 0!important;
+  /* superseded by UI v26 unified card border */
  }
 
  /* The graph now paints behind the floating toolbar, so lift only its
@@ -2404,8 +2403,8 @@ dialog .candidate-item small{color:#9a9a9a!important}
   height:100%!important;
   max-height:100%!important;
   min-height:0!important;
-  border-width:1px!important;
-  border-style:solid!important;
+  /* Explicit color: width+style alone falls back to currentColor (near-white text). */
+  border:1px solid #222!important;
   border-radius:14px!important;
   overflow:hidden!important;
  }
