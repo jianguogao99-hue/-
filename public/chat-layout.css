@@ -2290,3 +2290,16 @@ dialog .review-candidate .candidate-item{background:none!important;border:0!impo
 dialog .candidate-item b{color:#eee!important}
 dialog .candidate-item small{color:#9a9a9a!important}
 #mergeDialog .candidate-item:has(input:checked),#splitDialog .candidate-item:has(input:checked){border-color:color-mix(in srgb,var(--accent) 55%,#333)!important;background:#222!important}
+
+/* UI v24: mobile immersive graph controls clear Safari toolbar + safe area */
+@media(max-width:760px){
+ /* The immersive panel paints to 100lvh, so its absolute children would sit under the
+    Safari toolbar and home indicator. Add that chrome gap to the existing design offsets:
+    35px/10px keep the same control-to-legend spacing (legend stays 25px below controls). */
+ #workspace #mapPanel.graph-immersive .mind-controls{
+  bottom:calc(35px + env(safe-area-inset-bottom,0px) + (100lvh - 100dvh));
+ }
+ #workspace #mapPanel.graph-immersive .mind-legend{
+  bottom:calc(10px + env(safe-area-inset-bottom,0px) + (100lvh - 100dvh));
+ }
+}
