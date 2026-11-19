@@ -2490,3 +2490,18 @@ dialog .candidate-item small{color:#9a9a9a!important}
  main:has(#workspace[data-mode="chat"])::before{display:none!important}
  main:has(#workspace[data-mode="chat"]) header .chat-brand{text-shadow:0 1px 5px #000}
 }
+
+/* UI v31: compact floating navigation and icon-only question actions. */
+#conversationTitle{display:none}
+#toggleMap{background:var(--accent);border-color:transparent;color:var(--accent-on,#111);font-weight:650;-webkit-backdrop-filter:none;backdrop-filter:none}
+#toggleMap:hover{background:var(--accent);color:var(--accent-on,#111);filter:brightness(1.08)}
+#sidebar>summary,#sidebar .sidebar-menu{border-radius:50%;background:linear-gradient(150deg,#292929,#1b1b1b);color:#fff;border:1px solid #ffffff20;box-shadow:inset 0 1px 2px #ffffff20}
+#sidebar>summary svg,#sidebar .sidebar-menu svg{display:block;margin:auto}
+#mapPanel [data-focus-question]{display:inline-grid;place-items:center;min-width:36px;min-height:36px;padding:0}
+@media(max-width:760px){
+ main:has(#workspace[data-mode="map"] #mapPanel:not(.graph-immersive))::before{
+  height:env(safe-area-inset-top,0px)!important;
+  -webkit-backdrop-filter:blur(4px)!important;
+  backdrop-filter:blur(4px)!important;
+ }
+}
