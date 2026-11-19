@@ -169,4 +169,11 @@ const meta=document.querySelector('meta[name="theme-color"]');
 function syncThemeColor(){if(meta)meta.setAttribute('content',root.classList.contains('rei-theme')?'#070907':'#101010');}
 if(window.MutationObserver)new MutationObserver(syncThemeColor).observe(root,{attributes:true,attributeFilter:['class']});
 syncThemeColor();
+// UI v27: search stays compact until explicitly opened.
+const searchToggle=document.querySelector('#toggleMapSearch');
+const mapSearch=document.querySelector('#search');
+function closeMapSearch(){if(!mapSearch||mapSearch.value.trim())return;mapSearch.hidden=true;searchToggle?.setAttribute('aria-expanded','false');}
+searchToggle?.addEventListener('click',()=>{if(!mapSearch)return;const opening=mapSearch.hidden;mapSearch.hidden=!opening;searchToggle.setAttribute('aria-expanded',String(opening));if(opening)mapSearch.focus();});
+mapSearch?.addEventListener('keydown',event=>{if(event.key==='Escape'){mapSearch.value='';mapSearch.dispatchEvent(new Event('input',{bubbles:true}));mapSearch.blur();closeMapSearch();searchToggle?.focus();}});
+mapSearch?.addEventListener('blur',closeMapSearch);
 })();

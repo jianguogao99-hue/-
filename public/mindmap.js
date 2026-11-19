@@ -7,7 +7,7 @@ const palette=['#b6a0de','#90bfaa','#c2a2bd','#b9bc85','#8cafd0','#d0a788'];
 const spherePalette=['#9edbe0','#9fd9bf','#b9a9e6','#e7cf9e','#d9a8b8','#a9c7e8'];
 const MOBILE_QUERY='(max-width:760px)';
 const SPHERE_SCALE=400,SPHERE_CAMERA=3.4,GOLDEN=2.399963229728653;
-const INITIAL_YAW=-0.55,INITIAL_PITCH=0.3;
+const INITIAL_YAW=-0.12,INITIAL_PITCH=0.08;
 let sphereScene=null,sphereYaw=INITIAL_YAW,spherePitch=INITIAL_PITCH,sphereFrame=0;
 let sphereMQ=null;
 function sphereMode(){
@@ -33,47 +33,22 @@ function rotateDir(dir,angle,az){
 }
 function hashPath(text){let h=0;for(const c of String(text||''))h=(h*31+c.codePointAt(0))%10007;return h/10007*Math.PI*2;}
 function shellFor(depth,maxDepth){if(depth<=0)return 0;const t=maxDepth>1?Math.min(1,depth/maxDepth):1;return .52+.56*t;}
-function nodeRadius(n){if(n.root)return .13;if(n.q)return .022;if(n.depth<=1)return .052;if(n.depth===2)return .042;return .032;}
+function nodeRadius(n){if(n.root)return .045;if(n.q)return .018;if(n.depth<=1)return .032;if(n.depth===2)return .027;return .024;}
 function buildSphere(nodes,edges,maxDepth){
  const root=nodes[0];
- for(const n of nodes){n.childNodes=[];n.dir=null;n.sphereIdx=0;n.sphereColor=spherePalette[0];}
+ for(const n of nodes){n.childNodes=[];n.sphereIdx=0;n.sphereColor=spherePalette[0];}
  for(const e of edges)e.a.childNodes.push(e.b);
- root.shell=0;root.dir={x:0,y:0,z:0};root.sphereColor='#e6f0ef';
- const top=root.childNodes,total=top.reduce((a,n)=>a+(n.weight||1),0)||1;
- let cum=0;
- top.forEach((n,i)=>{
-  const w=n.weight||1;
-  // Weighted Fibonacci shell: heavier first-level branches get more surface.
-  const y=1-2*((cum+w*.5)/total);
-  const ring=Math.sqrt(Math.max(.0001,1-y*y));
-  const theta=i*GOLDEN+.55;
-  n.dir=norm({x:Math.cos(theta)*ring,y,z:Math.sin(theta)*ring});
-  n.sphereIdx=i%spherePalette.length;
-  n.sphereColor=spherePalette[n.sphereIdx];
-  n.spread=Math.min(1.02,.46+.56*Math.sqrt(w/total));
-  n.shell=shellFor(1,maxDepth);
-  cum+=w;
-  placeChildren(n,1,maxDepth);
- });
+ let leaf=0;
+ function measure(n){if(!n.childNodes.length){n.treeX=leaf++;return;}n.childNodes.forEach(measure);n.treeX=(n.childNodes[0].treeX+n.childNodes[n.childNodes.length-1].treeX)/2;}
+ measure(root);
+ const width=Math.max(1.6,(leaf-1)*.32),center=(leaf-1)/2;
+ function place(n,branch){
+  n.sphereIdx=branch%spherePalette.length;n.sphereColor=n.root?'#e6f0ef':spherePalette[n.sphereIdx];
+  n.dir={x:leaf>1?(n.treeX-center)/(leaf-1)*width:0,y:-.92+n.depth*.5,z:n.root?0:Math.sin(branch*1.7)*.16};
+  n.childNodes.forEach((child,i)=>place(child,n.root?i:branch));
+ }
+ place(root,0);
  return {nodes,edges,root,maxDepth,yaw:sphereYaw,pitch:spherePitch,key:identity};
-}
-function placeChildren(parent,depth,maxDepth){
- const kids=parent.childNodes;
- if(!kids.length)return;
- const total=kids.reduce((a,n)=>a+(n.weight||1),0)||1;
- const cap=Math.min(1,parent.spread*.94),baseAz=hashPath(parent.path||parent.label||'root');
- let cum=0;
- kids.forEach((k,i)=>{
-  const w=k.weight||1,area=w/total;
-  const rho=kids.length===1?0:cap*Math.sqrt((cum+w*.5)/total);
-  k.dir=rotateDir(parent.dir,rho,baseAz+i*GOLDEN);
-  k.sphereIdx=parent.sphereIdx;
-  k.sphereColor=spherePalette[k.sphereIdx];
-  k.spread=Math.max(.25,cap*Math.sqrt(area));
-  k.shell=shellFor(depth+1,maxDepth);
-  cum+=w;
-  placeChildren(k,depth+1,maxDepth);
- });
 }
 function projectSphere(scene){
  const cy=Math.cos(scene.yaw),sy=Math.sin(scene.yaw),cp=Math.cos(scene.pitch),sp=Math.sin(scene.pitch);
@@ -96,8 +71,8 @@ function sphereBounds(scene){
   minX=Math.min(minX,p.x-p.r);maxX=Math.max(maxX,p.x+p.r);
   minY=Math.min(minY,p.y-p.r);maxY=Math.max(maxY,p.y+p.r);
  }
- const pad=SPHERE_SCALE*.42;
- const side=Math.max(SPHERE_SCALE*3.7,(maxX-minX)+pad*2,(maxY-minY)+pad*2);
+ const pad=SPHERE_SCALE*.18;
+ const side=Math.max(SPHERE_SCALE*1.7,(maxX-minX)+pad*2,(maxY-minY)+pad*2);
  const cx=(minX+maxX)/2,cy=(minY+maxY)/2;
  return {x:cx-side/2,y:cy-side/2,w:side,h:side};
 }
@@ -115,13 +90,13 @@ function sphereNode(n,p){
  const fill=root?'url(#mgSphereRoot)':q?color:'url(#mgSphere'+n.sphereIdx+')';
  const fillOpacity=root?.94:q?.48+.38*front:.56+.4*front;
  const strokeOpacity=.22+.4*front;
- const showLabel=root||(topic&&(n.depth<=2||n.count>=5));
- const fontSize=(root?.145:topic&&n.depth<=2?.105:.086)*SPHERE_SCALE*(.92+.08*p.factor);
+ const showLabel=!n.hideLabel;
+ const fontSize=(root?.048:topic?.035:.028)*SPHERE_SCALE*(.92+.08*p.factor);
  const lineH=fontSize*(root?1.1:1.14);
- const lines=showLabel?label(root?n.label:n.label,root?70:50):[];
+ const lines=showLabel?[Array.from(n.label).slice(0,root?14:10).join('')+(Array.from(n.label).length>(root?14:10)?'…':'')]:[];
  let text='';
  if(lines.length){
-  const baseY=root?fontSize*.36-(lines.length-1)*lineH/2:r+fontSize*1.08;
+  const baseY=r+fontSize*1.3;
   const cls=root?'mind-label mind-label--root':'mind-label mind-label--topic';
   text='<text class="'+cls+'" text-anchor="middle" fill="'+(root?'#f6fbfa':'#eaf2f1')+'" fill-opacity="'+(root?.96:Math.max(.56,.5+.5*front))+'" font-size="'+fontSize.toFixed(1)+'" font-weight="'+(root?650:560)+'">'+lines.map((line,i)=>'<tspan x="0" y="'+(baseY+i*lineH).toFixed(1)+'">'+esc(line)+'</tspan>').join('')+'</text>';
  }
@@ -132,6 +107,15 @@ function sphereNode(n,p){
 }
 function sphereBody(scene){
  projectSphere(scene);
+ // Reserve label rectangles in priority order; dense leaves remain accessible by tap/title.
+ const occupied=[];
+ for(const {n,p} of scene.projected.slice().sort((a,b)=>a.n.depth-b.n.depth)){
+  const font=(n.root?.048:n.q?.028:.035)*SPHERE_SCALE;
+  const w=Math.min(Array.from(n.label).length,n.root?14:10)*font;
+  const box={x:p.x-w/2,y:p.y+p.r+font*.3,w,h:font*1.5};
+  n.hideLabel=occupied.some(b=>box.x<b.x+b.w&&box.x+box.w>b.x&&box.y<b.y+b.h&&box.y+box.h>b.y);
+  if(!n.hideLabel)occupied.push(box);
+ }
  const edges='<g class="mind-edges">'+scene.edges.map(e=>{
   const a=e.a.proj,b=e.b.proj,front=(a.front+b.front)/2,color=e.b.sphereColor||e.color;
   return '<line x1="'+a.x.toFixed(1)+'" y1="'+a.y.toFixed(1)+'" x2="'+b.x.toFixed(1)+'" y2="'+b.y.toFixed(1)+'" stroke="'+color+'" stroke-opacity="'+(.08+.17*front).toFixed(3)+'"/>';
@@ -173,9 +157,9 @@ sphereScene=null;
 positions=new Map(nodes.filter(n=>n.q).map(n=>[n.q.id,{x:n.x,y:n.y}]));
 const minX=Math.min(...nodes.map(n=>n.x-n.r))-45,minY=Math.min(...nodes.map(n=>n.y-n.r))-45,maxX=Math.max(...nodes.map(n=>n.x+n.r))+45,maxY=Math.max(...nodes.map(n=>n.y+n.r))+45;bounds={x:minX,y:minY,w:Math.max(400,maxX-minX),h:Math.max(400,maxY-minY)};if(!viewport)viewport={...bounds};
 const svg='<svg class="mind-svg" role="group" aria-label="可拖动缩放的问题关系图" viewBox="'+[viewport.x,viewport.y,viewport.w,viewport.h].join(' ')+'"><g class="mind-edges">'+edges.map(e=>'<line x1="'+e.a.x+'" y1="'+e.a.y+'" x2="'+e.b.x+'" y2="'+e.b.y+'" stroke="'+e.color+'"/>').join('')+'</g>'+nodes.map(n=>{const lines=label(n.label,n.r);return '<g class="mind-node '+(n.q?'question-node':n.root?'root-node':'topic-node')+'" transform="translate('+n.x+' '+n.y+')" '+(n.q?'data-id="'+esc(n.q.id)+'"':n.path?'data-graph-topic="'+esc(n.path)+'"':'data-graph-root="true"')+' role="button" tabindex="0" aria-label="'+esc(n.label)+(n.path?(n.collapsed?'，展开':'，收起'):'')+'"><title>'+esc(n.label)+(n.q?(n.q.favorite?' · 已收藏':''):' · '+n.count+' 个问题')+'</title><circle r="'+n.r+'" fill="'+n.color+'" fill-opacity="'+(n.root?'.85':n.q?'.2':'.65')+'" stroke="'+n.color+'"/><text text-anchor="middle" fill="'+(n.q?'#e9e8ef':'#fff')+'" font-size="'+(n.root?17:n.q?11:14)+'">'+lines.map((line,i)=>'<tspan x="0" y="'+((i-(lines.length-1)/2)*(n.q?16:19)+4)+'">'+esc(line)+'</tspan>').join('')+'</text>'+(n.q&&n.q.favorite?'<path class="mind-fav" transform="translate(18 -30) scale(0.55)" d="M12 3.6 14.5 8.7 20.1 9.5 16.1 13.4 17 19 12 16.3 7 19 7.9 13.4 3.9 9.5 9.5 8.7Z"/>':'')+(n.path?'<g transform="translate(32 39)"><circle r="12" fill="#222822" stroke="'+n.color+'"/><text text-anchor="middle" y="4" fill="#e7eee1" font-size="12">'+(n.collapsed?'+':'−')+'</text></g>':'')+'</g>';}).join('')+'</svg>';
-return '<div class="mind-shell"><div class="mind-hint">拖动移动 · 双指缩放 · 短按主题收展 · 长按标题改名 · 点问题看详情</div>'+svg+'<div class="mind-controls"><button type="button" data-zoom="in" aria-label="放大关系图">+</button><button type="button" data-zoom="out" aria-label="缩小关系图">−</button><button type="button" data-zoom="fit">总览</button><button type="button" data-zoom="full">全屏</button></div><div class="mind-legend"><i></i>中心：方向 <span>●</span>彩色：主题 <span>○</span>外圈：问题</div></div>';}
+return '<div class="mind-shell">'+svg+'<div class="mind-controls"><button type="button" data-zoom="in" aria-label="放大关系图">+</button><button type="button" data-zoom="out" aria-label="缩小关系图">−</button><button type="button" data-zoom="fit">总览</button><button type="button" data-zoom="full">全屏</button></div></div>';}
 function sphereShell(title){
- return '<div class="mind-shell mind-shell--sphere"><div class="mind-hint">拖动旋转 · 双指缩放 · 短按主题收展 · 长按标题改名 · 点问题看详情</div>'+sphereSvg(sphereScene)+'<div class="mind-controls"><button type="button" data-zoom="in" aria-label="放大关系图">+</button><button type="button" data-zoom="out" aria-label="缩小关系图">−</button><button type="button" data-zoom="fit">总览</button><button type="button" data-zoom="full">全屏</button></div><div class="mind-legend"><i></i>中心：方向 <span>●</span>彩色：主题 <span>○</span>外圈：问题</div></div>';
+ return '<div class="mind-shell mind-shell--sphere">'+sphereSvg(sphereScene)+'<div class="mind-controls"><button type="button" data-zoom="in" aria-label="放大关系图">+</button><button type="button" data-zoom="out" aria-label="缩小关系图">−</button><button type="button" data-zoom="fit">总览</button><button type="button" data-zoom="full">全屏</button></div></div>';
 }
 function apply(){activeSvg?.setAttribute('viewBox',[viewport.x,viewport.y,viewport.w,viewport.h].join(' '));}
 function zoom(factor){if(!viewport)return;const w=Math.max(140,Math.min(4500,viewport.w*factor));const f=w/viewport.w;viewport={x:viewport.x+(viewport.w-w)/2,y:viewport.y+(viewport.h-viewport.h*f)/2,w,h:viewport.h*f};apply();}

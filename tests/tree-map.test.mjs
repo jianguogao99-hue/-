@@ -1,0 +1,18 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+const context={window:{matchMedia:()=>({matches:true})}};
+vm.createContext(context);
+vm.runInContext(fs.readFileSync('public/mindmap.js','utf8'),context);
+const root={children:new Map(),questions:[]};
+for(let i=0;i<4;i++)root.children.set('Topic '+i,{children:new Map(),questions:Array.from({length:3},(_,j)=>({id:`q${i}-${j}`,title:`Question ${i}-${j}`,links:[]}))});
+const html=context.window.QuestionGraph.render(root,'Root',new Set(),false,'test');
+const nodes=[...html.matchAll(/class="mind-node ([^"]+)" transform="translate\(([-.\d]+) ([-.\d]+)\)"/g)].map(m=>({kind:m[1],x:+m[2],y:+m[3]}));
+assert.equal(nodes.length,17);
+const top=nodes.find(n=>n.kind==='root-node');
+assert.ok(nodes.filter(n=>n!==top).every(n=>n.y>top.y),'root must sit above its descendants');
+const topics=nodes.filter(n=>n.kind==='topic-node').sort((a,b)=>a.x-b.x);
+assert.ok(topics.every((n,i)=>!i||n.x-topics[i-1].x>50),'branches must have distinct horizontal lanes');
+assert.ok(!/mind-hint|mind-legend/.test(html));
+assert.equal((html.match(/data-id="q/g)||[]).length,12,'all question hit targets survive label decluttering');
+console.log('PASS: hierarchical mobile tree, separated branches, clean chrome and all question targets');

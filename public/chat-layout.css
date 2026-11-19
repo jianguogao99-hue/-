@@ -2458,3 +2458,11 @@ dialog .candidate-item small{color:#9a9a9a!important}
   overflow:hidden!important;
  }
 }
+
+/* UI v27: compact search and quiet hierarchical map chrome. */
+#mapPanel .map-search{display:flex;align-items:center;justify-content:flex-end;gap:8px;width:100%;margin:8px 0}
+#toggleMapSearch{display:grid;place-items:center;width:42px;height:42px;flex:0 0 42px;padding:0;border:1px solid #ffffff20;border-radius:50%;color:#d9d9d9;background:#ffffff08;cursor:pointer}
+#mapPanel .map-search #search{flex:1;min-width:0;margin:0;width:auto}
+#mapPanel .map-search #search[hidden]{display:none!important}
+#mapPanel .mind-hint,#mapPanel .mind-legend{display:none!important}
+#mapPanel .mind-svg--sphere .mind-label{paint-order:stroke;stroke:#0b0d0f;stroke-width:2px;stroke-linejoin:round}
