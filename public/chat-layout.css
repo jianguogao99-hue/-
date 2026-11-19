@@ -2466,3 +2466,8 @@ dialog .candidate-item small{color:#9a9a9a!important}
 #mapPanel .map-search #search[hidden]{display:none!important}
 #mapPanel .mind-hint,#mapPanel .mind-legend{display:none!important}
 #mapPanel .mind-svg--sphere .mind-label{paint-order:stroke;stroke:#0b0d0f;stroke-width:2px;stroke-linejoin:round}
+
+/* UI v28: full-width search field with an icon and no placeholder. */
+#mapPanel .map-search{position:relative;display:block}
+#mapPanel .map-search svg{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:#dedede;pointer-events:none;z-index:1}
+#mapPanel .map-search #search{display:block;width:100%;min-height:44px;padding-inline-start:46px!important;box-sizing:border-box}

@@ -7,7 +7,7 @@ const palette=['#b6a0de','#90bfaa','#c2a2bd','#b9bc85','#8cafd0','#d0a788'];
 const spherePalette=['#9edbe0','#9fd9bf','#b9a9e6','#e7cf9e','#d9a8b8','#a9c7e8'];
 const MOBILE_QUERY='(max-width:760px)';
 const SPHERE_SCALE=400,SPHERE_CAMERA=3.4,GOLDEN=2.399963229728653;
-const INITIAL_YAW=-0.12,INITIAL_PITCH=0.08;
+const INITIAL_YAW=-0.24,INITIAL_PITCH=0.31;
 let sphereScene=null,sphereYaw=INITIAL_YAW,spherePitch=INITIAL_PITCH,sphereFrame=0;
 let sphereMQ=null;
 function sphereMode(){
@@ -38,16 +38,23 @@ function buildSphere(nodes,edges,maxDepth){
  const root=nodes[0];
  for(const n of nodes){n.childNodes=[];n.sphereIdx=0;n.sphereColor=spherePalette[0];}
  for(const e of edges)e.a.childNodes.push(e.b);
- let leaf=0;
- function measure(n){if(!n.childNodes.length){n.treeX=leaf++;return;}n.childNodes.forEach(measure);n.treeX=(n.childNodes[0].treeX+n.childNodes[n.childNodes.length-1].treeX)/2;}
- measure(root);
- const width=Math.max(1.6,(leaf-1)*.32),center=(leaf-1)/2;
- function place(n,branch){
-  n.sphereIdx=branch%spherePalette.length;n.sphereColor=n.root?'#e6f0ef':spherePalette[n.sphereIdx];
-  n.dir={x:leaf>1?(n.treeX-center)/(leaf-1)*width:0,y:-.92+n.depth*.5,z:n.root?0:Math.sin(branch*1.7)*.16};
-  n.childNodes.forEach((child,i)=>place(child,n.root?i:branch));
+ // Each subtree occupies a sector in the horizontal X/Z plane.
+ // Descendants fan out within that sector as they move down the tree.
+ function place(n, start, end, branch){
+  const angle=(start+end)/2;
+  const radius=n.depth===0?0:Math.min(1.45,.58+(n.depth-1)*.31);
+  n.sphereIdx=branch%spherePalette.length;
+  n.sphereColor=n.root?'#e6f0ef':spherePalette[n.sphereIdx];
+  n.dir={x:Math.cos(angle)*radius,y:-.92+n.depth*.58,z:Math.sin(angle)*radius};
+  const total=n.childNodes.reduce((sum,child)=>sum+Math.sqrt(child.weight||1),0);
+  let cursor=start;
+  n.childNodes.forEach((child,i)=>{
+   const span=(end-start)*Math.sqrt(child.weight||1)/total;
+   place(child,cursor+span*.08,cursor+span*.92,n.root?i:branch);
+   cursor+=span;
+  });
  }
- place(root,0);
+ place(root,-.9,Math.PI*2-.9,0);
  return {nodes,edges,root,maxDepth,yaw:sphereYaw,pitch:spherePitch,key:identity};
 }
 function projectSphere(scene){
@@ -118,7 +125,7 @@ function sphereBody(scene){
  }
  const edges='<g class="mind-edges">'+scene.edges.map(e=>{
   const a=e.a.proj,b=e.b.proj,front=(a.front+b.front)/2,color=e.b.sphereColor||e.color;
-  return '<line x1="'+a.x.toFixed(1)+'" y1="'+a.y.toFixed(1)+'" x2="'+b.x.toFixed(1)+'" y2="'+b.y.toFixed(1)+'" stroke="'+color+'" stroke-opacity="'+(.08+.17*front).toFixed(3)+'"/>';
+  return '<line x1="'+a.x.toFixed(1)+'" y1="'+a.y.toFixed(1)+'" x2="'+b.x.toFixed(1)+'" y2="'+b.y.toFixed(1)+'" stroke="'+color+'" stroke-opacity="'+(.26+.34*front).toFixed(3)+'"/>';
  }).join('')+'</g>';
  const ordered=scene.projected.slice().sort((A,B)=>A.n.root?1:B.n.root?-1:A.p.z-B.p.z);
  const nodes=ordered.map(item=>sphereNode(item.n,item.p)).join('');
