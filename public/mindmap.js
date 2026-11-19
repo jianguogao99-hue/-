@@ -128,21 +128,48 @@ function sphereBody(scene){
   return '<line x1="'+a.x.toFixed(1)+'" y1="'+a.y.toFixed(1)+'" x2="'+b.x.toFixed(1)+'" y2="'+b.y.toFixed(1)+'" stroke="'+color+'" stroke-opacity="'+(.26+.34*front).toFixed(3)+'"/>';
  }).join('')+'</g>';
  const ordered=scene.projected.slice().sort((A,B)=>A.n.root?1:B.n.root?-1:A.p.z-B.p.z);
+ scene.drawOrder=ordered;
  const nodes=ordered.map(item=>sphereNode(item.n,item.p)).join('');
  return sphereDefs()+'<circle class="mind-sphere-halo" cx="0" cy="0" r="'+(SPHERE_SCALE*1.04).toFixed(1)+'" fill="url(#mgSphereHalo)"/>'+edges+nodes;
 }
 function sphereSvg(scene){
  return '<svg class="mind-svg mind-svg--sphere" role="group" aria-label="可拖动旋转缩放的问题关系图" viewBox="'+[viewport.x,viewport.y,viewport.w,viewport.h].join(' ')+'">'+sphereBody(scene)+'</svg>';
 }
-function paintSphere(){
- if(!sphereScene||!activeSvg)return;
- sphereScene.yaw=sphereYaw;sphereScene.pitch=spherePitch;
- activeSvg.innerHTML=sphereBody(sphereScene);
+let settleSphere=false;
+function paintSphere(settle=false){
+ const scene=sphereScene,svg=activeSvg;
+ if(!scene||!svg?.isConnected||!svg.classList.contains('mind-svg--sphere'))return;
+ const rotated=scene.yaw!==sphereYaw||scene.pitch!==spherePitch;
+ scene.yaw=sphereYaw;scene.pitch=spherePitch;
+ if(settle){
+  svg.innerHTML=sphereBody(scene);
+  scene.elements=null;
+  apply();
+  return;
+ }
+ if(!rotated){apply();return;}
+ if(scene.elements?.svg!==svg){
+  scene.elements={svg,nodes:Array.from(svg.querySelectorAll('.mind-node')),edges:Array.from(svg.querySelectorAll('.mind-edges line'))};
+ }
+ projectSphere(scene);
+ scene.drawOrder.forEach(({n,p:initial},i)=>{
+  const p=n.proj;
+  scene.elements.nodes[i].setAttribute('transform',
+   `translate(${p.x.toFixed(1)} ${p.y.toFixed(1)}) scale(${(p.factor/initial.factor).toFixed(3)})`);
+ });
+ scene.edges.forEach(({a,b},i)=>{
+  const line=scene.elements.edges[i];
+  line.setAttribute('x1',a.proj.x.toFixed(1));line.setAttribute('y1',a.proj.y.toFixed(1));
+  line.setAttribute('x2',b.proj.x.toFixed(1));line.setAttribute('y2',b.proj.y.toFixed(1));
+ });
+ apply();
 }
-function scheduleSphere(){
+function scheduleSphere(settle=false){
+ settleSphere=settle;
  if(sphereFrame)return;
- if(typeof requestAnimationFrame==='function')sphereFrame=requestAnimationFrame(()=>{sphereFrame=0;paintSphere();});
- else paintSphere();
+ const frame=()=>{sphereFrame=0;paintSphere(settleSphere);};
+ if(typeof requestAnimationFrame==='function')sphereFrame=requestAnimationFrame(frame);
+ else frame();
 }
 function clampPitch(v){return Math.max(-1.32,Math.min(1.32,v));}
 function resetSphereRotation(){sphereYaw=INITIAL_YAW;spherePitch=INITIAL_PITCH;if(sphereScene){sphereScene.yaw=sphereYaw;sphereScene.pitch=spherePitch;}}
@@ -176,29 +203,29 @@ function cancelHold(){clearTimeout(holdTimer);holdTimer=0;holdStart=null;}
 function startHold(target,x,y){cancelHold();const node=target.closest?.('[data-graph-topic],[data-graph-root]');if(!node||!onRename)return;holdStart={x,y};holdTimer=setTimeout(()=>{holdTimer=0;holdStart=null;if(node.isConnected===false)return;suppressUntil=Date.now()+1200;moved=false;gesture=null;points.clear();touchActive=false;onRename(node.dataset.graphTopic||null);},550);}
 function moveHold(x,y){if(holdStart&&Math.hypot(x-holdStart.x,y-holdStart.y)>8)cancelHold();}
 el.addEventListener('contextmenu',e=>{if(e.target.closest?.('[data-graph-topic],[data-graph-root]'))e.preventDefault();});
-const useTouch='ontouchstart' in window;el.addEventListener('click',e=>{if(Date.now()<suppressUntil){e.preventDefault();e.stopImmediatePropagation();return;}const ctl=e.target.closest('[data-zoom]');if(ctl){activeSvg=el.querySelector('svg');if(ctl.dataset.zoom==='full'){const panel=document.querySelector('#mapPanel');panel.classList.toggle('graph-immersive');ctl.textContent=panel.classList.contains('graph-immersive')?'退出':'全屏';return;}if(ctl.dataset.zoom==='fit'){resetSphereRotation();if(viewport&&sphereScene){projectSphere(sphereScene);paintSphere();}viewport={...bounds};apply();}else zoom(ctl.dataset.zoom==='in'?.75:1.333);return;}if(moved){e.preventDefault();e.stopImmediatePropagation();moved=false;return;}const topic=e.target.closest('[data-graph-topic]');if(topic){e.stopPropagation();onTopic(topic.dataset.graphTopic);}if(e.target.closest('[data-graph-root]')){viewport={...bounds};activeSvg=el.querySelector('svg');apply();}},true);
+const useTouch='ontouchstart' in window;el.addEventListener('click',e=>{if(Date.now()<suppressUntil){e.preventDefault();e.stopImmediatePropagation();return;}const ctl=e.target.closest('[data-zoom]');if(ctl){activeSvg=el.querySelector('svg');if(ctl.dataset.zoom==='full'){const panel=document.querySelector('#mapPanel');panel.classList.toggle('graph-immersive');ctl.textContent=panel.classList.contains('graph-immersive')?'退出':'全屏';return;}if(ctl.dataset.zoom==='fit'){resetSphereRotation();if(viewport&&sphereScene){paintSphere(true);}viewport={...bounds};apply();}else zoom(ctl.dataset.zoom==='in'?.75:1.333);return;}if(moved){e.preventDefault();e.stopImmediatePropagation();moved=false;return;}const topic=e.target.closest('[data-graph-topic]');if(topic){e.stopPropagation();onTopic(topic.dataset.graphTopic);}if(e.target.closest('[data-graph-root]')){viewport={...bounds};activeSvg=el.querySelector('svg');apply();}},true);
 el.addEventListener('keydown',e=>{if(e.key==='F2'){const node=e.target.closest('[data-graph-topic],[data-graph-root]');if(node&&onRename){e.preventDefault();onRename(node.dataset.graphTopic||null);}return;}if(e.key!=='Enter'&&e.key!==' ')return;const node=e.target.closest('.mind-node');if(node){e.preventDefault();node.dispatchEvent(new MouseEvent('click',{bubbles:true}));}});
 el.addEventListener('pointerdown',e=>{if(useTouch&&e.pointerType==='touch')return;const svg=e.target.closest('svg');if(!svg||!viewport)return;activeSvg=svg;moved=false;if(points.size===0)startHold(e.target,e.clientX,e.clientY);else cancelHold();points.set(e.pointerId,{x:e.clientX,y:e.clientY});gesture={points:Array.from(points.values()),viewport:{...viewport}};if(sphereScene){gesture.yaw=sphereYaw;gesture.pitch=spherePitch;}});
-el.addEventListener('pointermove',e=>{if(useTouch&&e.pointerType==='touch')return;moveHold(e.clientX,e.clientY);if(!points.has(e.pointerId)||!gesture)return;if(e.cancelable)e.preventDefault();e.stopPropagation();points.set(e.pointerId,{x:e.clientX,y:e.clientY});const current=Array.from(points.values()),before=gesture.points;const rect=activeSvg.getBoundingClientRect();if(!rect.width)return;
+el.addEventListener('pointermove',e=>{if(useTouch&&e.pointerType==='touch')return;moveHold(e.clientX,e.clientY);if(!points.has(e.pointerId)||!gesture)return;if(e.cancelable)e.preventDefault();e.stopPropagation();points.set(e.pointerId,{x:e.clientX,y:e.clientY});const current=Array.from(points.values()),before=gesture.points;const rect=gesture.rect??=activeSvg.getBoundingClientRect();if(!rect.width)return;
  if(sphereScene){
-  if(current.length===1&&before.length===1){const dx=current[0].x-before[0].x,dy=current[0].y-before[0].y;if(Math.abs(dx)+Math.abs(dy)>4)moved=true;if(moved){sphereYaw=(gesture.yaw??sphereYaw)+dx*.0075;spherePitch=clampPitch((gesture.pitch??spherePitch)+dy*.0075);sphereScene.yaw=sphereYaw;sphereScene.pitch=spherePitch;scheduleSphere();}}
-  else if(current.length>=2&&before.length>=2){const distance=p=>Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);const f=distance(before)/Math.max(1,distance(current));const w=Math.max(140,Math.min(4500,gesture.viewport.w*f));const ratio=w/gesture.viewport.w;viewport={x:gesture.viewport.x+(gesture.viewport.w-w)/2,y:gesture.viewport.y+(gesture.viewport.h-gesture.viewport.h*ratio)/2,w,h:gesture.viewport.h*ratio};moved=true;apply();}
+  if(current.length===1&&before.length===1){const dx=current[0].x-before[0].x,dy=current[0].y-before[0].y;if(Math.abs(dx)+Math.abs(dy)>4)moved=true;if(moved){sphereYaw=(gesture.yaw??sphereYaw)+dx*.0075;spherePitch=clampPitch((gesture.pitch??spherePitch)+dy*.0075);scheduleSphere();}}
+  else if(current.length>=2&&before.length>=2){const distance=p=>Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);const f=distance(before)/Math.max(1,distance(current));const w=Math.max(140,Math.min(4500,gesture.viewport.w*f));const ratio=w/gesture.viewport.w;viewport={x:gesture.viewport.x+(gesture.viewport.w-w)/2,y:gesture.viewport.y+(gesture.viewport.h-gesture.viewport.h*ratio)/2,w,h:gesture.viewport.h*ratio};moved=true;scheduleSphere();}
   return;
  }
  if(current.length===1&&before.length===1){const dx=current[0].x-before[0].x,dy=current[0].y-before[0].y;if(Math.abs(dx)+Math.abs(dy)>5){moved=true;activeSvg.setPointerCapture?.(e.pointerId);}const scale=Math.max(gesture.viewport.w/rect.width,gesture.viewport.h/rect.height);viewport={...gesture.viewport,x:gesture.viewport.x-dx*scale,y:gesture.viewport.y-dy*scale};}else if(current.length>=2&&before.length>=2){const distance=p=>Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);const f=distance(before)/Math.max(1,distance(current));const w=Math.max(140,Math.min(4500,gesture.viewport.w*f));const ratio=w/gesture.viewport.w;viewport={x:gesture.viewport.x+(gesture.viewport.w-w)/2,y:gesture.viewport.y+(gesture.viewport.h-gesture.viewport.h*ratio)/2,w,h:gesture.viewport.h*ratio};moved=true;}apply();});
-function end(e){if(useTouch&&e.pointerType==='touch')return;cancelHold();points.delete(e.pointerId);gesture=points.size?{points:Array.from(points.values()),viewport:{...viewport},yaw:sphereYaw,pitch:spherePitch}:null;}el.addEventListener('pointerup',end);el.addEventListener('pointercancel',e=>{end(e);moved=false;});
+function end(e){if(useTouch&&e.pointerType==='touch')return;cancelHold();points.delete(e.pointerId);gesture=points.size?{points:Array.from(points.values()),viewport:{...viewport},yaw:sphereYaw,pitch:spherePitch}:null;if(!gesture&&moved&&sphereScene)scheduleSphere(true);}el.addEventListener('pointerup',end);el.addEventListener('pointercancel',e=>{end(e);moved=false;});
 // iOS Safari may hand SVG touches to page scrolling unless explicitly cancelled.
 function touchPoints(touches){return Array.from(touches).map(t=>({x:t.clientX,y:t.clientY}));}
 function beginTouch(e){if(e.touches.length!==1)cancelHold();else startHold(e.target,e.touches[0].clientX,e.touches[0].clientY);const svg=e.target.closest?.('.mind-svg');if(!svg&&!touchActive)return;if(!viewport)return;if(!touchActive){activeSvg=svg;moved=false;touchActive=true;}gesture={points:touchPoints(e.touches),viewport:{...viewport},yaw:sphereYaw,pitch:spherePitch};if(e.touches.length>1&&e.cancelable)e.preventDefault();e.stopPropagation();}
-function moveTouch(e){if(e.touches.length!==1)cancelHold();else moveHold(e.touches[0].clientX,e.touches[0].clientY);if(activeSvg?.isConnected===false){touchActive=false;gesture=null;return;}if(!touchActive||!gesture||!activeSvg)return;if(e.cancelable)e.preventDefault();e.stopPropagation();const current=touchPoints(e.touches),before=gesture.points;const rect=activeSvg.getBoundingClientRect();if(!rect.width||!rect.height)return;
+function moveTouch(e){if(e.touches.length!==1)cancelHold();else moveHold(e.touches[0].clientX,e.touches[0].clientY);if(activeSvg?.isConnected===false){touchActive=false;gesture=null;return;}if(!touchActive||!gesture||!activeSvg)return;if(e.cancelable)e.preventDefault();e.stopPropagation();const current=touchPoints(e.touches),before=gesture.points;const rect=gesture.rect??=activeSvg.getBoundingClientRect();if(!rect.width||!rect.height)return;
  if(sphereScene){
-  if(current.length===1&&before.length===1){const dx=current[0].x-before[0].x,dy=current[0].y-before[0].y;if(Math.abs(dx)+Math.abs(dy)>4)moved=true;if(moved){sphereYaw=(gesture.yaw??sphereYaw)+dx*.0075;spherePitch=clampPitch((gesture.pitch??spherePitch)+dy*.0075);sphereScene.yaw=sphereYaw;sphereScene.pitch=spherePitch;scheduleSphere();}}
-  else if(current.length>=2&&before.length>=2){const distance=p=>Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);const mid=p=>({x:(p[0].x+p[1].x)/2,y:(p[0].y+p[1].y)/2});const f=Math.max(140,Math.min(4500,gesture.viewport.w*distance(before)/Math.max(1,distance(current))))/gesture.viewport.w;const a=mid(before),b=mid(current);const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;const scale=Math.max(gesture.viewport.w/rect.width,gesture.viewport.h/rect.height);const anchorX=gesture.viewport.x+gesture.viewport.w/2+(a.x-cx)*scale,anchorY=gesture.viewport.y+gesture.viewport.h/2+(a.y-cy)*scale;viewport={x:anchorX-(b.x-cx)*scale*f-gesture.viewport.w*f/2,y:anchorY-(b.y-cy)*scale*f-gesture.viewport.h*f/2,w:gesture.viewport.w*f,h:gesture.viewport.h*f};moved=true;apply();}
+  if(current.length===1&&before.length===1){const dx=current[0].x-before[0].x,dy=current[0].y-before[0].y;if(Math.abs(dx)+Math.abs(dy)>4)moved=true;if(moved){sphereYaw=(gesture.yaw??sphereYaw)+dx*.0075;spherePitch=clampPitch((gesture.pitch??spherePitch)+dy*.0075);scheduleSphere();}}
+  else if(current.length>=2&&before.length>=2){const distance=p=>Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);const mid=p=>({x:(p[0].x+p[1].x)/2,y:(p[0].y+p[1].y)/2});const f=Math.max(140,Math.min(4500,gesture.viewport.w*distance(before)/Math.max(1,distance(current))))/gesture.viewport.w;const a=mid(before),b=mid(current);const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;const scale=Math.max(gesture.viewport.w/rect.width,gesture.viewport.h/rect.height);const anchorX=gesture.viewport.x+gesture.viewport.w/2+(a.x-cx)*scale,anchorY=gesture.viewport.y+gesture.viewport.h/2+(a.y-cy)*scale;viewport={x:anchorX-(b.x-cx)*scale*f-gesture.viewport.w*f/2,y:anchorY-(b.y-cy)*scale*f-gesture.viewport.h*f/2,w:gesture.viewport.w*f,h:gesture.viewport.h*f};moved=true;scheduleSphere();}
   return;
  }
  const base=gesture.viewport,scale=Math.max(base.w/rect.width,base.h/rect.height);if(current.length===1&&before.length===1){const dx=current[0].x-before[0].x,dy=current[0].y-before[0].y;if(Math.abs(dx)+Math.abs(dy)>4)moved=true;viewport={...base,x:base.x-dx*scale,y:base.y-dy*scale};}else if(current.length>=2&&before.length>=2){const distance=p=>Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);const mid=p=>({x:(p[0].x+p[1].x)/2,y:(p[0].y+p[1].y)/2});const f=Math.max(140,Math.min(4500,base.w*distance(before)/Math.max(1,distance(current))))/base.w;const a=mid(before),b=mid(current);const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;const anchorX=base.x+base.w/2+(a.x-cx)*scale,anchorY=base.y+base.h/2+(a.y-cy)*scale;viewport={x:anchorX-(b.x-cx)*scale*f-base.w*f/2,y:anchorY-(b.y-cy)*scale*f-base.h*f/2,w:base.w*f,h:base.h*f};moved=true;}apply();}
-function endTouch(e){cancelHold();if(!touchActive)return;e.stopPropagation();if(e.touches.length){gesture={points:touchPoints(e.touches),viewport:{...viewport},yaw:sphereYaw,pitch:spherePitch};}else{touchActive=false;gesture=null;} }
-el.addEventListener('touchstart',beginTouch,{passive:false});document.addEventListener('touchmove',moveTouch,{passive:false,capture:true});document.addEventListener('touchend',endTouch,{passive:false,capture:true});document.addEventListener('touchcancel',e=>{cancelHold();if(!touchActive)return;touchActive=false;gesture=null;moved=false;},{passive:false,capture:true});
+function endTouch(e){cancelHold();if(!touchActive)return;e.stopPropagation();if(e.touches.length){gesture={points:touchPoints(e.touches),viewport:{...viewport},yaw:sphereYaw,pitch:spherePitch};}else{touchActive=false;gesture=null;if(moved&&sphereScene)scheduleSphere(true);} }
+el.addEventListener('touchstart',beginTouch,{passive:false});document.addEventListener('touchmove',moveTouch,{passive:false,capture:true});document.addEventListener('touchend',endTouch,{passive:false,capture:true});document.addEventListener('touchcancel',e=>{cancelHold();if(!touchActive)return;touchActive=false;gesture=null;if(moved&&sphereScene)scheduleSphere(true);moved=false;},{passive:false,capture:true});
 for(const name of ['gesturestart','gesturechange','gestureend'])el.addEventListener(name,e=>{if(e.target.closest?.('.mind-shell')){if(e.cancelable)e.preventDefault();e.stopPropagation();}},{passive:false});
 el.addEventListener('wheel',e=>{if(!e.target.closest('svg'))return;e.preventDefault();activeSvg=el.querySelector('svg');zoom(e.deltaY>0?1.12:.89);},{passive:false});}
 window.QuestionGraph={render,attach,focus(id){const point=positions.get(id);activeSvg=document.querySelector('.mind-svg');if(!point||!activeSvg)return false;const side=sphereScene?420:340;viewport={x:point.x-side/2,y:point.y-side/2,w:side,h:side};apply();for(const node of activeSvg.querySelectorAll('[data-id]'))node.classList.toggle('graph-located',node.dataset.id===id);return true;},reset(){viewport=null;points.clear();gesture=null;sphereScene=null;positions=new Map();resetSphereRotation();}};
