@@ -2484,3 +2484,9 @@ dialog .candidate-item small{color:#9a9a9a!important}
 #workspace .reply-content pre{padding:12px 14px;background:#191919;border:1px solid #343434;border-radius:12px;white-space:pre;overflow:auto;text-wrap:initial}
 #workspace .reply-content pre code{padding:0;background:none}
 .rei-theme #workspace .msg .reply-content{text-shadow:0 1px 4px #000,0 0 8px #000}
+
+/* UI v30: continue the chat surface behind the mobile header. */
+@media(max-width:760px){
+ main:has(#workspace[data-mode="chat"])::before{display:none!important}
+ main:has(#workspace[data-mode="chat"]) header .chat-brand{text-shadow:0 1px 5px #000}
+}
