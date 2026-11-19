@@ -306,7 +306,7 @@ assert.match(css, /\.glass-opacity-control/, 'slider must be styled with the set
 
 
 assert.match(html, /placeholder="输入问题"/, 'composer placeholder stays short and quiet');
-assert.match(html, /placeholder="搜索问题"/, 'map search placeholder stays short and quiet');
+assert.match(html, /id="search" type="search" aria-label="搜索问题">/, 'map search has an accessible name and no placeholder');
 assert.match(html, /placeholder="筛选问题"/, 'merge search placeholder stays short and quiet');
 assert.doesNotMatch(html, /想聊些什么|搜索问题、关键词|筛选候选问题|ASCII 绫波丽 · 试用/, 'wordy or promotional placeholders must be tightened');
 assert.match(html, /<option value="rei">ASCII 绫波丽<\/option>/, 'background option keeps the world name without a trial tag');
