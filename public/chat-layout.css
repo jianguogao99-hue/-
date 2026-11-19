@@ -2471,3 +2471,16 @@ dialog .candidate-item small{color:#9a9a9a!important}
 #mapPanel .map-search{position:relative;display:block}
 #mapPanel .map-search svg{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:#dedede;pointer-events:none;z-index:1}
 #mapPanel .map-search #search{display:block;width:100%;min-height:44px;padding-inline-start:46px!important;box-sizing:border-box}
+
+/* UI v29: reading rhythm for assistant replies. */
+#workspace .msg .reply-content{font-size:16px;line-height:1.65;letter-spacing:normal;white-space:normal;color:#efefef;text-wrap:pretty;padding-block:2px}
+#workspace .reply-content > *{margin:0}
+#workspace .reply-content > * + *{margin-top:.85em}
+#workspace .reply-content :is(h3,h4,h5,h6){font-size:1.04em;line-height:1.4;font-weight:650}
+#workspace .reply-content :is(ol,ul){padding-inline-start:1.55em}
+#workspace .reply-content li + li{margin-top:.28em}
+#workspace .reply-content strong{font-weight:650;color:#fff}
+#workspace .reply-content code{font-family:ui-monospace,monospace;font-size:.88em;background:#282828;border-radius:4px;padding:.12em .3em}
+#workspace .reply-content pre{padding:12px 14px;background:#191919;border:1px solid #343434;border-radius:12px;white-space:pre;overflow:auto;text-wrap:initial}
+#workspace .reply-content pre code{padding:0;background:none}
+.rei-theme #workspace .msg .reply-content{text-shadow:0 1px 4px #000,0 0 8px #000}
