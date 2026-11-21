@@ -81,3 +81,7 @@ main{height:100%;display:grid;grid-template-rows:minmax(0,1fr) auto;overflow:vis
 /* Keep iOS long-press menus available only in editable fields. */
 main{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 main input{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
+
+.welcome,.panel{grid-area:1/1}
+#authStatus{grid-row:2}
+@media(prefers-reduced-motion:no-preference){#codeRain{transition:opacity 300ms ease}}

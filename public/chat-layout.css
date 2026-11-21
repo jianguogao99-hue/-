@@ -2527,3 +2527,13 @@ dialog .candidate-item small{color:#9a9a9a!important}
  background:rgba(255,255,255,.09);
  color:var(--glass-text,#eee);
 }
+
+/* UI v34: the chat drawer trigger uses the drawer glass tokens. */
+#sidebar>summary,#sidebar>summary:hover{
+ background:var(--glass-tint),var(--sidebar-bg);
+ border-color:var(--glass-hairline);
+ color:var(--glass-text,#eee);
+ box-shadow:var(--glass-highlight);
+ -webkit-backdrop-filter:blur(var(--sidebar-blur)) saturate(var(--sidebar-sat));
+ backdrop-filter:blur(var(--sidebar-blur)) saturate(var(--sidebar-sat));
+}

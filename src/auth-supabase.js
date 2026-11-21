@@ -33,15 +33,22 @@ async function main(){
   const animate=returning&&!matchMedia('(prefers-reduced-motion: reduce)').matches&&typeof panel.animate==='function';
   if(animate){
    leaving=true;
+   const welcome=$('#authWelcome');
+   welcome.inert=true;
+   panel.inert=true;
+   welcome.hidden=false;
+   welcome.animate([{opacity:0},{opacity:1}],{duration:300,easing:'ease-out'});
    const exit=panel.animate([{transform:'translateY(0)'},{transform:'translateY(100dvh)'}],{duration:300,easing:'cubic-bezier(.55,.05,.85,.58)',fill:'forwards'});
    try{await exit.finished;}catch{}
+   panel.hidden=true;
    exit.cancel();
+   panel.inert=false;
+   welcome.inert=false;
    leaving=false;
   }
   history.replaceState(null,'',link.href);
   $('#authStatus').textContent='';
   renderScreen();
-  if(animate)$('#authWelcome').animate([{opacity:0},{opacity:1}],{duration:200,easing:'ease-out'});
   document.querySelector($('#authPanel').hidden?'#authWelcome h1':'#authHeading')?.focus({preventScroll:true});
  }
  for(const link of document.querySelectorAll('#authWelcome nav a, #authPanel .back'))link.addEventListener('click',navigate);
