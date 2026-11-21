@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const drawer=document.querySelector('#sidebar');let closing=0,start=null,suppressClick=false;
+const drawer=document.querySelector('#sidebar');let closing=0,start=null,suppressClick=false,menuReturn=null;
 const reduceMotion=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)');
 const CLOSE_MS=160;
 function duration(){return reduceMotion&&reduceMotion.matches?0:CLOSE_MS;}
@@ -17,8 +17,10 @@ function focusedOn(node){return node&&document.activeElement===node;}
 function blurEditable(){const el=document.activeElement;if(el&&el!==document.body&&(el.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))&&typeof el.blur==='function')el.blur();}
 function open(){
  clearTimeout(closing);
+ closing=0;
  blurEditable();
- drawer.classList.remove('drawer-closing');
+ menuReturn?.cancel();
+ drawer.classList.remove('drawer-closing','menu-returning');
  const head=summary(),card=cardMenu();
  const keep=focusedOn(head);
  drawer.open=true;
@@ -26,14 +28,24 @@ function open(){
  if(keep&&card&&typeof card.focus==='function')card.focus();
 }
 function close(){
- clearTimeout(closing);
- if(!drawer.open)return;
- drawer.classList.add('drawer-closing');
+ if(!drawer.open||closing)return;
  const head=summary(),card=cardMenu();
+ if(duration()&&card?.getBoundingClientRect&&head?.animate){
+  const from=card.getBoundingClientRect(),to=head.getBoundingClientRect();
+  drawer.classList.add('menu-returning');
+  menuReturn=head.animate([
+   {transform:`translate(${from.left-to.left}px,${from.top-to.top}px) scale(.9)`,opacity:.45},
+   {transform:'translateX(-5px) scale(.96)',opacity:1,offset:.68},
+   {transform:'translateX(2px) scale(1.035)',opacity:1,offset:.86},
+   {transform:'none',opacity:1}
+  ],{duration:240,easing:'cubic-bezier(.32,0,.25,1)'});
+ }
+ drawer.classList.add('drawer-closing');
  const keep=focusedOn(card)||(card&&card.contains&&document.activeElement&&card.contains(document.activeElement));
  closing=setTimeout(()=>{
+  closing=0;
   drawer.open=false;
-  drawer.classList.remove('drawer-closing');
+  drawer.classList.remove('drawer-closing','menu-returning');
   setExpanded(false);
   if(keep&&head&&typeof head.focus==='function')head.focus();
  },duration());
