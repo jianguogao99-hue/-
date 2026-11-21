@@ -49,3 +49,19 @@ body:has(.welcome:not([hidden])) .welcome{color:#fff}
 .welcome nav .primary{border-color:#fff;background:#fff;color:#111}
 .welcome nav .secondary{border-color:#fff;background:#101014;color:#fff}
 .welcome nav a:focus-visible{outline-color:#fff}
+
+/* One continuous rain scene across all account screens. */
+:root{color-scheme:dark;background:#050507;color:#f5f5f6}
+body{background:#050507}
+main{position:relative}
+body:has(.panel:not([hidden])) #codeRain{
+ opacity:.4;
+ mask-image:radial-gradient(ellipse at center,transparent 14%,#000 90%);
+}
+.panel input{background:#101014;border-color:#64646b}
+.panel input:focus{border-color:#bcbcc2}
+.panel label,#signup,#forgotPassword{color:#dedee3}
+#signup{border-color:#8a8a91;color:#fff}
+.panel button[type=submit]{background:#fff;color:#111;border-color:#fff}
+.back:hover{background:#232329}
+a:focus-visible,button:focus-visible{outline-color:#bbb}
