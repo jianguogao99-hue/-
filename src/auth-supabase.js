@@ -33,27 +33,24 @@ async function main(){
   const animate=returning&&!matchMedia('(prefers-reduced-motion: reduce)').matches&&typeof panel.animate==='function';
   if(animate){
    leaving=true;
-   const welcome=$('#authWelcome');
-   welcome.inert=true;
    panel.inert=true;
-   welcome.hidden=false;
-   welcome.animate([{opacity:0},{opacity:1}],{duration:300,delay:70,easing:'ease-out',fill:'backwards'});
-   welcome.querySelector('nav').animate([{opacity:0},{opacity:1}],{duration:160,delay:300,easing:'ease-out',fill:'backwards'});
    const exit=panel.animate([
     {transform:'translateY(0)',opacity:1},
-    {opacity:0,offset:.54},
-    {transform:'translateY(100dvh)',opacity:0}
-   ],{duration:300,easing:'ease-in',fill:'forwards'});
+    {transform:'translateY(44px)',opacity:0}
+   ],{duration:150,easing:'ease-in',fill:'forwards'});
    try{await exit.finished;}catch{}
    panel.hidden=true;
    exit.cancel();
    panel.inert=false;
-   welcome.inert=false;
    leaving=false;
   }
   history.replaceState(null,'',link.href);
   $('#authStatus').textContent='';
   renderScreen();
+  if(animate)$('#authWelcome').animate([
+   {opacity:0,transform:'translateY(7px)'},
+   {opacity:1,transform:'translateY(0)'}
+  ],{duration:240,easing:'ease-out'});
   document.querySelector($('#authPanel').hidden?'#authWelcome h1':'#authHeading')?.focus({preventScroll:true});
  }
  for(const link of document.querySelectorAll('#authWelcome nav a, #authPanel .back'))link.addEventListener('click',navigate);
