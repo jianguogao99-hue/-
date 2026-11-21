@@ -81,7 +81,7 @@
   frame = requestAnimationFrame(draw);
  }
 
- window.addEventListener('resize', refresh, {passive: true});
+ new ResizeObserver(refresh).observe(canvas);
  document.addEventListener('visibilitychange', refresh);
  reduced.addEventListener('change', refresh);
  new MutationObserver(() => { if (!welcome.hidden) bounds = nut.getBoundingClientRect(); }).observe(welcome, {attributes: true, attributeFilter: ['hidden']});
