@@ -3,29 +3,28 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0a1024">
+<meta name="theme-color" content="#f5f5f5">
 <title>登录问迹</title>
 <link rel="icon" href="/tall-nut.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="apple-mobile-web-app-title" content="问迹">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="stylesheet" href="/login-rain.css?v=1">
+<link rel="stylesheet" href="/login.css?v=1">
 </head>
 <body>
-<div class="rain" aria-hidden="true"></div>
 <main>
 <section id="authWelcome" class="welcome">
- <div class="art"><i></i><i></i><img src="/tall-nut.png" alt=""></div>
+ <div class="art"><img src="/tall-nut.png" alt=""></div>
  <h1>问迹</h1>
- <p>每个问题，都有来路。</p>
+
  <nav aria-label="账号操作">
   <a class="primary" href="?mode=login">登录</a>
   <a class="secondary" href="?mode=signup">注册</a>
  </nav>
 </section>
 <section id="authPanel" class="panel" hidden>
- <a class="back" href="/login.html">‹ 返回</a>
+ <a class="back" href="/login.html" aria-label="返回登录首页">←</a>
  <h1 id="authHeading">登录问迹</h1>
  <form id="authForm"><label for="authEmail">账号邮箱</label><input id="authEmail" type="email" autocomplete="email" required><label for="authPassword">密码</label><input id="authPassword" type="password" minlength="8" autocomplete="current-password" required><div id="confirmPasswordField" hidden><label for="authConfirm">确认密码</label><input id="authConfirm" type="password" minlength="8" autocomplete="new-password"></div><button id="submitLogin" type="submit">登录</button><button id="signup" type="button">没有账号？注册</button></form><button id="forgotPassword" type="button">忘记密码</button>
 </section>
