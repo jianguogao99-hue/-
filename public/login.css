@@ -86,7 +86,7 @@ main input{-webkit-user-select:text;user-select:text;-webkit-touch-callout:defau
 #authStatus{grid-row:2}
 @media(prefers-reduced-motion:no-preference){#codeRain{transition:opacity 300ms ease}}
 
-/* Standalone iOS can place the home-indicator inset beyond the layout viewport. */
-@media(display-mode:standalone){
- body,#codeRain{height:calc(100lvh + env(safe-area-inset-bottom,0px))}
-}
+/* Paint independently of the safe-area-sized form and the fixed viewport. */
+html{overflow:clip}
+body{position:relative;inset:auto;overflow:clip;height:var(--rain-height,100lvh)}
+#codeRain{position:absolute;height:100%;width:100%}

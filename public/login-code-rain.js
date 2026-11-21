@@ -21,6 +21,16 @@
   };
  }
 
+ function fitRain() {
+  // Screen height covers the inset that standalone WebKit may omit from lvh.
+  if (screen.width <= 600 || navigator.standalone) {
+   const viewport = window.visualViewport;
+   const bottom = (viewport?.height || innerHeight) + (viewport?.offsetTop || 0);
+   const height = Math.max(screen.height, bottom);
+   document.documentElement.style.setProperty('--rain-height', `max(100lvh, ${Math.ceil(height)}px)`);
+  }
+ }
+
  function resize() {
   const ratio = Math.min(devicePixelRatio || 1, 2);
   width = canvas.clientWidth;
@@ -81,6 +91,9 @@
   frame = requestAnimationFrame(draw);
  }
 
+ window.addEventListener('resize', fitRain, {passive:true});
+ window.visualViewport?.addEventListener('resize', fitRain, {passive:true});
+ fitRain();
  new ResizeObserver(refresh).observe(canvas);
  document.addEventListener('visibilitychange', refresh);
  reduced.addEventListener('change', refresh);
