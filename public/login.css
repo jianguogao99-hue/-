@@ -65,3 +65,10 @@ body:has(.panel:not([hidden])) #codeRain{
 .panel button[type=submit]{background:#fff;color:#111;border-color:#fff}
 .back:hover{background:#232329}
 a:focus-visible,button:focus-visible{outline-color:#bbb}
+
+/* Keep the entrance animation inside the viewport. Only oversized content scrolls. */
+html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+body{position:fixed;inset:0;min-height:0;height:100dvh}
+main{max-height:100%;min-height:0;overflow:auto;overscroll-behavior:contain}
+.panel:not([hidden]){animation-fill-mode:backwards}
+.welcome{min-height:min(660px,calc(100dvh - max(20px,env(safe-area-inset-top)) - max(20px,env(safe-area-inset-bottom))))}
