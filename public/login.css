@@ -38,3 +38,12 @@ a:focus-visible,button:focus-visible{outline:2px solid #555;outline-offset:3px}
 #signup{width:100%;margin-top:12px;border:1px solid #222;border-radius:999px;color:#111;font-weight:750}
 #signup:active,#forgotPassword:active{opacity:.65}
 @media(prefers-reduced-motion:reduce){.panel:not([hidden]){animation:none}nav a:active,button[type=submit]:active{transform:none}}
+
+/* Code rain stays behind the welcome screen controls. */
+body:has(.welcome:not([hidden])){background:#255ec1}
+body:has(.welcome:not([hidden])) .welcome{color:#fff}
+#codeRain{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
+.welcome .art,.welcome h1,.welcome nav{position:relative}
+.welcome h1{text-shadow:0 2px 16px #133474}
+.welcome .art img{width:110px;height:136px;filter:drop-shadow(0 10px 14px #143d8c80)}
+.welcome nav a:focus-visible{outline-color:#fff}
