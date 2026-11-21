@@ -37,8 +37,13 @@ async function main(){
    welcome.inert=true;
    panel.inert=true;
    welcome.hidden=false;
-   welcome.animate([{opacity:0},{opacity:1}],{duration:300,easing:'ease-out'});
-   const exit=panel.animate([{transform:'translateY(0)'},{transform:'translateY(100dvh)'}],{duration:300,easing:'cubic-bezier(.55,.05,.85,.58)',fill:'forwards'});
+   welcome.animate([{opacity:0},{opacity:1}],{duration:300,delay:70,easing:'ease-out',fill:'backwards'});
+   welcome.querySelector('nav').animate([{opacity:0},{opacity:1}],{duration:160,delay:300,easing:'ease-out',fill:'backwards'});
+   const exit=panel.animate([
+    {transform:'translateY(0)',opacity:1},
+    {opacity:0,offset:.54},
+    {transform:'translateY(100dvh)',opacity:0}
+   ],{duration:300,easing:'ease-in',fill:'forwards'});
    try{await exit.finished;}catch{}
    panel.hidden=true;
    exit.cancel();
