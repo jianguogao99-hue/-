@@ -30,7 +30,7 @@ assert.match(html, /chat-layout\.css\?v=ui-fx42/, 'edited composer CSS needs a n
 assert.match(html, /app\.js\?v=ui-fx42/, 'edited composer JS needs a new cache token');
 assert.match(html, /liquid-glass\.js\?v=ui-fx4/, 'liquid glass runtime must be included');
 assert.match(html, /rei-background\.css\?v=ui-fx11/, 'rei theme override needs a new cache token');
-assert.match(html, /layout\.js\?v=ui-fx43/, 'drawer JS needs a new cache token');
+assert.match(html, /layout\.js\?v=ui-fx44/, 'drawer JS needs a new cache token');
 assert.match(html, /rei-background\.js\?v=ui-fx11/, 'appearance JS needs a new cache token');
 
 const waitingStart = app.indexOf('function startWaiting');
