@@ -8,14 +8,15 @@
  const alphabet = '0123456789abcdefghijklmnopqrstuvwxyz';
  const colors = ['#a9dcff', '#f9bbdc', '#b9bbff'];
  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
- let width, height, drops, frame = 0, previous = 0;
+ const splashes = [];
+ let width, height, drops, bounds, frame = 0, previous = 0;
  const random = (min, max) => min + Math.random() * (max - min);
 
  function makeDrop(y) {
-  const size = random(10, 19);
+  const size = random(9, 16);
   return {
-   x: random(0, width), y, size, speed: size * random(5, 10),
-   vx: 0, bounced: false, opacity: random(.38, .85),
+   x: random(0, width), y, size, speed: random(165, 340),
+   opacity: random(.35, .92),
    glyph: alphabet[Math.floor(Math.random() * alphabet.length)],
    color: colors[Math.floor(Math.random() * colors.length)]
   };
@@ -29,7 +30,9 @@
   canvas.width = Math.round(width * ratio);
   canvas.height = Math.round(height * ratio);
   ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-  const count = Math.min(230, Math.max(60, Math.round(width * height / 4200)));
+  bounds = nut.getBoundingClientRect();
+  splashes.length = 0;
+  const count = Math.min(460, Math.max(135, Math.round(width * height / 1550)));
   drops = Array.from({length: count}, () => makeDrop(random(-40, height)));
  }
 
@@ -38,34 +41,44 @@
   if (document.hidden || welcome.hidden || !drops) return;
   const dt = previous && !reduced.matches ? Math.min(.035, (time - previous) / 1000) : 0;
   previous = time;
-  const bounds = nut.getBoundingClientRect();
   const center = bounds.left + bounds.width / 2;
   ctx.clearRect(0, 0, width, height);
   for (let i = 0; i < drops.length; i++) {
    let d = drops[i];
    const oldY = d.y;
-   d.x += d.vx * dt;
    d.y += d.speed * dt;
-   const lateral = (d.x - center) / (bounds.width * .34);
-   const shoulder = bounds.top + bounds.height * (.16 + lateral * lateral * .28);
-   if (!d.bounced && Math.abs(lateral) < 1 && oldY < shoulder && d.y >= shoulder) {
-    d.bounced = true;
-    d.vx = (lateral < 0 ? -1 : 1) * random(55, 110);
-    d.speed = -random(35, 65);
+   const lateral = (d.x - center) / (bounds.width * .46);
+   const shoulder = bounds.top + bounds.height * (.05 + lateral * lateral * .34);
+   if (Math.abs(lateral) < 1 && oldY < shoulder && d.y >= shoulder) {
+    for (let j = 0; j < 5; j++) {
+     splashes.push({x:d.x, y:shoulder, vx:(lateral < 0 ? -1 : 1)*random(45,155),
+      vy:-random(65,160), life:random(.24,.48), color:d.color});
+    }
+    drops[i] = makeDrop(random(-70, -14));
+    continue;
    }
-   if (d.bounced) d.speed += 300 * dt;
-   if (d.y > height + 28 || d.x < -24 || d.x > width + 24) {
-    d = drops[i] = makeDrop(random(-85, -14));
-   }
-   ctx.globalAlpha = d.opacity * .28;
+   if (d.y > height + 28) d = drops[i] = makeDrop(random(-70, -14));
+   const tail = d.speed * .11;
    ctx.fillStyle = d.color;
-   ctx.fillRect(d.x + 2, d.y - d.size * 2, 2, d.size * .55);
-   ctx.globalAlpha = d.opacity * .55;
-   ctx.fillRect(d.x + 2, d.y - d.size * 1.45, 2, d.size * .4);
+   ctx.globalAlpha = d.opacity * .2;
+   ctx.fillRect(d.x + 2, d.y - d.size - tail, 1, tail);
+   ctx.globalAlpha = d.opacity * .66;
+   ctx.fillRect(d.x + 2, d.y - d.size - tail * .44, 1.7, tail * .44);
    ctx.globalAlpha = d.opacity;
    ctx.fillStyle = '#f4f8ff';
    ctx.font = d.size.toFixed(0) + 'px monospace';
    ctx.fillText(d.glyph, d.x, d.y);
+  }
+  for (let i = splashes.length - 1; i >= 0; i--) {
+   const drop = splashes[i];
+   drop.life -= dt;
+   if (drop.life <= 0) { splashes.splice(i, 1); continue; }
+   drop.x += drop.vx * dt;
+   drop.y += drop.vy * dt;
+   drop.vy += 480 * dt;
+   ctx.globalAlpha = Math.min(1, drop.life * 3);
+   ctx.fillStyle = drop.color;
+   ctx.fillRect(drop.x, drop.y, 2, 2);
   }
   ctx.globalAlpha = 1;
   if (!reduced.matches) frame = requestAnimationFrame(draw);
@@ -84,5 +97,6 @@
  document.addEventListener('visibilitychange', refresh);
  reduced.addEventListener('change', refresh);
  new MutationObserver(refresh).observe(welcome, {attributes: true, attributeFilter: ['hidden']});
+ if (!nut.complete) nut.addEventListener('load', refresh, {once:true});
  refresh();
 })();
