@@ -6,8 +6,47 @@ window.WenjiAuth={headers:authHeaders};
 // cloud-account captures fetch before this entry point; its private requests use
 // WenjiAuth directly, while direct /api/account calls use this wrapper.
 const previousFetch=window.fetch.bind(window);window.fetch=async(input,options={})=>{if(typeof input==='string'&&input.startsWith('/api/'))options={...options,headers:{...Object.fromEntries(new Headers(options.headers||{})),...await authHeaders()}};return previousFetch(input,options);};
+async function signOut(){
+ document.body.style.visibility='hidden';
+ try{
+  const {error}=await client.auth.signOut({scope:'local'});
+  if(error)throw error;
+  location.replace('/login.html');
+ }catch(error){
+  document.body.style.visibility='';
+  throw error;
+ }
+}
+if(loginPage){
+ let edge=null;
+ document.addEventListener('touchstart',event=>{
+  edge=null;
+  if(event.touches.length!==1||event.target.closest('input'))return;
+  const {clientX:x,clientY:y}=event.touches[0];
+  const direction=x<=22?1:x>=document.documentElement.clientWidth-22?-1:0;
+  if(direction)edge={x,y,direction};
+ },{passive:true});
+ document.addEventListener('touchmove',event=>{
+  if(!edge||event.touches.length!==1){edge=null;return;}
+  const {clientX:x,clientY:y}=event.touches[0];
+  const dx=x-edge.x,dy=y-edge.y;
+  if(Math.abs(dy)>Math.abs(dx)&&Math.abs(dy)>4){edge=null;return;}
+  if(dx*edge.direction>3&&Math.abs(dx)>Math.abs(dy)&&event.cancelable)event.preventDefault();
+ },{passive:false});
+}else{
+ document.addEventListener('click',event=>{
+  if(!event.target.closest('a[href="/login.html?logout=1"]'))return;
+  event.preventDefault();
+  signOut().catch(error=>alert(error.message||'暂时无法退出，请重试'));
+ });
+ window.addEventListener('pageshow',async event=>{
+  if(!event.persisted)return;
+  const {data}=await client.auth.getSession();
+  if(!data.session){document.body.style.visibility='hidden';location.replace('/login.html');}
+ });
+}
 async function main(){
- if(new URLSearchParams(location.search).has('logout')){await client.auth.signOut();location.replace('/login.html');return;}
+ if(new URLSearchParams(location.search).has('logout')){await signOut();return;}
  const {data,error}=await client.auth.getSession();if(error)throw error;session=data.session;
  if(!loginPage){if(!session){location.replace('/login.html');return;}client.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT')location.replace('/login.html');});const script=document.createElement('script');script.src='/app.js';document.body.append(script);return;}
  const params=new URLSearchParams(location.search);
