@@ -2515,3 +2515,15 @@ dialog .candidate-item small{color:#9a9a9a!important}
 #syncLoading:has(#retryAccount:not([hidden])) .sync-glyphs{display:none}
 @keyframes sync-glyph{from{opacity:.42;transform:translateY(3px)}to{opacity:1;transform:translateY(-4px)}}
 @media(prefers-reduced-motion:no-preference){#syncLoading .sync-glyphs i{animation:sync-glyph 1.35s ease-in-out infinite alternate}}
+
+/* UI v33: the drawer control shares the drawer surface. */
+#sidebar .sidebar-menu{
+ background:transparent;
+ border-color:transparent;
+ box-shadow:none;
+ color:var(--glass-text,#eee);
+}
+#sidebar .sidebar-menu:hover,#sidebar .sidebar-menu:active{
+ background:rgba(255,255,255,.09);
+ color:var(--glass-text,#eee);
+}

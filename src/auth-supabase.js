@@ -22,12 +22,26 @@ async function main(){
   mode=requested==='signup'?'signup':'login';
   show();
  }
- function navigate(event){
+ let leaving=false;
+ async function navigate(event){
   if(event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||recovery)return;
   event.preventDefault();
-  history.replaceState(null,'',event.currentTarget.href);
+  if(leaving)return;
+  const link=event.currentTarget;
+  const panel=$('#authPanel');
+  const returning=link.classList.contains('back');
+  const animate=returning&&!matchMedia('(prefers-reduced-motion: reduce)').matches&&typeof panel.animate==='function';
+  if(animate){
+   leaving=true;
+   const exit=panel.animate([{transform:'translateY(0)'},{transform:'translateY(100dvh)'}],{duration:300,easing:'cubic-bezier(.55,.05,.85,.58)',fill:'forwards'});
+   try{await exit.finished;}catch{}
+   exit.cancel();
+   leaving=false;
+  }
+  history.replaceState(null,'',link.href);
   $('#authStatus').textContent='';
   renderScreen();
+  if(animate)$('#authWelcome').animate([{opacity:0},{opacity:1}],{duration:200,easing:'ease-out'});
   document.querySelector($('#authPanel').hidden?'#authWelcome h1':'#authHeading')?.focus({preventScroll:true});
  }
  for(const link of document.querySelectorAll('#authWelcome nav a, #authPanel .back'))link.addEventListener('click',navigate);
