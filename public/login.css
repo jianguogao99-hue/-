@@ -85,3 +85,8 @@ main input{-webkit-user-select:text;user-select:text;-webkit-touch-callout:defau
 .welcome,.panel{grid-area:1/1}
 #authStatus{grid-row:2}
 @media(prefers-reduced-motion:no-preference){#codeRain{transition:opacity 300ms ease}}
+
+/* Standalone iOS can place the home-indicator inset beyond the layout viewport. */
+@media(display-mode:standalone){
+ body,#codeRain{height:calc(100lvh + env(safe-area-inset-bottom,0px))}
+}

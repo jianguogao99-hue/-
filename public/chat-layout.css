@@ -2541,3 +2541,8 @@ dialog .candidate-item small{color:#9a9a9a!important}
 /* UI v35: hand the drawer icon back to its header position while closing. */
 #sidebar.drawer-js.menu-returning.drawer-closing>summary{visibility:visible;opacity:1}
 #sidebar.menu-returning .sidebar-menu{opacity:0}
+
+/* Mobile browser history gestures should not chain from the chat surface. */
+@media(max-width:760px){
+ html,body,#workspace,#messages{overscroll-behavior-x:none}
+}

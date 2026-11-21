@@ -59,6 +59,22 @@ const closeButton=document.querySelector('#closeSidebar');
 if(closeButton)closeButton.onclick=close;
 drawer.addEventListener('click',e=>{if(e.target===drawer)close();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
+// Claim inward swipes early at the browser edges, without blocking vertical scrolling.
+let browserEdge=null;
+document.addEventListener('touchstart',event=>{
+ browserEdge=null;
+ if(event.touches.length!==1||event.target.closest('input,textarea,select,.mind-shell'))return;
+ const {clientX:x,clientY:y}=event.touches[0];
+ const direction=x<=20?1:x>=document.documentElement.clientWidth-20?-1:0;
+ if(direction)browserEdge={x,y,direction};
+},{passive:true,capture:true});
+document.addEventListener('touchmove',event=>{
+ if(!browserEdge||event.touches.length!==1){browserEdge=null;return;}
+ const {clientX:x,clientY:y}=event.touches[0];
+ const dx=x-browserEdge.x,dy=y-browserEdge.y;
+ if(Math.abs(dy)>Math.abs(dx)&&Math.abs(dy)>4){browserEdge=null;return;}
+ if(dx*browserEdge.direction>3&&Math.abs(dx)>Math.abs(dy)&&event.cancelable)event.preventDefault();
+},{passive:false,capture:true});
 // Only the left-edge opening gesture owns page touches. Graph pan, text editing,
 // vertical scrolling and all multi-finger gestures keep their own behavior.
 document.addEventListener('touchstart',e=>{start=null;if(e.touches.length!==1||document.querySelector('dialog[open]'))return;const t=e.touches[0];if(e.target.closest('input,textarea,select,.mind-shell,.map-view-switch'))return;if(!drawer.open&&t.clientX>88)return;start={x:t.clientX,y:t.clientY,opened:drawer.open,locked:false};},{passive:true,capture:true});
