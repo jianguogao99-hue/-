@@ -25,7 +25,7 @@ async function main(){
  function navigate(event){
   if(event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||recovery)return;
   event.preventDefault();
-  history.pushState(null,'',event.currentTarget.href);
+  history.replaceState(null,'',event.currentTarget.href);
   $('#authStatus').textContent='';
   renderScreen();
   document.querySelector($('#authPanel').hidden?'#authWelcome h1':'#authHeading')?.focus({preventScroll:true});
