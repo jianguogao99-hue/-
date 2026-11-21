@@ -41,6 +41,6 @@ async function main(){
  if(mode==='signup'){await client.auth.signOut();result=await client.auth.signUp({email,password,options:{emailRedirectTo:location.origin+'/login.html'}});}else result=await client.auth.signInWithPassword({email,password});
  if(result.error)throw result.error;if(result.data.session)location.replace('/');else $('#authStatus').textContent='注册请求已提交；若项目启用了邮箱确认，请查收确认邮件后登录。';
  }catch(error){$('#authStatus').textContent=error.message||'暂时无法登录，请稍后重试。';}finally{$('#submitLogin').disabled=false;$('#signup').disabled=false;}};
- $('#forgotPassword').onclick=async()=>{const email=$('#authEmail').value.trim();if(!email){$('#authStatus').textContent='请先填写邮箱。';return;}const {error}=await client.auth.resetPasswordForEmail(email,{redirectTo:location.origin+'/login.html?recovery=1'});$('#authStatus').textContent=error?error.message:'重置邮件已发送，请查看邮箱。';};
+ $('#forgotPassword').onclick=async()=>{const email=$('#authEmail').value.trim();if(!email){$('#authStatus').textContent='请先填写邮箱';return;}const {error}=await client.auth.resetPasswordForEmail(email,{redirectTo:location.origin+'/login.html?recovery=1'});$('#authStatus').textContent=error?error.message:'重置邮件已发送，请查看邮箱。';};
 }
 main().catch(error=>{const status=$('#authStatus')||$('#syncLoadingText');if(status)status.textContent='登录服务暂不可用：'+error.message;});
