@@ -10,7 +10,14 @@ async function main(){
  if(new URLSearchParams(location.search).has('logout')){await client.auth.signOut();location.replace('/login.html');return;}
  const {data,error}=await client.auth.getSession();if(error)throw error;session=data.session;
  if(!loginPage){if(!session){location.replace('/login.html');return;}client.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT')location.replace('/login.html');});const script=document.createElement('script');script.src='/app.js';document.body.append(script);return;}
- let mode=new URLSearchParams(location.search).get('mode')==='signup'?'signup':'login';const recovery=new URLSearchParams(location.search).has('recovery');
+ const params=new URLSearchParams(location.search);
+ const recovery=params.has('recovery');
+ const explicitMode=params.get('mode');
+ if(!recovery&&explicitMode!=='login'&&explicitMode!=='signup')return;
+ $('#authWelcome').hidden=true;
+ $('#authPanel').hidden=false;
+ $('#forgotPassword').hidden=recovery;
+ let mode=explicitMode==='signup'?'signup':'login';
  function show(){const registering=mode==='signup';$('#confirmPasswordField').hidden=!registering;$('#authConfirm').required=registering;$('#authPassword').autocomplete=registering||recovery?'new-password':'current-password';$('#authHeading').textContent=recovery?'设置新密码':registering?'创建你的问迹账号':'登录问迹';$('#submitLogin').textContent=recovery?'保存新密码':registering?'注册账号':'登录';$('#signup').textContent=registering?'已有账号？返回登录':'没有账号？注册';$('#signup').hidden=recovery;$('#authEmail').required=!recovery;if(recovery){$('#authEmail').value=session?.user?.email||'';$('#authEmail').readOnly=true;}}
  $('#signup').onclick=()=>{mode=mode==='signup'?'login':'signup';$('#authStatus').textContent='';show();};show();
  $('#authForm').onsubmit=async e=>{e.preventDefault();if(mode==='signup'&&$('#authPassword').value!==$('#authConfirm').value){$('#authStatus').textContent='两次输入的密码不一致。';return;}$('#submitLogin').disabled=true;$('#signup').disabled=true;$('#authStatus').textContent='正在处理…';try{
