@@ -72,3 +72,8 @@ body{position:fixed;inset:0;min-height:0;height:100dvh}
 main{max-height:100%;min-height:0;overflow:auto;overscroll-behavior:contain}
 .panel:not([hidden]){animation-fill-mode:backwards}
 .welcome{min-height:min(660px,calc(100dvh - max(20px,env(safe-area-inset-top)) - max(20px,env(safe-area-inset-bottom))))}
+
+/* Scroll inside the moving form; clip its entrance only at the viewport. */
+main{height:100%;display:grid;grid-template-rows:minmax(0,1fr) auto;overflow:visible}
+.welcome,.panel{align-self:center;min-height:0;max-height:100%;overflow:auto;overscroll-behavior:contain}
+.welcome{height:min(660px,100%)}
