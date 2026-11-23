@@ -255,7 +255,29 @@ function renderQuestionSource(question){
  $('#source').innerHTML=section('对话原话',quote)+
   (followups?section('连续追问','<ol>'+followups+'</ol>'):'');
 }
-$('#tree').onclick=e=>{const toggle=e.target.closest('.group-title');if(toggle){const branch=toggle.nextElementSibling;branch.hidden=!branch.hidden;toggle.setAttribute('aria-expanded',String(!branch.hidden));return}const button=e.target.closest('[data-id]');if(!button)return;selected=state.questions.find(q=>q.id===button.dataset.id);if(!selected)return;selectedSourceMessage=button.dataset.eventMessage||selected.messageId;$('#deletePrompt').hidden=true;$('#splitFollowups').hidden=!selected.followups?.length;setQuestionEditor(false,true);$('#detailMore').removeAttribute('open');$('#detailMore .detail-manage').open=false;$('#sourceDetails').removeAttribute('open');$('#detailTopic').textContent=topicPath(selected).join(' › ');$('#detailAnswer').textContent=selected.summary||'还没有整理摘要，可以继续讨论这个问题。';$('#detailTitle').textContent=selected.title;renderQuestionSource(selected);$('#editTitle').value=selected.title;$('#editPath').value=topicPath(selected).join(' / ');$('#editGroup').innerHTML=categories.map(g=>`<option>${g}</option>`).join('');$('#editGroup').value=selected.group;$('#favoriteQuestion').innerHTML=favoriteStar(selected.favorite)+(selected.favorite?'已收藏':'收藏');const names=selected.links.map(id=>state.questions.find(q=>q.id===id)?.title).filter(Boolean);$('#related').hidden=!names.length;$('#related').textContent=names.length?'关联问题：'+names.join('；'):'尚未确认与其他问题的关系。';const detail=$('#detail');detail.showModal();detail.scrollTop=0};
+// Touch browsers may defer :active until release inside a scrolling list.
+let questionPress=null;
+function clearQuestionPress(event){
+ if(questionPress?.pointerId!==event.pointerId)return;
+ questionPress.card.classList.remove('is-card-pressed');
+ questionPress=null;
+}
+$('#tree').addEventListener('pointerdown',event=>{
+ if(event.button!==0||!event.isPrimary||!motionAllowed())return;
+ const trigger=event.target.closest('.find-open,.timeline-event,.topic-content .q');
+ if(!trigger)return;
+ const card=trigger.closest('.find-card')||trigger;
+ questionPress?.card.classList.remove('is-card-pressed');
+ questionPress={card,pointerId:event.pointerId,x:event.clientX,y:event.clientY};
+ card.classList.add('is-card-pressed');
+},{passive:true});
+document.addEventListener('pointermove',event=>{
+ if(questionPress?.pointerId===event.pointerId&&
+  Math.hypot(event.clientX-questionPress.x,event.clientY-questionPress.y)>9)clearQuestionPress(event);
+},{passive:true});
+for(const name of ['pointerup','pointercancel'])document.addEventListener(name,clearQuestionPress,{passive:true,capture:true});
+
+$('#tree').onclick=e=>{const toggle=e.target.closest('.group-title');if(toggle){const branch=toggle.nextElementSibling;branch.hidden=!branch.hidden;toggle.setAttribute('aria-expanded',String(!branch.hidden));return}const button=e.target.closest('[data-id]');if(!button)return;selected=state.questions.find(q=>q.id===button.dataset.id);if(!selected)return;selectedSourceMessage=button.dataset.eventMessage||selected.messageId;$('#deletePrompt').hidden=true;$('#splitFollowups').hidden=!selected.followups?.length;setQuestionEditor(false,true);closeDetailMenu();$('#sourceDetails').removeAttribute('open');$('#detailTopic').textContent=topicPath(selected).join(' › ');$('#detailAnswer').textContent=selected.summary||'还没有整理摘要，可以继续讨论这个问题。';$('#detailTitle').textContent=selected.title;renderQuestionSource(selected);$('#editTitle').value=selected.title;$('#editPath').value=topicPath(selected).join(' / ');$('#editGroup').innerHTML=categories.map(g=>`<option>${g}</option>`).join('');$('#editGroup').value=selected.group;$('#favoriteQuestion').innerHTML=favoriteStar(selected.favorite)+(selected.favorite?'已收藏':'收藏');const names=selected.links.map(id=>state.questions.find(q=>q.id===id)?.title).filter(Boolean);$('#related').hidden=!names.length;$('#related').textContent=names.length?'关联问题：'+names.join('；'):'尚未确认与其他问题的关系。';const detail=$('#detail');detail.showModal();detail.scrollTop=0};
 $('#close').onclick=()=>$('#detail').close();$('#edit').onsubmit=e=>{e.preventDefault();if($('#editFieldsContent').inert||!selected||!$('#editTitle').value.trim())return;selected.title=$('#editTitle').value.trim();selected.group=$('#editGroup').value;selected.path=$('#editPath').value.split('/').map(x=>x.trim()).filter(Boolean).slice(0,3);save();renderMap();renderSummary();$('#detail').close();toast('问题已更新')};$('#locate').onclick=()=>{$('#detail').close();const messageId=selectedSourceMessage||selected?.messageId;if(!messageId||!state.messages.some(m=>m.id===messageId)){openConversation(state.id,'chat');toast('找不到对应的原问题');return;}openConversation(state.id,'chat',{scrollTo:messageId});};
 renderMessages();renderMap();scrollMessagesToBottom();if(!storageOK)toast('本地存储不可用，请使用导出备份。');
 
@@ -459,7 +481,7 @@ function setQuestionEditor(open,immediate=false){
  },()=>{});
 }
 $('#openEdit').onclick=()=>{
- $('#detailMore').removeAttribute('open');
+ closeDetailMenu();
  setQuestionEditor(true);
  $('#editFields').scrollIntoView({behavior:motionAllowed()?'smooth':'auto',block:'start'});
 };
@@ -475,12 +497,37 @@ $('#cancelEdit').onclick=()=>{
  }
  setQuestionEditor(false);
 };
+function setDetailManagement(open){
+ $('#toggleDetailManage').setAttribute('aria-expanded',String(open));
+ $('#detailManageActions').hidden=!open;
+}
+function closeDetailMenu(){
+ $('#detailMore').open=false;
+ setDetailManagement(false);
+}
+$('#toggleDetailManage').onclick=()=>{
+ setDetailManagement($('#detailManageActions').hidden);
+};
+$('#detailMore>summary').addEventListener('click',event=>{
+ event.preventDefault();
+ const menu=$('#detailMore');
+ if(menu.open)closeDetailMenu();
+ else menu.open=true;
+});
 document.addEventListener('click',event=>{
  const menu=$('#detailMore');
- if(!menu?.open||menu.contains(event.target))return;
- menu.open=false;
+ if(menu.open&&!menu.contains(event.target))closeDetailMenu();
 },true);
-$('#detailMore').addEventListener('click',e=>{if(e.target.closest('button'))$('#detailMore').removeAttribute('open');});
+$('#detailMore').addEventListener('click',event=>{
+ const action=event.target.closest('button');
+ if(action&&action.id!=='toggleDetailManage')closeDetailMenu();
+});
+$('#detail').addEventListener('cancel',event=>{
+ if(!$('#detailMore').open)return;
+ event.preventDefault();
+ closeDetailMenu();
+ $('#detailMore>summary').focus();
+});
 
 let mergeTarget=null;
 function renderMergeChoices(){if(!mergeTarget)return;const {conversation,question}=mergeTarget;const keyword=$('#mergeSearch').value.trim().toLowerCase();const candidates=conversation.questions.filter(q=>q.id!==question.id);$('#mergeList').innerHTML=candidates.map(q=>'<label class="candidate-item merge-choice" data-merge-row="'+escape(q.id)+'"><input type="checkbox" name="merge" value="'+escape(q.id)+'"><span><b>'+escape(q.title)+'</b><small>'+escape(topicPath(q).join(' › '))+'</small></span></label>').join('')||'<p class="sub">当前对话没有其他独立问题。拆分后也可以在这里选中重新合并。</p>';$('#undoMerge').hidden=!(question.mergeHistory||[]).length;}
