@@ -2549,3 +2549,27 @@ dialog .candidate-item small{color:#9a9a9a!important}
 
 /* Let the collection notice consume its downward dismissal gesture. */
 #collectionNotice{touch-action:pan-x}
+
+/* UI v36: question details and pending collection actions. */
+#detail .detail-menu{width:min(220px,70vw);max-height:45dvh;overflow:auto;overscroll-behavior:contain;padding:8px;background:#202020}
+#detail .detail-actions{display:grid;gap:5px}
+#detail .detail-actions button{min-height:40px;padding:8px 11px;display:flex;align-items:center;gap:9px;border:1px solid #414141;border-radius:10px;background:#292929;color:#f0f0f0;font-size:13px;text-align:left}
+#detail .detail-actions button[hidden]{display:none}
+#detail .detail-actions button span{width:16px;text-align:center;color:var(--accent)}
+#detail .detail-actions button:active{background:#3b3b3b}
+#detail .detail-manage{margin-top:7px;border-top:1px solid #3a3a3a}
+#detail .detail-manage>summary{display:flex;justify-content:space-between;padding:10px;color:#ccc;font-size:12px;cursor:pointer;list-style:none}
+#detail .detail-manage>summary::-webkit-details-marker{display:none}
+#detail .detail-manage[open]>summary span{transform:rotate(180deg)}
+#detail .detail-actions #deleteQuestion{color:#efaaa5}
+#detail #source{display:grid;gap:16px;white-space:normal;background:none;border:0;padding:8px 0}
+#detail .source-section{padding:12px 14px;background:#1d1d1d;border:1px solid #353535;border-radius:12px}
+#detail .source-section h3{margin:0 0 7px;color:#f5f5f5;font-size:14px;font-weight:700}
+#detail .source-section p{margin:0;color:#d3d3d3;font-size:13px;line-height:1.65;white-space:pre-wrap}
+#detail .source-section ol{margin:0;padding-inline-start:20px}
+#detail .source-section li+li{margin-top:10px;padding-top:9px;border-top:1px solid #383838}
+#detail .source-section li::marker{color:var(--accent);font-weight:650}
+#detail .source-section strong{display:block;margin-bottom:4px;font-size:13px}
+#detail .source-section .source-note{margin-top:5px;color:#a9a9a9;font-size:12px}
+#workspace .msg .review-bubble{display:inline-flex;align-items:center;gap:7px;margin-top:10px;padding:6px 11px;border:1px solid color-mix(in srgb,var(--accent) 42%,#333);border-radius:999px;background:#202020;color:#eee;font-size:11px;cursor:pointer}
+#workspace .review-bubble span:first-child{color:var(--accent);font-size:8px}
