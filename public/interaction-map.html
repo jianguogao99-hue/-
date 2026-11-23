@@ -1,0 +1,59 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#111110"><title>问迹交互动效地图</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#111110;color:#f3eee6;font:15px/1.55 system-ui,sans-serif}main{max-width:850px;margin:auto;padding:32px 18px 48px}h1,h2,p{margin:0}h1{font-size:clamp(27px,6vw,42px)}h2{font-size:19px}.muted{color:#b9b2a7}.choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0 20px}.priority{grid-template-columns:repeat(3,minmax(0,1fr))}button{font:inherit;cursor:pointer;color:inherit;background:#22211f;border:1px solid #464139;border-radius:12px;padding:9px}button[aria-pressed=true]{background:#e6c08a;color:#21190f;border-color:#e6c08a;font-weight:700}button:focus-visible,a:focus-visible{outline:2px solid #e6c08a;outline-offset:3px}.card{padding:16px;background:#1a1917;border:1px solid #39352f;border-radius:18px}.flow{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin:13px 0}.step{padding:4px 9px;background:#2a2723;border-radius:7px}.arrow{color:#e6c08a}.stage{height:168px;background:#111;border:1px solid #39352f;overflow:hidden;border-radius:12px;position:relative;display:grid;place-items:center;margin:12px 0}.part{padding:9px 15px;background:#312a21;border:1px solid #6b5740;border-radius:10px}.sheet{position:absolute;inset:auto 10px 0;border-radius:14px 14px 0 0;padding:20px}.drawer{position:absolute;inset:10px auto 10px 10px;width:66%;display:grid;align-content:center;gap:6px}.menu{width:80%;display:grid;gap:5px}.play{background:#e6c08a;color:#21190f;font-weight:700}.tag{display:inline-block;margin-top:8px;color:#e6c08a;font-size:13px}a{color:#e6c08a}footer{margin-top:18px}
+</style></head><body><main>
+<h1>问迹交互动效地图</h1><p class="muted">点一个场景，再播放示意。用来选第一轮要改的地方。</p>
+<h2 style="margin-top:22px">第一轮建议</h2><div id="priority" class="choices priority"></div>
+<h2>其他场景</h2><div id="others" class="choices"></div>
+<section class="card" aria-labelledby="scene"><h2 id="scene"></h2><div id="flow" class="flow"></div><div id="stage" class="stage" aria-hidden="true"></div><button type="button" class="play" id="play">播放示意</button><p id="description" class="muted" style="margin-top:10px"></p><p id="tool" class="tag"></p></section>
+<footer><a href="./motion-lab.html">打开三套动效工具的实际演示</a></footer></main>
+<script>
+const scenes=[
+ {name:'侧边栏',steps:['右滑或点击','抽屉跟手','按钮回位'],type:'drawer',tool:'Motion · 按钮回弹',note:'下方示意抽屉退场和按钮回位。实际改版时，拖动过程会直接跟随手指。'},
+ {name:'收录确认',steps:['点击收录','底部弹出候选','确认后滑出'],type:'sheet',tool:'GSAP · 底部弹层',note:'弹层轻微回弹。确认后的提示保留 3 秒，也能提前下滑关闭。'},
+ {name:'问题详情 · 更多',steps:['点「更多」','常用按钮出现','选择操作'],type:'menu',tool:'Anime.js · 菜单错峰',note:'常用操作轻微错峰入场，管理操作继续折叠。'},
+ {name:'登录与注册',steps:['点登录或注册','表单从底部进入','返回时欢迎页淡入'],type:'sheet',tool:'GSAP · 表单过渡',note:'保留已确认的入场方向，统一退出节奏，避免两层表单重叠。'},
+ {name:'对话记录',steps:['长按一条对话','显示管理操作','选置顶或删除'],type:'menu',tool:'Anime.js · 行内管理菜单',note:'选中立即反馈，删除时该行收起，撤销时在原处展开。'},
+ {name:'问题地图',steps:['拖动或双指缩放','实时跟手','点总览回位'],type:'map',tool:'Motion · 总览回位',note:'只演示松手后的总览回位。拖动和缩放优先保证实时性。'},
+ {name:'设置',steps:['点模型与 API','打开子面板','返回设置'],type:'sheet',tool:'GSAP · 子面板过渡',note:'子面板沿用同一套节奏，透明度滑杆依然实时更新。'}
+];
+const $=id=>document.getElementById(id);
+const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+let selected=0;
+const buttons=scenes.map((scene,i)=>{
+ const button=document.createElement('button');button.type='button';button.textContent=scene.name;
+ button.onclick=()=>select(i);
+ $(i<3?'priority':'others').append(button);return button;
+});
+function select(i){
+ selected=i;const s=scenes[i];
+ buttons.forEach((b,j)=>b.setAttribute('aria-pressed',String(i===j)));
+ $('scene').textContent=s.name;$('description').textContent=s.note;$('tool').textContent=s.tool;
+ $('flow').replaceChildren(...s.steps.flatMap((text,index)=>{
+  const step=document.createElement('span');step.className='step';step.textContent=text;
+  if(!index)return [step];
+  const arrow=document.createElement('span');arrow.className='arrow';arrow.textContent='→';arrow.setAttribute('aria-hidden','true');
+  return [arrow,step];
+ }));
+ draw(false);
+}
+function draw(play){
+ const s=scenes[selected],stage=$('stage');
+ stage.innerHTML=s.type==='drawer'?'<div class="part drawer">对话记录<br>新对话<br>设置</div><div class="part" style="position:absolute;left:16px;top:16px">☰</div>':
+ s.type==='sheet'?'<div class="part sheet">'+s.name+'<br><small>确认 · 返回</small></div>':
+ s.type==='menu'?'<div class="menu"><div class="part">'+(selected===4?'置顶对话':'继续讨论')+'</div><div class="part">'+(selected===4?'更改名称':'地图定位')+'</div><div class="part">'+(selected===4?'删除对话':'编辑问题')+'</div></div>':
+ '<div class="part">主题<br>╱　│　╲<br>问题　问题　问题</div>';
+ if(!play||reduced.matches)return;
+ const parts=[...stage.querySelectorAll('.part')];
+ const run=(node,frames,duration,delay=0)=>node.animate(frames,{duration,delay,easing:'ease-out',fill:'both'});
+ if(s.type==='drawer'){
+  run(parts[0],[{transform:'none'},{transform:'translateX(-110%)'}],390);
+  run(parts[1],[{transform:'translateX(100px)'},{transform:'translateX(-5px)',offset:.78},{transform:'none'}],440);
+ }else if(s.type==='sheet'){
+  run(parts[0],[{transform:'translateY(110%)'},{transform:'translateY(-5px)',offset:.8},{transform:'none'}],460);
+ }else if(s.type==='menu'){
+  parts.forEach((part,i)=>run(part,[{opacity:0,transform:'translateY(7px)'},{opacity:1,transform:'none'}],220,i*66));
+ }else run(parts[0],[{transform:'translate(45px,20px) scale(1.25)'},{transform:'none'}],390);
+}
+$('play').onclick=()=>draw(true);select(0);
+</script></body></html>
