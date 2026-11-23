@@ -2591,3 +2591,20 @@ dialog .candidate-item small{color:#9a9a9a!important}
 }
 @keyframes detail-menu-enter{from{opacity:0;translate:0 5px}to{opacity:1;translate:0 0}}
 @keyframes detail-action-enter{from{opacity:0;translate:0 5px}to{opacity:1;translate:0 0}}
+
+/* UI v38: quick feedback for frequent actions and consistent dialog entry. */
+@media(prefers-reduced-motion:no-preference){
+ #workspace :is(.composer .send,.model-pill,.collect-actions button,.review-bubble,.map-view-switch button),#detail #favoriteQuestion,#sidebar .accent-swatch{
+  transition:scale 130ms ease-out;
+ }
+ #workspace :is(.composer .send,.model-pill,.collect-actions button,.review-bubble,.map-view-switch button):active,#detail #favoriteQuestion:active,#settingsDialog .accent-swatch:active{scale:.96}
+ #settingsDialog .accent-swatch{transition:scale 130ms ease-out}
+ dialog:is(#settingsDialog,#connection,#importDialog,#conversationActions,#renameDialog,#deleteConversationDialog,#detail,#mergeDialog,#splitDialog)[open]{
+  animation:wenji-dialog-enter 240ms cubic-bezier(.2,.72,.3,1) both;
+ }
+ dialog:is(#settingsDialog,#connection,#importDialog,#conversationActions,#renameDialog,#deleteConversationDialog,#detail,#mergeDialog,#splitDialog)[open]::backdrop{
+  animation:wenji-backdrop-enter 180ms ease-out both;
+ }
+}
+@keyframes wenji-dialog-enter{from{opacity:0;translate:0 14px;scale:.985}to{opacity:1;translate:0 0;scale:1}}
+@keyframes wenji-backdrop-enter{from{opacity:0}to{opacity:1}}

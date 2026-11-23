@@ -25,7 +25,7 @@ assert.match(v16, /padding-bottom:var\(--list-bottom-pad\)!important/, 'mobile l
 assert.match(v16, /#messages>\.msg:last-child\{margin-bottom:0!important\}/, 'the final message leaves exactly the measured 16px gap');
 assert.match(v16, /padding-bottom:calc\(var\(--list-bottom-pad\) \+ var\(--kb-lift,0px\)\)!important/, 'keyboard reserve stacks on the exact list padding');
 assert.doesNotMatch(part, /--map-top-zone|updateMapTopZone|mapTopZone/, 'map chrome never uses a viewport-measured top zone');
-for (const [file, token] of [['chat-layout.css', 'ui-fx57'], ['app.js', 'ui-fx57'], ['layout.js', 'ui-fx58']]) assert.ok(html.includes(file + '?v=' + token), file + ' cache token');
+for (const [file, token] of [['chat-layout.css', 'ui-fx59'], ['app.js', 'ui-fx59'], ['layout.js', 'ui-fx58']]) assert.ok(html.includes(file + '?v=' + token), file + ' cache token');
 
 function makeEnv() {
   const props = new Map(), classes = new Set(); let frames = [], timers = [];
