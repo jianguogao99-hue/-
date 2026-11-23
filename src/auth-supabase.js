@@ -48,7 +48,7 @@ if(loginPage){
 async function main(){
  if(new URLSearchParams(location.search).has('logout')){await signOut();return;}
  const {data,error}=await client.auth.getSession();if(error)throw error;session=data.session;
- if(!loginPage){if(!session){location.replace('/login.html');return;}client.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT')location.replace('/login.html');});const script=document.createElement('script');script.src='/app.js?v=ui-fx60';document.body.append(script);return;}
+ if(!loginPage){if(!session){location.replace('/login.html');return;}client.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT')location.replace('/login.html');});const script=document.createElement('script');script.src='/app.js?v=ui-fx61';document.body.append(script);return;}
  const params=new URLSearchParams(location.search);
  const recovery=params.has('recovery');
  let mode='login';

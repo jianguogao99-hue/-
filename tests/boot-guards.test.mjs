@@ -49,5 +49,5 @@ assert.equal(text.textContent, '已删除「旧的」');
 for (const id of ['deleteUndo', 'deleteUndoText', 'undoDelete', 'tree', 'search', 'syncLoading', 'mapPanel', 'historyList']) {
   assert.match(html, new RegExp('id="' + id + '"'), 'index.html keeps #' + id);
 }
-assert.match(html, /app\.js\?v=ui-fx60/, 'fixed app.js needs a new cache token');
+assert.match(html, /app\.js\?v=ui-fx61/, 'fixed app.js needs a new cache token');
 console.log('PASS: boot order (no TDZ on undo state), undo helpers survive missing elements and odd stored data, required map elements present.');
