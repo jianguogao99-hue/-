@@ -2573,3 +2573,8 @@ dialog .candidate-item small{color:#9a9a9a!important}
 #detail .source-section .source-note{margin-top:5px;color:#a9a9a9;font-size:12px}
 #workspace .msg .review-bubble{display:inline-flex;align-items:center;gap:7px;margin-top:10px;padding:6px 11px;border:1px solid color-mix(in srgb,var(--accent) 42%,#333);border-radius:999px;background:#202020;color:#eee;font-size:11px;cursor:pointer}
 #workspace .review-bubble span:first-child{color:var(--accent);font-size:8px}
+
+/* Text-led menu with a clear boundary between actions and management. */
+#detail .detail-actions button{justify-content:flex-start;padding-inline:12px;font-weight:600}
+#detail .detail-manage>summary::after{content:"";width:6px;height:6px;border:solid currentColor;border-width:0 1px 1px 0;transform:rotate(45deg);margin:3px 4px 0 0}
+#detail .detail-manage[open]>summary::after{transform:rotate(225deg);margin-top:6px}

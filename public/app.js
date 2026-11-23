@@ -21,7 +21,30 @@ const UI_ICON_STAR='<svg class="ui-icon star-icon" viewBox="0 0 24 24" width="14
 const UI_ICON_STAR_FILLED='<svg class="ui-icon star-icon is-filled" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.6 2.5 5.1 5.6.8-4 3.9.9 5.6L12 16.3 7 19l.9-5.6-4-3.9 5.6-.8Z"/></svg>';
 const UI_ICON_LOCATE='<svg class="ui-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg>';
 function favoriteStar(on){return on?UI_ICON_STAR_FILLED:UI_ICON_STAR;}
-function toast(text){$('#toast').textContent=text;$('#toast').style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('#toast').style.display='none',3200)}
+function slideFeedback(element, entering){
+ if(!element.animate||window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return null;
+ const edge=Math.max(36,Math.ceil(window.innerHeight-element.getBoundingClientRect().top)+16);
+ const frames=entering?[
+  {translate:`0 ${edge}px`,opacity:0},
+  {translate:'0 -5px',opacity:1,offset:.78},
+  {translate:'0 0',opacity:1}
+ ]:[{translate:'0 0',opacity:1},{translate:`0 ${edge}px`,opacity:0}];
+ return element.animate(frames,{duration:entering?340:240,easing:entering?'cubic-bezier(.18,.72,.25,1)':'ease-in',fill:'both'});
+}
+function toast(text){
+ const node=$('#toast');
+ clearTimeout(toast.timer);
+ toast.animation?.cancel();
+ node.textContent=text;
+ node.style.display='block';
+ toast.animation=slideFeedback(node,true);
+ toast.timer=setTimeout(()=>{
+  toast.animation?.cancel();
+  const hide=()=>{node.style.display='none';};
+  toast.animation=slideFeedback(node,false);
+  if(toast.animation)toast.animation.finished.then(hide,()=>{});else hide();
+ },3200);
+}
 function save(){try{localStorage.setItem(sessionsKey,JSON.stringify(library));window.CloudAccount?.schedule();}catch(e){storageOK=false;toast('浏览器未能保存，请导出笔记备份。')}}
 // Render a small Markdown subset. All model text is escaped before insertion.
 function replyInline(text){
@@ -276,14 +299,6 @@ function renderQuestionResults(qs,recent){const items=qs.map((q,i)=>({q,i,t:coll
 function locateQuestionInGraph(id){const q=state.questions.find(q=>q.id===id);if(!q)return;if(busy){toast('请等待本轮回答完成');return;}$('#detail').close();openConversation(state.id,'map');state.mapView='topic';filter='all';$('#search').value='';document.querySelectorAll('[data-filter]').forEach(b=>b.classList.toggle('active',b.dataset.filter==='all'));collapsedGraphTopics.clear();renderMap();QuestionGraph.focus(id);save();toast('已定位：'+topicPath(q).join(' › '));}
 $('#recentView').onclick=()=>{state.mapView='recent';save();renderMap();};$('#tree').addEventListener('click',e=>{const b=e.target.closest('[data-focus-question]');if(b)locateQuestionInGraph(b.dataset.focusQuestion);});
 $('#locateInGraph').onclick=()=>{if(selected)locateQuestionInGraph(selected.id);};
-function animateNotice(frames,duration){
- noticeAnimation?.cancel();
- noticeAnimation=null;
- if(!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches&&collectionNotice.animate){
-  noticeAnimation=collectionNotice.animate(frames,{duration,easing:'ease-out',fill:'both'});
- }
- return noticeAnimation;
-}
 function dismissCollectionNotice(){
  clearTimeout(noticeTimer);
  if(!noticeItem||collectionNotice.hidden||noticeItem.dismissed)return;
@@ -291,7 +306,8 @@ function dismissCollectionNotice(){
  save();
  const item=noticeItem;
  const hide=()=>{if(noticeItem===item)collectionNotice.hidden=true;};
- const exit=animateNotice([{opacity:1,translate:'0 0'},{opacity:0,translate:'0 22px'}],200);
+ noticeAnimation?.cancel();
+ const exit=noticeAnimation=slideFeedback(collectionNotice,false);
  if(exit)exit.finished.then(hide,()=>{});else hide();
 }
 function renderCollectionNotice(){
@@ -304,7 +320,7 @@ function renderCollectionNotice(){
  collectionNotice.hidden=!latest||latest.dismissed||!ids.length;
  if(collectionNotice.hidden)return;
  $('#collectionNoticeText').textContent='已收录 '+ids.length+' 个问题';
- animateNotice([{opacity:0,translate:'0 12px'},{opacity:1,translate:'0 0'}],210);
+ noticeAnimation=slideFeedback(collectionNotice,true);
  noticeTimer=setTimeout(dismissCollectionNotice,3000);
 }
 collectionNotice?.addEventListener('touchstart',event=>{

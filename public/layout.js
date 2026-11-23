@@ -59,6 +59,15 @@ const closeButton=document.querySelector('#closeSidebar');
 if(closeButton)closeButton.onclick=close;
 drawer.addEventListener('click',e=>{if(e.target===drawer)close();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
+// Prevent document pinch zoom while the map handles its own two-finger gesture.
+for(const name of ['gesturestart','gesturechange']){
+ document.addEventListener(name,event=>{
+  if(event.cancelable)event.preventDefault();
+ },{passive:false});
+}
+document.addEventListener('touchmove',event=>{
+ if(event.touches.length>1&&!event.target.closest('.mind-shell')&&event.cancelable)event.preventDefault();
+},{passive:false});
 // Claim inward swipes early at the browser edges, without blocking vertical scrolling.
 let browserEdge=null;
 document.addEventListener('touchstart',event=>{
