@@ -70,6 +70,8 @@ function replyMarkdown(text){
 }
 function renderMessages(){renderHistory();const el=$('#messages');el.innerHTML=state.messages.map(m=>`<div class="msg ${m.role==='user'?'user':''}" id="${escape(m.id)}"><div class="bubble${m.role==='user'?'':' reply-content'}">${m.error?escape('这条旧回复来自安全检测模型，没有回答你的问题。请重新发送原问题。'):m.role==='user'?escape(m.text):replyMarkdown(m.text)}</div>${toolSources(m)}${organizationBadge(m)}${state.questions.some(q=>q.messageId===m.id)?'<div class="capture">↳ 已收进问题地图</div>':''}</div>`).join('');}
 function topicPath(q){if(Array.isArray(q.path)&&q.path.length)return q.path;const text=q.title+' '+q.source;if(/口语|英语/.test(text))return ['其他探索','英语口语'];if(/模型|API|api|GPT|充值/.test(text))return ['问题梳理器','模型接入'];if(q.group==='产品设计')return ['问题梳理器','问题地图'];if(q.group==='使用条件'||q.group==='工具与模型')return ['开发工具'];if(q.group==='学习与探索')return ['基础认识'];return ['待归类'];}
+const collectionNotice=$('#collectionNotice');
+let noticeItem=null,noticeTimer=0,noticeAnimation=null,noticeTouch=null;
 function renderMap(){renderCollectionNotice();renderDeleteUndo();const keyword=$('#search').value.trim().toLowerCase();$('#mapPanel').classList.remove('search-editing');const qs=state.questions.filter(q=>(q.title+' '+q.source+' '+(q.followups||[]).map(f=>f.text).join(' ')+' '+topicPath(q).join(' ')).toLowerCase().includes(keyword));const root={children:new Map(),questions:[]};for(const q of qs){let node=root;for(const name of topicPath(q)){if(!node.children.has(name))node.children.set(name,{children:new Map(),questions:[]});node=node.children.get(name);}node.questions.push(q);}function count(n){return n.questions.length+Array.from(n.children.values()).reduce((sum,c)=>sum+count(c),0);}function draw(n,prefix=''){return Array.from(n.children).map(([name,child])=>{const path=prefix+'/'+name;return '<details class="topic-branch" data-path="'+escape(path)+'" '+(openedBranches.has(path)||keyword||filter!=='all'?'open':'')+'><summary><span class="branch-arrow">▶</span><span>'+escape(name)+'</span><small>'+count(child)+' 个问题</small></summary><div class="topic-content">'+draw(child,path)+child.questions.map(q=>'<button class="q" data-id="'+escape(q.id)+'"><div class="qtop"><span class="qtitle">'+escape(q.title)+'</span></div><div class="relation">'+escape(q.type||'问题')+(q.followups?.length?' · '+q.followups.length+' 次追问':'')+'</div></button>').join('')+'</div></details>';}).join('');}$('#byTopic').classList.toggle('active',(!state.mapView||state.mapView==='topic'));$('#byTime').classList.toggle('active',state.mapView==='time');$('#byTopic').setAttribute('aria-pressed',String((!state.mapView||state.mapView==='topic')));$('#byTime').setAttribute('aria-pressed',String(state.mapView==='time'));$('#stagedView').classList.toggle('active',state.mapView==='staged');$('#stagedView').textContent='临时区'+(stagedItems().length?' ('+stagedItems().length+')':'');$('#recentView').classList.toggle('active',state.mapView==='recent');$('#favoritesView').classList.toggle('active',state.mapView==='favorites');const timeActive=state.mapView==='time',timeOrder=state.timeOrder==='desc'?'desc':'asc';$('#byTime').innerHTML='按提问顺序'+(timeActive?'<svg class="order-arrow'+(timeOrder==='desc'?' desc':'')+'" viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 9.5V2.5M2.75 5.75 6 2.5l3.25 3.25"/></svg>':'');$('#byTime').setAttribute('aria-label',timeActive?'按提问顺序，当前'+(timeOrder==='asc'?'最早在前':'最新在前')+'，再点切换':'按提问顺序');$('#tree').innerHTML=(state.mapView==='staged'?renderStaged():state.mapView==='favorites'?renderFavorites(qs):keyword?renderQuestionResults(qs,false):state.mapView==='recent'?renderQuestionResults(qs,true):state.mapView==='time'?renderTimeline():QuestionGraph.render(root,state.title||'新对话',collapsedGraphTopics,Boolean(keyword||filter!=='all'),state.id))||'<div class="empty">'+(state.questions.length?'没有匹配的问题':'开始对话后，问题会逐步长成分支。')+'</div>';$('#mapTitle').textContent=state.title||'新对话';$('#conversationTitle').textContent=state.title||'新对话';}
 function timelineEvents(){const events=[];const messageOrder=new Map(state.messages.map((m,i)=>[m.id,i]));state.questions.forEach((q,index)=>{const original=state.messages.find(m=>m.id===q.messageId);events.push({q,text:q.title,messageId:q.messageId,kind:'首次提问',time:original?.createdAt||q.createdAt,position:messageOrder.get(q.messageId)??state.messages.length+index,sub:0});(q.followups||[]).forEach((f,j)=>{const m=state.messages.find(m=>m.id===f.messageId);events.push({q,text:f.text,messageId:f.messageId,kind:'继续追问',time:m?.createdAt||f.createdAt,position:messageOrder.get(f.messageId)??state.messages.length+index,sub:j+1});});});events.sort((a,b)=>a.position-b.position||a.sub-b.sub);return events.map((event,i)=>({...event,number:i+1}));}
 function renderTimeline(){const keyword=$('#search').value.trim().toLowerCase();let events=timelineEvents().filter(e=>(!keyword||(e.text+' '+e.q.title+' '+topicPath(e.q).join(' ')).toLowerCase().includes(keyword)));if(state.timeOrder==='desc')events=events.slice().reverse();if(!events.length)return '';return '<div class="question-timeline">'+events.map(e=>'<button class="timeline-event" data-id="'+escape(e.q.id)+'" data-event-message="'+escape(e.messageId||'')+'"><span class="event-number">'+String(e.number).padStart(2,'0')+'</span><span class="event-body"><span class="event-top"><time>'+(e.time&&Number.isFinite(Date.parse(e.time))?escape(new Date(e.time).toLocaleString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})):'历史记录')+'</time></span><span class="event-title">'+escape(e.text)+'</span><span class="event-status">'+(e.kind==='继续追问'?'归属于「'+escape(e.q.title)+'」':'')+'</span></span></button>').join('')+'</div>';}
@@ -134,7 +136,47 @@ function readableApiError(status,data){const error=data?.error||{};const raw=[er
 async function checkQuota(){if(provider!=='openrouter'){$('#quotaResult').textContent='该入口用于 OpenRouter。其他服务商请在其控制台查询额度。';return;}if(!apiKey){$('#quotaResult').textContent='请先连接 OpenRouter。';return;}$('#checkQuota').disabled=true;$('#quotaResult').textContent='正在读取账户免费额度…';try{const r=await fetch('https://openrouter.ai/api/v1/key',{headers:{Authorization:'Bearer '+apiKey},signal:AbortSignal.timeout(20000)});const result=await r.json();if(!r.ok||result.error)throw new Error('无法读取，请检查连接或前往 OpenRouter 控制台。');const q=result.data?.free_model_daily_requests;if(q&&typeof q.remaining==='number'){$('#quotaResult').textContent='今日免费请求：已用 '+(q.used??'未知')+' / 上限 '+(q.limit??'未知')+'，剩余 '+q.remaining+' 次。'+(q.remaining>0?'还有额度；刚才若为 429，可能是每分钟限制或模型上游拥挤。':'今日额度已用完，请等待重置。');}else{$('#quotaResult').textContent='账户验证通过，但服务未返回每日免费次数，无法据此判断是否用完。请查看 OpenRouter 控制台。';}}catch(e){$('#quotaResult').textContent=e.name==='TimeoutError'?'读取额度超时，请稍后再试。':e.message;}finally{$('#checkQuota').disabled=false;}}
 $('#checkQuota').onclick=checkQuota;$('#errorQuota').onclick=()=>{$('#connection').showModal();checkQuota();};
 function readModelAnswer(data,message){const choice=data.choices?.[0];const finish=choice?.finish_reason;const content=choice?.message?.content;const hasReasoning=typeof choice?.message?.reasoning_content==='string'&&Boolean(choice.message.reasoning_content.trim());if(finish==='length'||typeof content!=='string'||!content.trim()){const diagnostic={model:data.model||modelId,finish_reason:finish||'unknown',has_content:typeof content==='string'&&Boolean(content.trim()),has_reasoning:hasReasoning,completion_tokens:data.usage?.completion_tokens??null};$('#errorRaw').textContent=JSON.stringify(diagnostic,null,2);if(finish==='length')throw new Error('回答达到输出长度上限，正文可能尚未生成完整。请重试；本次没有保存不完整回答。');if(finish==='content_filter')throw new Error('服务没有提供正文（返回 content_filter）。可修改问题后重试。');if(hasReasoning)throw new Error('服务只返回了思考内容，没有最终回答。问题已保留，可稍后重试。');throw new Error(provider==='deepseek'?'DeepSeek 本次返回了空正文，问题已保留。可稍后重试，不会重复添加提问。':'模型未返回正文，请查看服务返回详情后重试。');}return content;}
-async function respond(message){const stopWaiting=startWaiting();busy=true;paintSendButton(true);$('#chatError').hidden=true;$('#retry').textContent='重试这条消息';$('#errorRaw').textContent='';$('#retry').disabled=true;try{const r=await fetch(providers[provider].base+'/chat/completions',{method:'POST',headers:{Authorization:'Bearer '+apiKey,'Content-Type':'application/json'},body:JSON.stringify({model:modelId,...(provider==='openrouter'?{provider:{require_parameters:true}}:{}),...(provider==='deepseek'?{thinking:{type:'disabled'}}:{}),messages:apiMessages(),app_tools:{mode:'auto',timezone:browserTimezone()},max_tokens:3000}),signal:AbortSignal.timeout(90000)});let data;try{data=await r.json();}catch{throw new Error('服务返回异常，请稍后重试。');}if(!r.ok||data.error){throw new Error(readableApiError(r.status,data));}const content=readModelAnswer(data,message);if(typeof data.model==='string'&&/content-safety|guard|moderation/i.test(data.model))throw new Error('服务返回了安全检测模型的结果，请切换聊天模型后重试。');applyAnswer(content,message);const reply=state.messages.find(m=>m.id===message.id+'reply');if(reply){reply.model=typeof data.model==='string'?data.model:modelId;reply.tools=Array.isArray(data.app_tools)?data.app_tools:[];}failedMessage=null;save();renderMessages();renderMap();renderSummary();$('#messages').scrollTop=$('#messages').scrollHeight;}catch(err){failedMessage=message;$('#errorText').textContent=err.name==='TimeoutError'?'等待回答超时。消息已保留，重试可能再次消耗免费次数。':err instanceof TypeError?'网络连接失败。消息已保留，请检查网络后重试。':err.message;$('#retry').textContent=message.retryWithoutJson?'重试（兼容模式）':'重试这条消息';$('#chatError').hidden=false;}finally{const elapsed=stopWaiting();const reply=state.messages.find(m=>m.id===message.id+'reply');if(reply){reply.elapsedMs=elapsed;save();renderMessages();$('#messages').scrollTop=$('#messages').scrollHeight;}busy=false;paintSendButton(false);$('#retry').disabled=false;}}
+// Reveal the validated answer in place; the saved message always stays complete.
+async function revealAnswer(reply){
+ if(!reply||document.hidden||window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
+ const messages=$('#messages');
+ const reading=document.createElement('div');
+ reading.className='msg';
+ reading.setAttribute('aria-hidden','true');
+ const body=document.createElement('div');
+ body.className='bubble reply-content';
+ body.innerHTML=replyMarkdown(reply.text);
+ reading.append(body);
+ const walker=document.createTreeWalker(body,NodeFilter.SHOW_TEXT);
+ const parts=[];
+ let total=0;
+ while(walker.nextNode()){
+  const node=walker.currentNode,characters=Array.from(node.data);
+  parts.push({node,characters,start:total});
+  total+=characters.length;
+  node.data='';
+ }
+ messages.append(reading);
+ let index=0;
+ const duration=Math.min(4600,Math.max(420,total*14));
+ const started=performance.now();
+ try{
+  while(reading.isConnected&&!document.hidden&&index<parts.length){
+   await new Promise(resolve=>setTimeout(resolve,30));
+   const follow=messages.scrollHeight-messages.scrollTop-messages.clientHeight<70;
+   const count=Math.ceil(total*Math.min(1,(performance.now()-started)/duration));
+   while(index<parts.length){
+    const {node,characters,start}=parts[index];
+    if(count<=start)break;
+    node.data=characters.slice(0,count-start).join('');
+    if(count<start+characters.length)break;
+    index++;
+   }
+   if(follow)messages.scrollTop=messages.scrollHeight;
+  }
+ }finally{reading.remove();}
+}
+async function respond(message){const stopWaiting=startWaiting();let waitElapsed;busy=true;paintSendButton(true);$('#chatError').hidden=true;$('#retry').textContent='重试这条消息';$('#errorRaw').textContent='';$('#retry').disabled=true;try{const r=await fetch(providers[provider].base+'/chat/completions',{method:'POST',headers:{Authorization:'Bearer '+apiKey,'Content-Type':'application/json'},body:JSON.stringify({model:modelId,...(provider==='openrouter'?{provider:{require_parameters:true}}:{}),...(provider==='deepseek'?{thinking:{type:'disabled'}}:{}),messages:apiMessages(),app_tools:{mode:'auto',timezone:browserTimezone()},max_tokens:3000}),signal:AbortSignal.timeout(90000)});let data;try{data=await r.json();}catch{throw new Error('服务返回异常，请稍后重试。');}if(!r.ok||data.error){throw new Error(readableApiError(r.status,data));}const content=readModelAnswer(data,message);if(typeof data.model==='string'&&/content-safety|guard|moderation/i.test(data.model))throw new Error('服务返回了安全检测模型的结果，请切换聊天模型后重试。');applyAnswer(content,message);const reply=state.messages.find(m=>m.id===message.id+'reply');if(reply){reply.model=typeof data.model==='string'?data.model:modelId;reply.tools=Array.isArray(data.app_tools)?data.app_tools:[];}failedMessage=null;waitElapsed=stopWaiting();save();await revealAnswer(reply);renderMessages();renderMap();renderSummary();$('#messages').scrollTop=$('#messages').scrollHeight;}catch(err){failedMessage=message;$('#errorText').textContent=err.name==='TimeoutError'?'等待回答超时。消息已保留，重试可能再次消耗免费次数。':err instanceof TypeError?'网络连接失败。消息已保留，请检查网络后重试。':err.message;$('#retry').textContent=message.retryWithoutJson?'重试（兼容模式）':'重试这条消息';$('#chatError').hidden=false;}finally{const elapsed=waitElapsed??stopWaiting();const reply=state.messages.find(m=>m.id===message.id+'reply');if(reply){reply.elapsedMs=elapsed;save();renderMessages();$('#messages').scrollTop=$('#messages').scrollHeight;}busy=false;paintSendButton(false);$('#retry').disabled=false;}}
 $('#form').addEventListener('submit',async e=>{e.preventDefault();if(busy)return;if(!apiKey){$('#connection').showModal();return;}if(failedMessage){toast('请先重试上一条未完成的消息');return;}const text=$('#input').value.trim();if(!text)return;const message={id:'new'+Date.now(),role:'user',text,createdAt:new Date().toISOString()};state.messages.push(message);if(!state.titleGenerated&&state.title==='新对话')state.title=text.slice(0,20);$('#input').value='';$('#input').style.height='auto';syncComposerTextState();save();renderMessages();$('#messages').scrollTop=$('#messages').scrollHeight;await respond(message);});
 $('#retry').onclick=async()=>{if(busy||!failedMessage)return;if(!apiKey){$('#connection').showModal();return;}await respond(failedMessage);};
 function renderSummary(){}
@@ -213,7 +255,7 @@ $('#stagedView').onclick=()=>{state.mapView='staged';save();renderMap();};
 $('#tree').addEventListener('click',e=>{const b=e.target.closest('[data-temp-action]');if(b)chooseCollection(b.dataset.tempAction,b.dataset.reply);});
 function openReview(conversation,reply){const draft=conversation.collectionDrafts?.[reply.id];if(!draft)return;activeReview={conversation,reply,draft};$('#candidateList').innerHTML=draft.data.questions.map((q,i)=>'<div class="review-candidate"><label class="candidate-item"><input type="checkbox" name="candidate" value="'+i+'" checked><span><b>'+escape(q.title)+'</b><small>'+escape((q.path||[]).join(' › '))+'</small></span></label><label>问题标题<input data-candidate-title="'+i+'" value="'+escape(q.title)+'" maxlength="300"></label><label>收录方式<select data-candidate-target="'+i+'"><option value="new">独立收录为新问题（默认）</option>'+conversation.questions.map(existing=>'<option value="'+escape(existing.id)+'">补充到：'+escape(existing.title)+'</option>').join('')+'</select></label></div>').join('');$('#collectReview').showModal();}
 $('#closeReview').onclick=()=>$('#collectReview').close();$('#reviewLater').onclick=()=>{if(!activeReview)return;activeReview.reply.collectionChoice='staged';activeReview.reply.stagedAt=activeReview.reply.stagedAt||new Date().toISOString();activeReview.reply.organizeStatus='unselected';$('#collectReview').close();refreshCollection();};
-$('#reviewForm').onsubmit=e=>{e.preventDefault();if(!activeReview)return;const {conversation,reply,draft}=activeReview;const checked=Array.from($('#candidateList').querySelectorAll('input[name="candidate"]:checked')).map(x=>Number(x.value));if(!checked.length){toast('请选择至少一个问题，或点“先暂存”');return;}const message=conversation.messages.find(m=>m.id===draft.messageId);if(!message)return;const candidates=draft.data.questions.filter((q,i)=>checked.includes(i)).map(q=>{const i=draft.data.questions.indexOf(q);const target=$('#candidateList select[data-candidate-target="'+i+'"]').value||'new';return {...q,title:$('#candidateList input[data-candidate-title="'+i+'"]').value.trim()||q.title,mergeConfirmed:target!=='new',existing_id:target==='new'?'':target};});mergeOrganized(conversation,{...draft.data,questions:candidates},message);conversation.lastCollected={ids:conversation.questions.filter(q=>candidates.some(candidate=>candidate.mergeConfirmed?candidate.existing_id===q.id:(q.messageId===message.id&&candidate.title.trim()===q.title.trim()))).map(q=>q.id),dismissed:false};reply.organizeStatus='done';reply.collectionChoice='collected';delete conversation.collectionDrafts[reply.id];$('#collectReview').close();refreshCollection();toast('已按你选择的方式收录');};
+$('#reviewForm').onsubmit=e=>{e.preventDefault();if(!activeReview)return;const {conversation,reply,draft}=activeReview;const checked=Array.from($('#candidateList').querySelectorAll('input[name="candidate"]:checked')).map(x=>Number(x.value));if(!checked.length){toast('请选择至少一个问题，或点“先暂存”');return;}const message=conversation.messages.find(m=>m.id===draft.messageId);if(!message)return;const candidates=draft.data.questions.filter((q,i)=>checked.includes(i)).map(q=>{const i=draft.data.questions.indexOf(q);const target=$('#candidateList select[data-candidate-target="'+i+'"]').value||'new';return {...q,title:$('#candidateList input[data-candidate-title="'+i+'"]').value.trim()||q.title,mergeConfirmed:target!=='new',existing_id:target==='new'?'':target};});mergeOrganized(conversation,{...draft.data,questions:candidates},message);conversation.lastCollected={ids:conversation.questions.filter(q=>candidates.some(candidate=>candidate.mergeConfirmed?candidate.existing_id===q.id:(q.messageId===message.id&&candidate.title.trim()===q.title.trim()))).map(q=>q.id),dismissed:false};reply.organizeStatus='done';reply.collectionChoice='collected';delete conversation.collectionDrafts[reply.id];$('#collectReview').close();refreshCollection();};
 // Cancel legacy automatic jobs. Only explicit collection requests may run now.
 for(const conversation of library.conversations){for(const job of conversation.organizeJobs||[]){if(job.requested!==true||job.status==='processing'){if(job.status==='pending'||job.status==='processing'){job.status='cancelled';const reply=conversation.messages.find(m=>m.id===job.replyId);if(reply){reply.organizeStatus='unselected';reply.collectionChoice='unselected';}}}}}
 save();renderMessages();
@@ -224,8 +266,55 @@ function renderQuestionResults(qs,recent){const items=qs.map((q,i)=>({q,i,t:coll
 function locateQuestionInGraph(id){const q=state.questions.find(q=>q.id===id);if(!q)return;if(busy){toast('请等待本轮回答完成');return;}$('#detail').close();openConversation(state.id,'map');state.mapView='topic';filter='all';$('#search').value='';document.querySelectorAll('[data-filter]').forEach(b=>b.classList.toggle('active',b.dataset.filter==='all'));collapsedGraphTopics.clear();renderMap();QuestionGraph.focus(id);save();toast('已定位：'+topicPath(q).join(' › '));}
 $('#recentView').onclick=()=>{state.mapView='recent';save();renderMap();};$('#tree').addEventListener('click',e=>{const b=e.target.closest('[data-focus-question]');if(b)locateQuestionInGraph(b.dataset.focusQuestion);});
 $('#locateInGraph').onclick=()=>{if(selected)locateQuestionInGraph(selected.id);};
-function renderCollectionNotice(){const latest=state.lastCollected;const ids=(latest?.ids||[]).filter(id=>state.questions.some(q=>q.id===id));$('#collectionNotice').hidden=!latest||latest.dismissed||!ids.length;$('#collectionNoticeText').textContent='已收录 '+ids.length+' 个问题';}
-$('#dismissCollected').onclick=()=>{if(state.lastCollected)state.lastCollected.dismissed=true;save();renderCollectionNotice();};$('#viewCollected').onclick=()=>{if(busy){toast('请等待当前回答完成');return;}if(state.lastCollected)state.lastCollected.dismissed=true;openConversation(state.id,'map');state.mapView='recent';renderMap();save();};
+function animateNotice(frames,duration){
+ noticeAnimation?.cancel();
+ noticeAnimation=null;
+ if(!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches&&collectionNotice.animate){
+  noticeAnimation=collectionNotice.animate(frames,{duration,easing:'ease-out',fill:'both'});
+ }
+ return noticeAnimation;
+}
+function dismissCollectionNotice(){
+ clearTimeout(noticeTimer);
+ if(!noticeItem||collectionNotice.hidden||noticeItem.dismissed)return;
+ noticeItem.dismissed=true;
+ save();
+ const item=noticeItem;
+ const hide=()=>{if(noticeItem===item)collectionNotice.hidden=true;};
+ const exit=animateNotice([{opacity:1,translate:'0 0'},{opacity:0,translate:'0 22px'}],200);
+ if(exit)exit.finished.then(hide,()=>{});else hide();
+}
+function renderCollectionNotice(){
+ const latest=state.lastCollected;
+ const ids=(latest?.ids||[]).filter(id=>state.questions.some(q=>q.id===id));
+ if(latest===noticeItem)return;
+ clearTimeout(noticeTimer);
+ noticeAnimation?.cancel();
+ noticeItem=latest;
+ collectionNotice.hidden=!latest||latest.dismissed||!ids.length;
+ if(collectionNotice.hidden)return;
+ $('#collectionNoticeText').textContent='已收录 '+ids.length+' 个问题';
+ animateNotice([{opacity:0,translate:'0 12px'},{opacity:1,translate:'0 0'}],210);
+ noticeTimer=setTimeout(dismissCollectionNotice,3000);
+}
+collectionNotice?.addEventListener('touchstart',event=>{
+ const touch=event.touches[0];
+ noticeTouch=event.touches.length===1?{x:touch.clientX,y:touch.clientY}:null;
+ },{passive:true});
+collectionNotice?.addEventListener('touchend',event=>{
+ if(!noticeTouch)return;
+ const touch=event.changedTouches[0];
+ const dx=touch.clientX-noticeTouch.x,dy=touch.clientY-noticeTouch.y;
+ noticeTouch=null;
+ if(dy>25&&dy>Math.abs(dx))dismissCollectionNotice();
+ },{passive:true});
+collectionNotice?.addEventListener('touchcancel',()=>{noticeTouch=null;});
+$('#dismissCollected').onclick=dismissCollectionNotice;
+$('#viewCollected').onclick=()=>{
+ if(busy){toast('请等待当前回答完成');return;}
+ dismissCollectionNotice();
+ openConversation(state.id,'map');state.mapView='recent';renderMap();save();
+};
 
 let splitTarget=null;
 $('#splitFollowups').onclick=()=>{if(!selected?.followups?.length)return;splitTarget={conversation:state,question:selected};$('#splitList').innerHTML=selected.followups.map((f,i)=>'<div class="review-candidate"><label class="candidate-item"><input type="checkbox" name="split" value="'+i+'" checked><span><b>'+escape(f.text)+'</b></span></label><label>独立问题标题<input data-split-title="'+i+'" value="'+escape(f.title||f.text.slice(0,100))+'" maxlength="300"></label></div>').join('');$('#splitDialog').showModal();};
@@ -239,6 +328,11 @@ function renderFavorites(qs){const favorites=qs.filter(q=>q.favorite).slice().so
 
 $('#openEdit').onclick=()=>{$('#editFields').setAttribute('open','');$('#detailMore').removeAttribute('open');$('#editFields').scrollIntoView({behavior:'smooth',block:'center'});};
 $('#cancelEdit').onclick=()=>{if(selected){$('#editTitle').value=selected.title;$('#editPath').value=topicPath(selected).join(' / ');$('#editGroup').value=selected.group;}$('#editFields').removeAttribute('open');};
+document.addEventListener('click',event=>{
+ const menu=$('#detailMore');
+ if(!menu?.open||menu.contains(event.target))return;
+ menu.open=false;
+},true);
 $('#detailMore').addEventListener('click',e=>{if(e.target.closest('button'))$('#detailMore').removeAttribute('open');});
 
 let mergeTarget=null;

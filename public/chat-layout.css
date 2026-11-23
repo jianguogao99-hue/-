@@ -2546,3 +2546,6 @@ dialog .candidate-item small{color:#9a9a9a!important}
 @media(max-width:760px){
  html,body,#workspace,#messages{overscroll-behavior-x:none}
 }
+
+/* Let the collection notice consume its downward dismissal gesture. */
+#collectionNotice{touch-action:pan-x}

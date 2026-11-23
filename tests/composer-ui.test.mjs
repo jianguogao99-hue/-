@@ -26,8 +26,8 @@ assert.match(html, /id="modelPillLabel"/, 'model pill needs a truncatable label'
 assert.match(html, /class="glass-backdrop"/, 'composer must include a backdrop layer');
 assert.match(html, /class="glass-specularity"/, 'composer must include a specular highlight layer');
 assert.match(html, /class="glass-rim"/, 'composer must include a liquid-glass rim');
-assert.match(html, /chat-layout\.css\?v=ui-fx50/, 'edited composer CSS needs a new cache token');
-assert.match(html, /app\.js\?v=ui-fx42/, 'edited composer JS needs a new cache token');
+assert.match(html, /chat-layout\.css\?v=ui-fx53/, 'edited composer CSS needs a new cache token');
+assert.match(html, /app\.js\?v=ui-fx52/, 'edited composer JS needs a new cache token');
 assert.match(html, /liquid-glass\.js\?v=ui-fx4/, 'liquid glass runtime must be included');
 assert.match(html, /rei-background\.css\?v=ui-fx11/, 'rei theme override needs a new cache token');
 assert.match(html, /layout\.js\?v=ui-fx51/, 'drawer JS needs a new cache token');
@@ -330,7 +330,7 @@ assert.match(css, /#workspace #mapPanel \.mind-legend span\{color:#9a9a9a\}/, 'm
 assert.doesNotMatch(css.slice(css.lastIndexOf('/* UI polish: leftover olive/lime neutralization')), /#91ae80|#d0d6ca|#edffb4|#c9ff99|#b6a0de|#5a794a|#25371f|#101510ec|#9caf8e|#3d4935|#b3c8a5/, 'later leftover overrides must not keep the audited olive or lime');
 assert.match(read('public/mindmap.js'), /class="mind-fav"/, 'favorite map nodes use a gold star mark, not a star prefix in the label');
 assert.doesNotMatch(read('public/mindmap.js'), /item\.q\?\.favorite\?'★ /, 'mind-map labels must not prefix a star character');
-assert.match(html, /mindmap\.js\?v=ui-fx39/, 'edited mindmap JS needs a new cache token');
+assert.match(html, /mindmap\.js\?v=ui-fx52/, 'edited mindmap JS needs a new cache token');
 assert.match(html, /theme\.css\?v=ui-fx10/, 'theme tokens need a new cache token');
 
 console.log('PASS: liquid-glass composer, floating sidebar glass, riding hamburger, compact map, accent picker, sidebar glass preview, Claude-neutral surfaces, compact send typography, overlay frost, Safari-first backdrop, displacement as PE, reduced motion and palette guard.');
