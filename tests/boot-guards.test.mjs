@@ -19,9 +19,10 @@ for (const name of ['deleteUndoFresh', 'deleteUndoTimer']) {
 
 // Run the real undo helpers with the undo elements missing and with odd stored data: they must not throw.
 const start = app.indexOf('function hideDeleteUndo(){');
-const endMarker = 'deleteUndoTimer=setTimeout(hideDeleteUndo,5000);}';
+const endMarker = 'deleteUndoTimer=setTimeout(hideDeleteUndo,5000);\n}';
 const end = app.indexOf(endMarker, start) + endMarker.length;
-const helpers = app.slice(start, end);
+const motion = app.slice(app.indexOf('const feedbackMotions='), app.indexOf('function toast('));
+const helpers = motion + app.slice(start, end);
 assert.ok(helpers.includes('function renderDeleteUndo(){'), 'undo helpers found');
 const run = (state, elements = {}) => {
   const ctx = { state, document: { getElementById: id => elements[id] || null }, setTimeout: () => 1, clearTimeout: () => {} };
@@ -48,5 +49,5 @@ assert.equal(text.textContent, '已删除「旧的」');
 for (const id of ['deleteUndo', 'deleteUndoText', 'undoDelete', 'tree', 'search', 'syncLoading', 'mapPanel', 'historyList']) {
   assert.match(html, new RegExp('id="' + id + '"'), 'index.html keeps #' + id);
 }
-assert.match(html, /app\.js\?v=ui-fx59/, 'fixed app.js needs a new cache token');
+assert.match(html, /app\.js\?v=ui-fx60/, 'fixed app.js needs a new cache token');
 console.log('PASS: boot order (no TDZ on undo state), undo helpers survive missing elements and odd stored data, required map elements present.');

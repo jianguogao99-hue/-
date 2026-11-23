@@ -31,19 +31,46 @@ function slideFeedback(element, entering){
  ]:[{translate:'0 0',opacity:1},{translate:`0 ${edge}px`,opacity:0}];
  return element.animate(frames,{duration:entering?340:240,easing:entering?'cubic-bezier(.18,.72,.25,1)':'ease-in',fill:'both'});
 }
+// Small status messages fade before reaching any scrollport or safe-area edge.
+const feedbackMotions=new WeakMap();
+function setFeedbackVisible(element,visible,immediate=false){
+ if(!element)return;
+ const current=feedbackMotions.get(element);
+ if(!immediate&&current?.visible===visible)return;
+ const wasVisible=!element.hidden;
+ const resume=wasVisible&&current&&window.getComputedStyle
+  ?window.getComputedStyle(element).opacity:null;
+ current?.animation.cancel();
+ feedbackMotions.delete(element);
+ if(visible)element.hidden=false;
+ element.inert=!visible;
+ if(immediate||!element.animate||!motionAllowed()||(!visible&&!wasVisible)){
+  element.hidden=!visible;
+  return;
+ }
+ if(visible&&wasVisible&&!current)return;
+ const animation=element.animate(visible?[
+  {opacity:resume??0,translate:wasVisible?'0 0':'0 8px'},
+  {opacity:1,translate:'0 0'}
+ ]:[
+  {opacity:resume??1,translate:'0 0'},
+  {opacity:0,translate:'0 8px'}
+ ],{duration:visible?190:210,easing:'ease-out',fill:'both'});
+ const motion={animation,visible};
+ feedbackMotions.set(element,motion);
+ animation.finished.then(()=>{
+  if(feedbackMotions.get(element)!==motion)return;
+  if(!visible)element.hidden=true;
+  feedbackMotions.delete(element);
+  animation.cancel();
+ },()=>{});
+}
 function toast(text){
  const node=$('#toast');
  clearTimeout(toast.timer);
- toast.animation?.cancel();
  node.textContent=text;
- node.style.display='block';
- toast.animation=slideFeedback(node,true);
- toast.timer=setTimeout(()=>{
-  toast.animation?.cancel();
-  const hide=()=>{node.style.display='none';};
-  toast.animation=slideFeedback(node,false);
-  if(toast.animation)toast.animation.finished.then(hide,()=>{});else hide();
- },3200);
+ setFeedbackVisible(node,true);
+ toast.timer=setTimeout(()=>setFeedbackVisible(node,false),3200);
 }
 function save(){try{localStorage.setItem(sessionsKey,JSON.stringify(library));window.CloudAccount?.schedule();}catch(e){storageOK=false;toast('浏览器未能保存，请导出笔记备份。')}}
 // Render a small Markdown subset. All model text is escaped before insertion.
@@ -94,7 +121,7 @@ function replyMarkdown(text){
 function renderMessages(){renderHistory();const el=$('#messages');el.innerHTML=state.messages.map(m=>`<div class="msg ${m.role==='user'?'user':''}" id="${escape(m.id)}"><div class="bubble${m.role==='user'?'':' reply-content'}">${m.error?escape('这条旧回复来自安全检测模型，没有回答你的问题。请重新发送原问题。'):m.role==='user'?escape(m.text):replyMarkdown(m.text)}</div>${toolSources(m)}${organizationBadge(m)}${state.questions.some(q=>q.messageId===m.id)?'<div class="capture">↳ 已收进问题地图</div>':''}</div>`).join('');}
 function topicPath(q){if(Array.isArray(q.path)&&q.path.length)return q.path;const text=q.title+' '+q.source;if(/口语|英语/.test(text))return ['其他探索','英语口语'];if(/模型|API|api|GPT|充值/.test(text))return ['问题梳理器','模型接入'];if(q.group==='产品设计')return ['问题梳理器','问题地图'];if(q.group==='使用条件'||q.group==='工具与模型')return ['开发工具'];if(q.group==='学习与探索')return ['基础认识'];return ['待归类'];}
 const collectionNotice=$('#collectionNotice');
-let noticeItem=null,noticeTimer=0,noticeAnimation=null,noticeTouch=null;
+let noticeItem=null,noticeTimer=0,noticeTouch=null;
 function renderMap(){renderCollectionNotice();renderDeleteUndo();const keyword=$('#search').value.trim().toLowerCase();$('#mapPanel').classList.remove('search-editing');const qs=state.questions.filter(q=>(q.title+' '+q.source+' '+(q.followups||[]).map(f=>f.text).join(' ')+' '+topicPath(q).join(' ')).toLowerCase().includes(keyword));const root={children:new Map(),questions:[]};for(const q of qs){let node=root;for(const name of topicPath(q)){if(!node.children.has(name))node.children.set(name,{children:new Map(),questions:[]});node=node.children.get(name);}node.questions.push(q);}function count(n){return n.questions.length+Array.from(n.children.values()).reduce((sum,c)=>sum+count(c),0);}function draw(n,prefix=''){return Array.from(n.children).map(([name,child])=>{const path=prefix+'/'+name;return '<details class="topic-branch" data-path="'+escape(path)+'" '+(openedBranches.has(path)||keyword||filter!=='all'?'open':'')+'><summary><span class="branch-arrow">▶</span><span>'+escape(name)+'</span><small>'+count(child)+' 个问题</small></summary><div class="topic-content">'+draw(child,path)+child.questions.map(q=>'<button class="q" data-id="'+escape(q.id)+'"><div class="qtop"><span class="qtitle">'+escape(q.title)+'</span></div><div class="relation">'+escape(q.type||'问题')+(q.followups?.length?' · '+q.followups.length+' 次追问':'')+'</div></button>').join('')+'</div></details>';}).join('');}$('#byTopic').classList.toggle('active',(!state.mapView||state.mapView==='topic'));$('#byTime').classList.toggle('active',state.mapView==='time');$('#byTopic').setAttribute('aria-pressed',String((!state.mapView||state.mapView==='topic')));$('#byTime').setAttribute('aria-pressed',String(state.mapView==='time'));$('#stagedView').classList.toggle('active',state.mapView==='staged');$('#stagedView').textContent='临时区'+(stagedItems().length?' ('+stagedItems().length+')':'');$('#recentView').classList.toggle('active',state.mapView==='recent');$('#favoritesView').classList.toggle('active',state.mapView==='favorites');const timeActive=state.mapView==='time',timeOrder=state.timeOrder==='desc'?'desc':'asc';$('#byTime').innerHTML='按提问顺序'+(timeActive?'<svg class="order-arrow'+(timeOrder==='desc'?' desc':'')+'" viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 9.5V2.5M2.75 5.75 6 2.5l3.25 3.25"/></svg>':'');$('#byTime').setAttribute('aria-label',timeActive?'按提问顺序，当前'+(timeOrder==='asc'?'最早在前':'最新在前')+'，再点切换':'按提问顺序');$('#tree').innerHTML=(state.mapView==='staged'?renderStaged():state.mapView==='favorites'?renderFavorites(qs):keyword?renderQuestionResults(qs,false):state.mapView==='recent'?renderQuestionResults(qs,true):state.mapView==='time'?renderTimeline():QuestionGraph.render(root,state.title||'新对话',collapsedGraphTopics,Boolean(keyword||filter!=='all'),state.id))||'<div class="empty">'+(state.questions.length?'没有匹配的问题':'开始对话后，问题会逐步长成分支。')+'</div>';$('#mapTitle').textContent=state.title||'新对话';$('#conversationTitle').textContent=state.title||'新对话';}
 function timelineEvents(){const events=[];const messageOrder=new Map(state.messages.map((m,i)=>[m.id,i]));state.questions.forEach((q,index)=>{const original=state.messages.find(m=>m.id===q.messageId);events.push({q,text:q.title,messageId:q.messageId,kind:'首次提问',time:original?.createdAt||q.createdAt,position:messageOrder.get(q.messageId)??state.messages.length+index,sub:0});(q.followups||[]).forEach((f,j)=>{const m=state.messages.find(m=>m.id===f.messageId);events.push({q,text:f.text,messageId:f.messageId,kind:'继续追问',time:m?.createdAt||f.createdAt,position:messageOrder.get(f.messageId)??state.messages.length+index,sub:j+1});});});events.sort((a,b)=>a.position-b.position||a.sub-b.sub);return events.map((event,i)=>({...event,number:i+1}));}
 function renderTimeline(){const keyword=$('#search').value.trim().toLowerCase();let events=timelineEvents().filter(e=>(!keyword||(e.text+' '+e.q.title+' '+topicPath(e.q).join(' ')).toLowerCase().includes(keyword)));if(state.timeOrder==='desc')events=events.slice().reverse();if(!events.length)return '';return '<div class="question-timeline">'+events.map(e=>'<button class="timeline-event" data-id="'+escape(e.q.id)+'" data-event-message="'+escape(e.messageId||'')+'"><span class="event-number">'+String(e.number).padStart(2,'0')+'</span><span class="event-body"><span class="event-top"><time>'+(e.time&&Number.isFinite(Date.parse(e.time))?escape(new Date(e.time).toLocaleString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})):'历史记录')+'</time></span><span class="event-title">'+escape(e.text)+'</span><span class="event-status">'+(e.kind==='继续追问'?'归属于「'+escape(e.q.title)+'」':'')+'</span></span></button>').join('')+'</div>';}
@@ -228,8 +255,8 @@ function renderQuestionSource(question){
  $('#source').innerHTML=section('对话原话',quote)+
   (followups?section('连续追问','<ol>'+followups+'</ol>'):'');
 }
-$('#tree').onclick=e=>{const toggle=e.target.closest('.group-title');if(toggle){const branch=toggle.nextElementSibling;branch.hidden=!branch.hidden;toggle.setAttribute('aria-expanded',String(!branch.hidden));return}const button=e.target.closest('[data-id]');if(!button)return;selected=state.questions.find(q=>q.id===button.dataset.id);if(!selected)return;selectedSourceMessage=button.dataset.eventMessage||selected.messageId;$('#deletePrompt').hidden=true;$('#splitFollowups').hidden=!selected.followups?.length;$('#editFields').removeAttribute('open');$('#detailMore').removeAttribute('open');$('#detailMore .detail-manage').open=false;$('#sourceDetails').removeAttribute('open');$('#detailTopic').textContent=topicPath(selected).join(' › ');$('#detailAnswer').textContent=selected.summary||'还没有整理摘要，可以继续讨论这个问题。';$('#detailTitle').textContent=selected.title;renderQuestionSource(selected);$('#editTitle').value=selected.title;$('#editPath').value=topicPath(selected).join(' / ');$('#editGroup').innerHTML=categories.map(g=>`<option>${g}</option>`).join('');$('#editGroup').value=selected.group;$('#favoriteQuestion').innerHTML=favoriteStar(selected.favorite)+(selected.favorite?'已收藏':'收藏');const names=selected.links.map(id=>state.questions.find(q=>q.id===id)?.title).filter(Boolean);$('#related').hidden=!names.length;$('#related').textContent=names.length?'关联问题：'+names.join('；'):'尚未确认与其他问题的关系。';$('#detail').showModal()};
-$('#close').onclick=()=>$('#detail').close();$('#edit').onsubmit=e=>{e.preventDefault();if(!$('#editTitle').value.trim())return;selected.title=$('#editTitle').value.trim();selected.group=$('#editGroup').value;selected.path=$('#editPath').value.split('/').map(x=>x.trim()).filter(Boolean).slice(0,3);save();renderMap();renderSummary();$('#detail').close();toast('问题已更新')};$('#locate').onclick=()=>{$('#detail').close();const messageId=selectedSourceMessage||selected?.messageId;if(!messageId||!state.messages.some(m=>m.id===messageId)){openConversation(state.id,'chat');toast('找不到对应的原问题');return;}openConversation(state.id,'chat',{scrollTo:messageId});};
+$('#tree').onclick=e=>{const toggle=e.target.closest('.group-title');if(toggle){const branch=toggle.nextElementSibling;branch.hidden=!branch.hidden;toggle.setAttribute('aria-expanded',String(!branch.hidden));return}const button=e.target.closest('[data-id]');if(!button)return;selected=state.questions.find(q=>q.id===button.dataset.id);if(!selected)return;selectedSourceMessage=button.dataset.eventMessage||selected.messageId;$('#deletePrompt').hidden=true;$('#splitFollowups').hidden=!selected.followups?.length;setQuestionEditor(false,true);$('#detailMore').removeAttribute('open');$('#detailMore .detail-manage').open=false;$('#sourceDetails').removeAttribute('open');$('#detailTopic').textContent=topicPath(selected).join(' › ');$('#detailAnswer').textContent=selected.summary||'还没有整理摘要，可以继续讨论这个问题。';$('#detailTitle').textContent=selected.title;renderQuestionSource(selected);$('#editTitle').value=selected.title;$('#editPath').value=topicPath(selected).join(' / ');$('#editGroup').innerHTML=categories.map(g=>`<option>${g}</option>`).join('');$('#editGroup').value=selected.group;$('#favoriteQuestion').innerHTML=favoriteStar(selected.favorite)+(selected.favorite?'已收藏':'收藏');const names=selected.links.map(id=>state.questions.find(q=>q.id===id)?.title).filter(Boolean);$('#related').hidden=!names.length;$('#related').textContent=names.length?'关联问题：'+names.join('；'):'尚未确认与其他问题的关系。';$('#detail').showModal()};
+$('#close').onclick=()=>$('#detail').close();$('#edit').onsubmit=e=>{e.preventDefault();if($('#editFieldsContent').inert||!selected||!$('#editTitle').value.trim())return;selected.title=$('#editTitle').value.trim();selected.group=$('#editGroup').value;selected.path=$('#editPath').value.split('/').map(x=>x.trim()).filter(Boolean).slice(0,3);save();renderMap();renderSummary();$('#detail').close();toast('问题已更新')};$('#locate').onclick=()=>{$('#detail').close();const messageId=selectedSourceMessage||selected?.messageId;if(!messageId||!state.messages.some(m=>m.id===messageId)){openConversation(state.id,'chat');toast('找不到对应的原问题');return;}openConversation(state.id,'chat',{scrollTo:messageId});};
 renderMessages();renderMap();scrollMessagesToBottom();if(!storageOK)toast('本地存储不可用，请使用导出备份。');
 
 function showSidebarSection(section){sidebarMode=section;window.Drawer.open();renderHistory();const panel=$('#historyPanel');panel.classList.remove('section-enter');void panel.offsetWidth;panel.classList.add('section-enter');}
@@ -252,8 +279,8 @@ function deleteConversation(id){if(busy){toast('请等待当前回答完成');re
  const wasActive=state.id===id;if(wasActive){const next=ConversationUI.ordered(library.conversations)[0];state=next;library.active=next.id;crossfadeConversation(()=>openConversation(next.id,'chat'));}
  managedConversation=null;save();renderHistory();
  conversationUndo={conversation:removed,index,wasActive,placeholderId:placeholder?.id||null};showConversationUndo(removed.title||'新对话');return true;}
-function showConversationUndo(title){const bar=document.getElementById('conversationUndo');if(!bar)return;const text=document.getElementById('conversationUndoText');if(text)text.textContent='已删除「'+title+'」';bar.hidden=false;clearTimeout(conversationUndoTimer);conversationUndoTimer=setTimeout(hideConversationUndo,5000);}
-function hideConversationUndo(){clearTimeout(conversationUndoTimer);conversationUndoTimer=0;conversationUndo=null;const bar=document.getElementById('conversationUndo');if(bar)bar.hidden=true;}
+function showConversationUndo(title){const bar=document.getElementById('conversationUndo');if(!bar)return;const text=document.getElementById('conversationUndoText');if(text)text.textContent='已删除「'+title+'」';setFeedbackVisible(bar,true);clearTimeout(conversationUndoTimer);conversationUndoTimer=setTimeout(hideConversationUndo,5000);}
+function hideConversationUndo(){clearTimeout(conversationUndoTimer);conversationUndoTimer=0;conversationUndo=null;const bar=document.getElementById('conversationUndo');setFeedbackVisible(bar,false);}
 function undoConversationDelete(){const item=conversationUndo;if(!item)return;if(busy){toast('请等待当前回答完成');return;}const {conversation}=item;library.deletedConversations=(library.deletedConversations||[]).filter(x=>x&&x.id!==conversation.id);if(item.placeholderId){const p=library.conversations.find(c=>c.id===item.placeholderId);if(p&&!p.messages.length&&!p.questions.length)library.conversations=library.conversations.filter(c=>c!==p);}if(!library.conversations.some(c=>c.id===conversation.id))library.conversations.splice(Math.min(item.index,library.conversations.length),0,conversation);hideConversationUndo();if(item.wasActive||!library.conversations.some(c=>c.id===state.id))openConversation(conversation.id,'chat');save();renderHistory();toast('已恢复对话');}
 $('#undoConversationDelete').onclick=undoConversationDelete;
 // Long-press a conversation row (~450ms, cancelled by >8px movement) opens its ⋯ menu.
@@ -281,7 +308,26 @@ $('#mapPanel').hidden=true;$('#historyPanel').hidden=false;renderHistory();save(
 
 QuestionGraph.attach($('#tree'),path=>{if(collapsedGraphTopics.has(path))collapsedGraphTopics.delete(path);else collapsedGraphTopics.add(path);renderMap();},renameMapTitle);
 
-function hideDeleteUndo(){clearTimeout(deleteUndoTimer);deleteUndoTimer=0;deleteUndoFresh=null;const bar=document.getElementById('deleteUndo');if(bar)bar.hidden=true;}function renderDeleteUndo(){const bar=document.getElementById('deleteUndo'),text=document.getElementById('deleteUndoText');if(!bar)return;const latest=state&&Array.isArray(state.deletedQuestions)?state.deletedQuestions.at(-1):null;if(!latest||latest!==deleteUndoFresh||!latest.question){if(!bar.hidden||deleteUndoTimer)hideDeleteUndo();return;}if(!bar.hidden)return;if(text)text.textContent='已删除「'+(latest.question.title||'问题')+'」';bar.hidden=false;clearTimeout(deleteUndoTimer);deleteUndoTimer=setTimeout(hideDeleteUndo,5000);}
+function hideDeleteUndo(){
+ clearTimeout(deleteUndoTimer);
+ deleteUndoTimer=0;
+ deleteUndoFresh=null;
+ setFeedbackVisible(document.getElementById('deleteUndo'),false);
+}
+function renderDeleteUndo(){
+ const bar=document.getElementById('deleteUndo'),text=document.getElementById('deleteUndoText');
+ if(!bar)return;
+ const latest=state&&Array.isArray(state.deletedQuestions)?state.deletedQuestions.at(-1):null;
+ if(!latest||latest!==deleteUndoFresh||!latest.question){
+  if(!bar.hidden||deleteUndoTimer)hideDeleteUndo();
+  return;
+ }
+ if(!bar.hidden&&!bar.inert)return;
+ if(text)text.textContent='已删除「'+(latest.question.title||'问题')+'」';
+ setFeedbackVisible(bar,true);
+ clearTimeout(deleteUndoTimer);
+ deleteUndoTimer=setTimeout(hideDeleteUndo,5000);
+}
 $('#deleteQuestion').onclick=()=>{if(busy){toast('请等待当前回答完成后再删除');return;}if(selected)$('#deletePrompt').hidden=false;};
 $('#cancelDelete').onclick=()=>$('#deletePrompt').hidden=true;
 $('#confirmDelete').onclick=()=>{if(busy||!selected)return;const index=state.questions.findIndex(q=>q.id===selected.id);if(index<0)return;const question=state.questions[index];const linkedFrom=state.questions.filter(q=>q.links.includes(question.id)).map(q=>q.id);state.deletedQuestions=state.deletedQuestions||[];const deletedItem={question,index,linkedFrom};state.deletedQuestions.push(deletedItem);deleteUndoFresh=deletedItem;state.questions.splice(index,1);for(const q of state.questions)q.links=q.links.filter(id=>id!==question.id);selected=null;$('#deletePrompt').hidden=true;$('#detail').close();QuestionGraph.reset();save();renderMessages();renderMap();};
@@ -341,24 +387,21 @@ function dismissCollectionNotice(){
  clearTimeout(noticeTimer);
  if(!noticeItem||collectionNotice.hidden||noticeItem.dismissed)return;
  noticeItem.dismissed=true;
+ setFeedbackVisible(collectionNotice,false);
  save();
- const item=noticeItem;
- const hide=()=>{if(noticeItem===item)collectionNotice.hidden=true;};
- noticeAnimation?.cancel();
- const exit=noticeAnimation=slideFeedback(collectionNotice,false);
- if(exit)exit.finished.then(hide,()=>{});else hide();
 }
 function renderCollectionNotice(){
  const latest=state.lastCollected;
  const ids=(latest?.ids||[]).filter(id=>state.questions.some(q=>q.id===id));
  if(latest===noticeItem)return;
  clearTimeout(noticeTimer);
- noticeAnimation?.cancel();
  noticeItem=latest;
- collectionNotice.hidden=!latest||latest.dismissed||!ids.length;
- if(collectionNotice.hidden)return;
+ if(!latest||latest.dismissed||!ids.length){
+  setFeedbackVisible(collectionNotice,false,true);
+  return;
+ }
  $('#collectionNoticeText').textContent='已收录 '+ids.length+' 个问题';
- noticeAnimation=slideFeedback(collectionNotice,true);
+ setFeedbackVisible(collectionNotice,true);
  noticeTimer=setTimeout(dismissCollectionNotice,3000);
 }
 collectionNotice?.addEventListener('touchstart',event=>{
@@ -390,8 +433,48 @@ $('#favoriteQuestion').onclick=()=>{if(selected)toggleFavorite(selected.id);};$(
 $('#tree').addEventListener('click',e=>{const button=e.target.closest('[data-favorite]');if(button)toggleFavorite(button.dataset.favorite);});
 function renderFavorites(qs){const favorites=qs.filter(q=>q.favorite).slice().sort((a,b)=>Date.parse(b.favoritedAt||0)-Date.parse(a.favoritedAt||0));if(!favorites.length)return '<div class="empty">'+($('#search').value.trim()?'没有匹配的收藏问题。':'还没有收藏。打开问题详情，点击“收藏问题”即可。')+'</div>';return renderQuestionResults(favorites,false).replace('搜索结果','我的收藏');}
 
-$('#openEdit').onclick=()=>{$('#editFields').setAttribute('open','');$('#detailMore').removeAttribute('open');$('#editFields').scrollIntoView({behavior:'smooth',block:'center'});};
-$('#cancelEdit').onclick=()=>{if(selected){$('#editTitle').value=selected.title;$('#editPath').value=topicPath(selected).join(' / ');$('#editGroup').value=selected.group;}$('#editFields').removeAttribute('open');};
+let editorMotion=null;
+function setQuestionEditor(open,immediate=false){
+ const editor=$('#editFields'),content=$('#editFieldsContent');
+ if(!editor||!content)return;
+ editorMotion?.cancel();
+ editorMotion=null;
+ content.inert=!open;
+ if(open)editor.open=true;
+ if(immediate||!content.animate||!motionAllowed()||!editor.open){
+  editor.open=open;
+  return;
+ }
+ const animation=content.animate(open?[
+  {opacity:0,translate:'0 8px'},{opacity:1,translate:'0 0'}
+ ]:[
+  {opacity:1,translate:'0 0'},{opacity:0,translate:'0 6px'}
+ ],{duration:open?230:160,easing:'ease-out',fill:'both'});
+ editorMotion=animation;
+ animation.finished.then(()=>{
+  if(editorMotion!==animation)return;
+  if(!open)editor.open=false;
+  editorMotion=null;
+  animation.cancel();
+ },()=>{});
+}
+$('#openEdit').onclick=()=>{
+ $('#detailMore').removeAttribute('open');
+ setQuestionEditor(true);
+ $('#editFields').scrollIntoView({behavior:motionAllowed()?'smooth':'auto',block:'start'});
+};
+$('#editFields>summary').addEventListener('click',event=>{
+ event.preventDefault();
+ if($('#editFields').open&&!$('#editFieldsContent').inert)setQuestionEditor(false);
+});
+$('#cancelEdit').onclick=()=>{
+ if(selected){
+  $('#editTitle').value=selected.title;
+  $('#editPath').value=topicPath(selected).join(' / ');
+  $('#editGroup').value=selected.group;
+ }
+ setQuestionEditor(false);
+};
 document.addEventListener('click',event=>{
  const menu=$('#detailMore');
  if(!menu?.open||menu.contains(event.target))return;

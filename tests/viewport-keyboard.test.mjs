@@ -114,5 +114,5 @@ assert.match(v19, /html\{--map-top-zone:calc\(env\(safe-area-inset-top,0px\) \+ 
 assert.match(v19, /padding-top:calc\(env\(safe-area-inset-top,0px\) \+ 62px\)!important;[\s\S]*?scroll-padding-top:0!important;[\s\S]*?overflow-anchor:none!important/, 'map panel geometry is CSS-only and ignores view-switch anchoring');
 assert.match(v19, /\.map-sticky\{[\s\S]*?position:sticky!important;[\s\S]*?top:0!important/, 'the sticky rail pins inside the padded map scrollport');
 assert.doesNotMatch(v19, /var\(--map-top-zone\)/, 'no v19 rule reads a measured map zone');
-for (const [file, token] of [['chat-layout.css', 'ui-fx59'], ['rei-background.css', 'ui-fx11'], ['app.js', 'ui-fx59'], ['layout.js', 'ui-fx58']]) assert.ok(html.includes(file + '?v=' + token), file + ' cache token');
+for (const [file, token] of [['chat-layout.css', 'ui-fx60'], ['rei-background.css', 'ui-fx11'], ['app.js', 'ui-fx60'], ['layout.js', 'ui-fx58']]) assert.ok(html.includes(file + '?v=' + token), file + ' cache token');
 console.log('PASS: drawer dismisses keyboard, no phone auto-focus, sub-dialogs return to settings, uniform accent close.');
