@@ -286,9 +286,34 @@ function stagedItems(){return state.messages.filter(m=>m.collectionChoice==='sta
 function renderStaged(){const items=stagedItems();return items.map(reply=>{const message=findTurn(state,reply);return '<article class="staged-card"><small>'+escape(new Date(reply.stagedAt).toLocaleDateString('zh-CN'))+'</small><p>'+escape(message?.text||'暂存内容')+'</p><div><button data-temp-action="collect" data-reply="'+escape(reply.id)+'">收进地图</button><button data-temp-action="skip" data-reply="'+escape(reply.id)+'">移出临时区</button></div></article>';}).join('')+(items.length?'':'<div class="empty">还没有暂存的问题。聊天后点“暂存”，可以留到以后决定。</div>');}
 $('#stagedView').onclick=()=>{state.mapView='staged';save();renderMap();};
 $('#tree').addEventListener('click',e=>{const b=e.target.closest('[data-temp-action]');if(b)chooseCollection(b.dataset.tempAction,b.dataset.reply);});
-function openReview(conversation,reply){const draft=conversation.collectionDrafts?.[reply.id];if(!draft)return;activeReview={conversation,reply,draft};$('#candidateList').innerHTML=draft.data.questions.map((q,i)=>'<div class="review-candidate"><label class="candidate-item"><input type="checkbox" name="candidate" value="'+i+'" checked><span><b>'+escape(q.title)+'</b><small>'+escape((q.path||[]).join(' › '))+'</small></span></label><label>问题标题<input data-candidate-title="'+i+'" value="'+escape(q.title)+'" maxlength="300"></label><label>收录方式<select data-candidate-target="'+i+'"><option value="new">独立收录为新问题（默认）</option>'+conversation.questions.map(existing=>'<option value="'+escape(existing.id)+'">补充到：'+escape(existing.title)+'</option>').join('')+'</select></label></div>').join('');$('#collectReview').showModal();}
-$('#closeReview').onclick=()=>$('#collectReview').close();$('#reviewLater').onclick=()=>{if(!activeReview)return;activeReview.reply.collectionChoice='staged';activeReview.reply.stagedAt=activeReview.reply.stagedAt||new Date().toISOString();activeReview.reply.organizeStatus='unselected';$('#collectReview').close();refreshCollection();};
-$('#reviewForm').onsubmit=e=>{e.preventDefault();if(!activeReview)return;const {conversation,reply,draft}=activeReview;const checked=Array.from($('#candidateList').querySelectorAll('input[name="candidate"]:checked')).map(x=>Number(x.value));if(!checked.length){toast('请选择至少一个问题，或点“先暂存”');return;}const message=conversation.messages.find(m=>m.id===draft.messageId);if(!message)return;const candidates=draft.data.questions.filter((q,i)=>checked.includes(i)).map(q=>{const i=draft.data.questions.indexOf(q);const target=$('#candidateList select[data-candidate-target="'+i+'"]').value||'new';return {...q,title:$('#candidateList input[data-candidate-title="'+i+'"]').value.trim()||q.title,mergeConfirmed:target!=='new',existing_id:target==='new'?'':target};});mergeOrganized(conversation,{...draft.data,questions:candidates},message);conversation.lastCollected={ids:conversation.questions.filter(q=>candidates.some(candidate=>candidate.mergeConfirmed?candidate.existing_id===q.id:(q.messageId===message.id&&candidate.title.trim()===q.title.trim()))).map(q=>q.id),dismissed:false};reply.organizeStatus='done';reply.collectionChoice='collected';delete conversation.collectionDrafts[reply.id];$('#collectReview').close();refreshCollection();};
+let reviewMotion=null,reviewClosing=false;
+function closeReview(){
+ const dialog=$('#collectReview');
+ if(!dialog.open||reviewClosing)return;
+ reviewClosing=true;
+ reviewMotion?.cancel();
+ const finish=()=>{
+  dialog.close();
+  reviewMotion?.cancel();
+  reviewMotion=null;
+  reviewClosing=false;
+ };
+ reviewMotion=slideFeedback(dialog,false);
+ if(reviewMotion)reviewMotion.finished.then(finish,finish);else finish();
+}
+$('#collectReview').addEventListener('cancel',event=>{
+ event.preventDefault();
+ closeReview();
+});
+$('#collectReview').addEventListener('click',event=>{
+ const dialog=event.currentTarget;
+ if(event.target!==dialog)return;
+ const rect=dialog.getBoundingClientRect();
+ if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)closeReview();
+});
+function openReview(conversation,reply){const draft=conversation.collectionDrafts?.[reply.id];if(!draft||$('#collectReview').open||reviewClosing)return;activeReview={conversation,reply,draft};$('#candidateList').innerHTML=draft.data.questions.map((q,i)=>'<div class="review-candidate"><label class="candidate-item"><input type="checkbox" name="candidate" value="'+i+'" checked><span><b>'+escape(q.title)+'</b><small>'+escape((q.path||[]).join(' › '))+'</small></span></label><label>问题标题<input data-candidate-title="'+i+'" value="'+escape(q.title)+'" maxlength="300"></label><label>收录方式<select data-candidate-target="'+i+'"><option value="new">独立收录为新问题（默认）</option>'+conversation.questions.map(existing=>'<option value="'+escape(existing.id)+'">补充到：'+escape(existing.title)+'</option>').join('')+'</select></label></div>').join('');$('#collectReview').showModal();reviewMotion=slideFeedback($('#collectReview'),true);}
+$('#closeReview').onclick=closeReview;$('#reviewLater').onclick=()=>{if(!activeReview||reviewClosing)return;activeReview.reply.collectionChoice='staged';activeReview.reply.stagedAt=activeReview.reply.stagedAt||new Date().toISOString();activeReview.reply.organizeStatus='unselected';closeReview();refreshCollection();};
+$('#reviewForm').onsubmit=e=>{e.preventDefault();if(!activeReview||reviewClosing)return;const {conversation,reply,draft}=activeReview;const checked=Array.from($('#candidateList').querySelectorAll('input[name="candidate"]:checked')).map(x=>Number(x.value));if(!checked.length){toast('请选择至少一个问题，或点“先暂存”');return;}const message=conversation.messages.find(m=>m.id===draft.messageId);if(!message)return;const candidates=draft.data.questions.filter((q,i)=>checked.includes(i)).map(q=>{const i=draft.data.questions.indexOf(q);const target=$('#candidateList select[data-candidate-target="'+i+'"]').value||'new';return {...q,title:$('#candidateList input[data-candidate-title="'+i+'"]').value.trim()||q.title,mergeConfirmed:target!=='new',existing_id:target==='new'?'':target};});mergeOrganized(conversation,{...draft.data,questions:candidates},message);conversation.lastCollected={ids:conversation.questions.filter(q=>candidates.some(candidate=>candidate.mergeConfirmed?candidate.existing_id===q.id:(q.messageId===message.id&&candidate.title.trim()===q.title.trim()))).map(q=>q.id),dismissed:false};reply.organizeStatus='done';reply.collectionChoice='collected';delete conversation.collectionDrafts[reply.id];closeReview();refreshCollection();};
 // Cancel legacy automatic jobs. Only explicit collection requests may run now.
 for(const conversation of library.conversations){for(const job of conversation.organizeJobs||[]){if(job.requested!==true||job.status==='processing'){if(job.status==='pending'||job.status==='processing'){job.status='cancelled';const reply=conversation.messages.find(m=>m.id===job.replyId);if(reply){reply.organizeStatus='unselected';reply.collectionChoice='unselected';}}}}}
 save();renderMessages();

@@ -2578,3 +2578,16 @@ dialog .candidate-item small{color:#9a9a9a!important}
 #detail .detail-actions button{justify-content:flex-start;padding-inline:12px;font-weight:600}
 #detail .detail-manage>summary::after{content:"";width:6px;height:6px;border:solid currentColor;border-width:0 1px 1px 0;transform:rotate(45deg);margin:3px 4px 0 0}
 #detail .detail-manage[open]>summary::after{transform:rotate(225deg);margin-top:6px}
+
+/* UI v37: motion preview for review sheet and detail actions. */
+@media(max-width:760px){
+ dialog#collectReview{inset:auto 0 0;width:100%;max-width:none;max-height:82dvh;margin:0;border-radius:22px 22px 0 0;padding-bottom:max(18px,env(safe-area-inset-bottom,0px))}
+}
+@media(prefers-reduced-motion:no-preference){
+ #detailMore[open] .detail-menu{animation:detail-menu-enter 180ms ease-out both}
+ #detailMore[open] .detail-menu>.detail-actions>button{animation:detail-action-enter 190ms ease-out both}
+ #detailMore[open] .detail-menu>.detail-actions>button:nth-child(2){animation-delay:32ms}
+ #detailMore[open] .detail-menu>.detail-actions>button:nth-child(3){animation-delay:64ms}
+}
+@keyframes detail-menu-enter{from{opacity:0;translate:0 5px}to{opacity:1;translate:0 0}}
+@keyframes detail-action-enter{from{opacity:0;translate:0 5px}to{opacity:1;translate:0 0}}

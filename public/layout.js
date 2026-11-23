@@ -34,11 +34,12 @@ function close(){
   const from=card.getBoundingClientRect(),to=head.getBoundingClientRect();
   drawer.classList.add('menu-returning');
   menuReturn=head.animate([
-   {transform:`translate(${from.left-to.left}px,${from.top-to.top}px) scale(.9)`,opacity:.45},
-   {transform:'translateX(-5px) scale(.96)',opacity:1,offset:.68},
-   {transform:'translateX(2px) scale(1.035)',opacity:1,offset:.86},
+   {transform:`translate(${from.left-to.left}px,${from.top-to.top}px) scale(.92)`,opacity:.68},
+   {transform:'translateX(-5px) scale(.97)',opacity:1,offset:.58},
+   {transform:'translateX(3px) scale(1.045)',opacity:1,offset:.74},
+   {transform:'translateX(-1px) scale(.99)',opacity:1,offset:.88},
    {transform:'none',opacity:1}
-  ],{duration:240,easing:'cubic-bezier(.32,0,.25,1)'});
+  ],{duration:290,easing:'ease-out'});
  }
  drawer.classList.add('drawer-closing');
  const keep=focusedOn(card)||(card&&card.contains&&document.activeElement&&card.contains(document.activeElement));
